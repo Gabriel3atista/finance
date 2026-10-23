@@ -12,9 +12,9 @@ export function Button({
   ...props
 }: ButtonProps) {
   const variants = {
-    primary: "bg-accent text-white hover:bg-[#274b39]",
-    secondary: "border border-line bg-white text-ink hover:bg-canvas",
-    ghost: "text-muted hover:bg-canvas hover:text-ink",
+    primary: "bg-primary-200 text-background-900 hover:bg-primary-100",
+    secondary: "border border-line bg-secondary-900 text-ink hover:bg-secondary-800",
+    ghost: "text-muted hover:bg-secondary-800 hover:text-ink",
   };
   const sizes = {
     default: "min-h-10 rounded-xl px-4 text-sm",

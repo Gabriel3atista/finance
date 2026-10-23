@@ -3,9 +3,12 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --background: #f6f7f3;
-  --foreground: #22261f;
+  color-scheme: dark;
+  --background: #0b0c0f;
+  --foreground: #7d808b;
+  --surface: #131416;
+  --border: #303238;
+  --primary: #e1e8ee;
 }
 
 * {
@@ -15,10 +18,13 @@
 html {
   min-height: 100%;
   background: var(--background);
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   background: var(--background);
   color: var(--foreground);
@@ -27,26 +33,65 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+a,
 button,
-a {
+[role="button"] {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
 ::selection {
-  background: #d9e6dc;
-  color: #203d2d;
+  background: #35434f;
+  color: #f7fafc;
 }
 
 .surface {
-  border: 1px solid #e6e8e1;
+  border: 1px solid var(--border);
   border-radius: 18px;
-  background: #fff;
+  background: var(--surface);
   box-shadow:
-    0 1px 2px rgb(27 34 28 / 4%),
-    0 8px 24px rgb(27 34 28 / 3%);
+    0 1px 2px rgb(0 0 0 / 24%),
+    0 12px 32px rgb(0 0 0 / 20%);
 }
 
 .focus-ring:focus-visible {
-  outline: 3px solid #9bb9a4;
+  outline: 3px solid #6e7c89;
   outline-offset: 3px;
+}
+
+@layer components {
+  .field-label {
+    @apply flex flex-col gap-1.5 text-xs font-medium text-muted;
+  }
+
+  .field-control {
+    @apply min-h-10 w-full rounded-xl border border-line bg-secondary-900 px-3 text-sm font-normal text-primary-200 outline-none transition-colors placeholder:text-foreground-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-900;
+  }
+
+  .primary-button {
+    @apply inline-flex min-h-10 items-center justify-center rounded-xl bg-primary-200 px-4 text-sm font-medium text-background-900 transition-colors hover:bg-primary-100 focus-ring active:scale-[0.98];
+  }
+
+  .quiet-button {
+    @apply inline-flex min-h-9 items-center justify-center rounded-lg border border-line bg-secondary-900 px-3 text-sm font-medium text-foreground-400 transition-colors hover:bg-secondary-800 hover:text-primary-200 focus-ring active:scale-[0.98];
+  }
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary-button,
+  .quiet-button {
+    transition: none;
+  }
 }

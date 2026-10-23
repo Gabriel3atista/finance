@@ -20,9 +20,9 @@ export function MonthOverview() {
             Seu panorama financeiro, organizado em um só lugar.
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start rounded-full border border-line bg-white px-3 py-1.5 text-xs font-medium text-muted sm:self-auto">
+        <div className="flex items-center gap-2 self-start rounded-full border border-line bg-card-900 px-3 py-1.5 text-xs font-medium text-muted sm:self-auto">
           <span
-            className="size-1.5 rounded-full bg-[#9aa89b]"
+            className="size-1.5 rounded-full bg-success-400"
             aria-hidden="true"
           />
           Núcleo familiar
@@ -51,7 +51,7 @@ export function MonthOverview() {
             </div>
           </div>
           <div className="flex min-h-[205px] flex-col items-center justify-center text-center">
-            <div className="grid size-11 place-items-center rounded-full bg-[#f3f5f0] text-muted">
+            <div className="grid size-11 place-items-center rounded-full bg-secondary-800 text-muted">
               <FeatureIcon name="history" />
             </div>
             <h3 className="mt-4 text-sm font-semibold text-ink">
@@ -102,7 +102,7 @@ function SummaryCard({ title, icon }: { title: string; icon: string }) {
       <div>
         <p className="text-sm text-muted">{title}</p>
         <p
-          className="mt-3 text-[22px] font-semibold tracking-tight text-[#a9ada5]"
+          className="mt-3 text-[22px] font-semibold tracking-tight text-foreground-500"
           aria-label="Sem dados"
         >
           —

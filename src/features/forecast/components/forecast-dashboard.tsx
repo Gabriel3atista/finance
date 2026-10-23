@@ -1,0 +1,875 @@
+import Link from "next/link";
+import {
+  formatMoney,
+  localDateString,
+  type FinancialEntry,
+} from "@/features/transactions/lib/data";
+import {
+  effectiveAmount,
+  historyCommitment,
+  labelMonth,
+  monthKey,
+  monthTitle,
+  monthTotals,
+  type CategoryEstimate,
+  type ForecastMonth,
+  type ForecastOverride,
+  type HistoryMonth,
+} from "@/features/forecast/lib/data";
+import {
+  clearCategoryForecastOverride,
+  clearForecastOverride,
+  clearOpeningBalance,
+  saveCategoryForecastOverride,
+  saveForecastOverride,
+  saveOpeningBalance,
+} from "@/features/forecast/actions";
+
+export function ForecastDashboard({
+  forecast,
+  overrides,
+  settings,
+  history,
+  overdue,
+  error,
+  saved,
+}: {
+  forecast: ForecastMonth[];
+  overrides: Map<string, ForecastOverride>;
+  settings: {
+    openingBalance: number | null;
+    balanceAsOf: string | null;
+  } | null;
+  history: HistoryMonth[];
+  overdue: FinancialEntry[];
+  error?: string;
+  saved?: string;
+}) {
+  const openingBalance = settings?.openingBalance ?? null;
+  const balanceAsOf = settings?.balanceAsOf ?? null;
+  let runningBalance = openingBalance;
+  const monthCards = forecast.map(({ month, entries, estimates }, index) => {
+    const totals = monthTotals(entries, overrides);
+    const estimateTotal = estimates.reduce(
+      (total, estimate) => total + estimate.amount,
+      0,
+    );
+    let balanceContribution = 0;
+    if (balanceAsOf) {
+      for (const entry of entries) {
+        if (entry.status === "cancelled") continue;
+        const settledAfterSnapshot =
+          entry.status === "settled" &&
+          Boolean(
+            entry.settled_at && entry.settled_at.slice(0, 10) > balanceAsOf,
+          );
+        if (entry.status !== "planned" && !settledAfterSnapshot) continue;
+        const amount = effectiveAmount(entry, overrides);
+        balanceContribution += entry.entry_type === "income" ? amount : -amount;
+      }
+      balanceContribution -= estimateTotal;
+      if (runningBalance !== null) runningBalance += balanceContribution;
+    }
+    return {
+      month,
+      entries,
+      estimates,
+      totals,
+      estimateTotal,
+      commitment:
+        totals.income > 0
+          ? ((totals.expenses + estimateTotal) / totals.income) * 100
+          : null,
+      accumulated: runningBalance,
+      index,
+    };
+  });
+  const highestCommitment = Math.max(
+    0,
+    ...monthCards.map((item) => item.commitment ?? 0),
+  );
+
+  const today = localDateString();
+  const dueLimit = localDateString(addDays(new Date(`${today}T12:00:00`), 30));
+  const dueEntries = [...overdue, ...forecast.flatMap(({ entries }) => entries)]
+    .filter(
+      (entry) =>
+        entry.status === "planned" &&
+        entry.due_date &&
+        entry.due_date <= dueLimit,
+    )
+    .filter(
+      (entry, index, rows) =>
+        rows.findIndex((item) => item.id === entry.id) === index,
+    )
+    .sort((left, right) =>
+      (left.due_date ?? "").localeCompare(right.due_date ?? ""),
+    )
+    .slice(0, 8);
+  const errorMessages: Record<string, string> = {
+    "invalid-balance":
+      "Informe um valor válido e uma data de hoje ou anterior.",
+    "save-balance": "Não foi possível salvar o saldo inicial.",
+    "invalid-override": "Informe uma hipótese válida, maior que zero.",
+    "entry-unavailable": "Este lançamento não está disponível para projeção.",
+    "save-override": "Não foi possível salvar a hipótese.",
+    "clear-override": "Não foi possível remover a hipótese.",
+  };
+  const savedMessage =
+    saved === "balance"
+      ? "Saldo inicial salvo; a projeção acumulada foi recalculada."
+      : saved === "balance-cleared"
+        ? "Saldo inicial removido. O saldo acumulado ficará oculto."
+        : saved === "override-cleared"
+          ? "Hipótese removida; o valor previsto original voltou à projeção."
+          : saved
+            ? "Alteração salva e projeção atualizada."
+            : null;
+
+  return (
+    <section className="mx-auto max-w-6xl">
+      <header className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+            Planejamento familiar
+          </p>
+          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
+            Projeção financeira
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-[15px]">
+            {monthTitle(forecast[0].month)} e os três meses seguintes. Valores
+            previstos permanecem separados dos pagamentos realizados.
+          </p>
+        </div>
+        <Link
+          href="/cadastros"
+          className="quiet-button self-start sm:self-auto"
+        >
+          Gerenciar recorrências
+        </Link>
+      </header>
+      {forecast.some((item) => item.estimates.length > 0) && (
+        <p className="mb-4 max-w-3xl rounded-xl bg-warning-900 px-4 py-3 text-xs leading-5 text-warning-100">
+          Despesas por categoria sem valor previsto usam a média dos valores
+          realizados nos últimos seis meses disponíveis, quando há pelo menos
+          duas competências com dados. Ajustes ficam limitados ao mês
+          selecionado.
+        </p>
+      )}
+
+      {error && (
+        <p
+          className="mb-4 rounded-xl border border-danger-800 bg-danger-900 px-4 py-3 text-sm text-danger-100"
+          role="alert"
+        >
+          {errorMessages[error] ?? "Não foi possível concluir a ação."}
+        </p>
+      )}
+      {savedMessage && (
+        <p
+          className="mb-4 rounded-xl border border-success-800 bg-success-900 px-4 py-3 text-sm text-success-100"
+          role="status"
+        >
+          {savedMessage}
+        </p>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {monthCards.map((item) => (
+          <MonthForecastCard
+            key={monthKey(item.month)}
+            {...item}
+            overrides={overrides}
+            highCommitment={
+              item.commitment !== null &&
+              item.commitment > 0 &&
+              item.commitment === highestCommitment
+            }
+          />
+        ))}
+      </div>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(290px,0.65fr)]">
+        <section className="surface p-5 sm:p-6">
+          <header className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-[15px] font-semibold text-ink">
+                Próximos vencimentos
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Em atraso ou previstos para os próximos 30 dias.
+              </p>
+            </div>
+            <span className="rounded-full bg-canvas px-3 py-1 text-xs text-muted">
+              {dueEntries.length}
+            </span>
+          </header>
+          {dueEntries.length ? (
+            <div className="mt-4 divide-y divide-line">
+              {dueEntries.map((entry) => (
+                <div
+                  className="flex items-center justify-between gap-3 py-3"
+                  key={entry.id}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-ink">
+                      {entry.title}
+                    </p>
+                    <p
+                      className={`mt-1 text-xs ${entry.due_date! < today ? "text-danger-300" : "text-muted"}`}
+                    >
+                      {entry.due_date! < today ? "Vencida · " : "Vence · "}
+                      {formatDate(entry.due_date!)}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-semibold tabular-nums text-ink">
+                    {formatMoney(effectiveAmount(entry, overrides))}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-8 rounded-xl bg-canvas px-4 py-6 text-center text-sm text-muted">
+              Nenhuma pendência com vencimento nos próximos 30 dias.
+            </p>
+          )}
+        </section>
+
+        <section className="surface p-5 sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+            Saldo de partida
+          </p>
+          <h2 className="mt-2 text-[15px] font-semibold text-ink">
+            Saldo inicial da família
+          </h2>
+          <p className="mt-1 text-sm leading-5 text-muted">
+            Informe o saldo disponível e a data em que conferiu. Sem esse dado,
+            mostramos apenas o saldo mensal projetado.
+          </p>
+          {settings && openingBalance !== null && balanceAsOf ? (
+            <div className="mt-4 rounded-xl bg-accent-soft px-4 py-3">
+              <p className="text-xs text-muted">
+                Informado em {formatDate(balanceAsOf)}
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-ink">
+                {formatMoney(openingBalance)}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted">
+              Saldo acumulado oculto até informar um saldo inicial.
+            </div>
+          )}
+          <form action={saveOpeningBalance} className="mt-4 space-y-3">
+            <label className="field-label">
+              Saldo disponível (R$)
+              <input
+                className="field-control"
+                name="opening_balance"
+                inputMode="decimal"
+                defaultValue={
+                  openingBalance === null
+                    ? ""
+                    : openingBalance.toFixed(2).replace(".", ",")
+                }
+                placeholder="Ex.: 12500,00 ou -350,00"
+                required
+              />
+            </label>
+            <label className="field-label">
+              Data da conferência
+              <input
+                className="field-control"
+                type="date"
+                name="balance_as_of"
+                max={today}
+                defaultValue={balanceAsOf ?? today}
+                required
+              />
+            </label>
+            <button className="primary-button w-full" type="submit">
+              Salvar saldo inicial
+            </button>
+          </form>
+          {settings && (
+            <form action={clearOpeningBalance} className="mt-2">
+              <button className="quiet-button w-full text-xs" type="submit">
+                Remover saldo e acumulado
+              </button>
+            </form>
+          )}
+        </section>
+      </div>
+
+      <section className="mt-7">
+        <header className="mb-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+            Histórico realizado
+          </p>
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-ink">
+            Evolução financeira
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Últimos seis meses com pagamentos e recebimentos marcados como
+            realizados.
+          </p>
+        </header>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <MoneyBarChart title="Evolução da renda familiar" data={history} />
+          <ExpenseCommitmentChart data={history} />
+        </div>
+        <p className="mt-3 text-xs leading-5 text-muted">
+          O histórico mostra apenas lançamentos realizados já registrados no
+          Finance. Os lançamentos históricos importados permanecem disponíveis
+          para consulta na página de histórico.
+        </p>
+      </section>
+    </section>
+  );
+}
+
+function MonthForecastCard({
+  month,
+  entries,
+  estimates,
+  totals,
+  estimateTotal,
+  commitment,
+  accumulated,
+  index,
+  overrides,
+  highCommitment,
+}: {
+  month: Date;
+  entries: FinancialEntry[];
+  estimates: CategoryEstimate[];
+  totals: ReturnType<typeof monthTotals>;
+  estimateTotal: number;
+  commitment: number | null;
+  accumulated: number | null;
+  index: number;
+  overrides: Map<string, ForecastOverride>;
+  highCommitment: boolean;
+}) {
+  const totalExpenses = totals.expenses + estimateTotal;
+  const balance = totals.income - totalExpenses;
+  return (
+    <article
+      className={`surface overflow-hidden p-4 sm:p-5 ${balance < 0 ? "border-danger-800" : ""}`}
+    >
+      <header className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+            {index === 0 ? "Mês atual" : `${index}º mês à frente`}
+          </p>
+          <h2 className="mt-1 text-base font-semibold capitalize text-ink">
+            {monthTitle(month)}
+          </h2>
+        </div>
+        <span
+          className={`mt-1 size-2 rounded-full ${balance < 0 ? "bg-danger-400" : "bg-success-400"}`}
+          aria-hidden="true"
+        />
+      </header>
+      <dl className="mt-4 space-y-2.5 text-sm">
+        <AmountLine label="Receitas esperadas" value={totals.income} positive />
+        <AmountLine label="Despesas previstas" value={totalExpenses} />
+      </dl>
+      <div className="mt-4 border-t border-line pt-3">
+        <p className="text-xs text-muted">Saldo mensal estimado</p>
+        <p
+          className={`mt-1 text-xl font-semibold tabular-nums ${balance < 0 ? "text-danger-300" : "text-ink"}`}
+        >
+          {formatMoney(balance)}
+        </p>
+      </div>
+      <div
+        className={`mt-3 flex items-center justify-between rounded-lg px-3 py-2 ${highCommitment ? "bg-warning-900" : "bg-secondary-800"}`}
+      >
+        <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
+          Comprometimento da renda
+        </p>
+        <p
+          className={`text-xs font-semibold tabular-nums ${highCommitment ? "text-warning-100" : "text-ink"}`}
+        >
+          {commitment === null ? "—" : `${commitment.toFixed(0)}%`}
+          {highCommitment && (
+            <span className="ml-1.5 text-[9px] font-medium">maior</span>
+          )}
+        </p>
+      </div>
+      {accumulated !== null ? (
+        <div className="mt-3 rounded-lg bg-canvas px-3 py-2">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
+            Saldo acumulado
+          </p>
+          <p
+            className={`mt-0.5 text-sm font-semibold tabular-nums ${accumulated < 0 ? "text-danger-300" : "text-ink"}`}
+          >
+            {formatMoney(accumulated)}
+          </p>
+        </div>
+      ) : (
+        <p className="mt-3 rounded-lg bg-canvas px-3 py-2 text-xs text-muted">
+          Saldo acumulado depende do saldo inicial.
+        </p>
+      )}
+      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
+        <span>
+          {formatMoney(totals.settledIncome + totals.settledExpenses)}{" "}
+          realizados
+        </span>
+        <span>{totals.plannedCount} previstos</span>
+        {totals.editedCount > 0 && (
+          <span>{totals.editedCount} hipóteses editadas</span>
+        )}
+      </div>
+      <details className="mt-4 border-t border-line pt-3">
+        <summary className="cursor-pointer text-xs font-medium text-accent">
+          Lançamentos ({entries.length + estimates.length})
+        </summary>
+        {entries.length || estimates.length ? (
+          <div className="mt-3 divide-y divide-line">
+            {entries.map((entry) => (
+              <ForecastEntry
+                key={entry.id}
+                entry={entry}
+                override={overrides.get(entry.id)}
+              />
+            ))}
+            {estimates.map((estimate) => (
+              <ForecastEstimate key={estimate.key} estimate={estimate} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-xs leading-5 text-muted">
+            Sem lançamentos neste mês. Cadastre receitas e despesas em{" "}
+            <Link
+              className="text-accent underline underline-offset-2"
+              href="/cadastros"
+            >
+              Cadastros
+            </Link>
+            .
+          </p>
+        )}
+      </details>
+    </article>
+  );
+}
+
+function ForecastEntry({
+  entry,
+  override,
+}: {
+  entry: FinancialEntry;
+  override?: ForecastOverride;
+}) {
+  const effective = override?.override_amount ?? Number(entry.amount);
+  const badge =
+    entry.status === "settled"
+      ? "Confirmado"
+      : override
+        ? "Hipótese editada"
+        : "Previsto";
+  return (
+    <div className="py-3 first:pt-1 last:pb-1">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-ink">{entry.title}</p>
+          <p className="mt-1 text-[10px] text-muted">
+            {entry.entry_type === "income" ? "Receita" : "Despesa"}
+            {entry.due_date ? ` · ${formatDate(entry.due_date)}` : ""}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-xs font-semibold tabular-nums text-ink">
+            {formatMoney(effective)}
+          </p>
+          <p
+            className={`mt-0.5 text-[9px] ${override ? "text-warning-200" : entry.status === "settled" ? "text-success-200" : "text-muted"}`}
+          >
+            {badge}
+          </p>
+        </div>
+      </div>
+      {entry.status === "planned" && (
+        <details className="mt-2">
+          <summary className="cursor-pointer text-[10px] font-medium text-muted">
+            {override ? "Editar hipótese" : "Ajustar estimativa"}
+          </summary>
+          <form
+            action={saveForecastOverride}
+            className="mt-2 space-y-2 rounded-lg bg-canvas p-2.5"
+          >
+            <input type="hidden" name="entry_id" value={entry.id} />
+            <label className="field-label">
+              Valor hipotético (R$)
+              <input
+                className="field-control min-h-9"
+                name="override_amount"
+                inputMode="decimal"
+                defaultValue={effective.toFixed(2).replace(".", ",")}
+                required
+              />
+            </label>
+            <label className="field-label">
+              Observação <span className="font-normal">(opcional)</span>
+              <input
+                className="field-control min-h-9"
+                name="note"
+                maxLength={160}
+                defaultValue={override?.note ?? ""}
+                placeholder="Ex.: conta de luz mais alta"
+              />
+            </label>
+            <p className="text-[10px] leading-4 text-muted">
+              A hipótese altera somente esta projeção; não muda o lançamento nem
+              registra pagamento.
+            </p>
+            <button
+              className="quiet-button min-h-8 w-full text-xs"
+              type="submit"
+            >
+              Aplicar hipótese
+            </button>
+          </form>
+          {override && (
+            <form action={clearForecastOverride} className="mt-1.5">
+              <input type="hidden" name="entry_id" value={entry.id} />
+              <button
+                className="text-[10px] text-muted underline underline-offset-2"
+                type="submit"
+              >
+                Voltar ao valor previsto
+              </button>
+            </form>
+          )}
+        </details>
+      )}
+    </div>
+  );
+}
+
+function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
+  const isEdited =
+    estimate.amount !== estimate.baseAmount || Boolean(estimate.note);
+  return (
+    <div className="py-3 first:pt-1 last:pb-1">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-ink">
+            {estimate.category}
+          </p>
+          <p className="mt-1 text-[10px] text-muted">
+            Média de {estimate.monthsUsed} competências com valor realizado
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-xs font-semibold tabular-nums text-ink">
+            {formatMoney(estimate.amount)}
+          </p>
+          <p
+            className={`mt-0.5 text-[9px] ${isEdited ? "text-warning-200" : "text-muted"}`}
+          >
+            {isEdited ? "Hipótese editada" : "Estimativa histórica"}
+          </p>
+        </div>
+      </div>
+      <details className="mt-2">
+        <summary className="cursor-pointer text-[10px] font-medium text-muted">
+          {isEdited ? "Editar hipótese" : "Ajustar estimativa"}
+        </summary>
+        <form
+          action={saveCategoryForecastOverride}
+          className="mt-2 space-y-2 rounded-lg bg-canvas p-2.5"
+        >
+          <input type="hidden" name="category" value={estimate.category} />
+          <input
+            type="hidden"
+            name="competence_month"
+            value={estimate.competenceMonth}
+          />
+          <label className="field-label">
+            Valor hipotético (R$)
+            <input
+              className="field-control min-h-9"
+              name="override_amount"
+              inputMode="decimal"
+              defaultValue={estimate.amount.toFixed(2).replace(".", ",")}
+              required
+            />
+          </label>
+          <label className="field-label">
+            Observação <span className="font-normal">(opcional)</span>
+            <input
+              className="field-control min-h-9"
+              name="note"
+              maxLength={160}
+              defaultValue={estimate.note ?? ""}
+              placeholder="Ex.: consumo maior este mês"
+            />
+          </label>
+          <p className="text-[10px] leading-4 text-muted">
+            A média vem dos valores realizados da categoria. Esta hipótese não
+            cria lançamento nem registra pagamento.
+          </p>
+          <button className="quiet-button min-h-8 w-full text-xs" type="submit">
+            Aplicar hipótese
+          </button>
+        </form>
+        {isEdited && (
+          <form action={clearCategoryForecastOverride} className="mt-1.5">
+            <input type="hidden" name="category" value={estimate.category} />
+            <input
+              type="hidden"
+              name="competence_month"
+              value={estimate.competenceMonth}
+            />
+            <button
+              className="text-[10px] text-muted underline underline-offset-2"
+              type="submit"
+            >
+              Voltar à média histórica
+            </button>
+          </form>
+        )}
+      </details>
+    </div>
+  );
+}
+
+function AmountLine({
+  label,
+  value,
+  positive = false,
+}: {
+  label: string;
+  value: number;
+  positive?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd
+        className={`text-xs font-semibold tabular-nums ${positive ? "text-success-200" : "text-ink"}`}
+      >
+        {formatMoney(value)}
+      </dd>
+    </div>
+  );
+}
+
+function MoneyBarChart({
+  title,
+  data,
+}: {
+  title: string;
+  data: HistoryMonth[];
+}) {
+  const maxValue = Math.max(...data.map((item) => item.income), 0);
+  const hasData = maxValue > 0;
+  return (
+    <section className="surface p-5 sm:p-6">
+      <h3 className="text-sm font-semibold text-ink">{title}</h3>
+      <p className="mt-1 text-xs text-muted">Renda recebida por competência</p>
+      {hasData ? (
+        <div className="mt-4 overflow-x-auto">
+          <svg
+            className="h-[220px] min-w-[520px] w-full"
+            viewBox="0 0 640 220"
+            role="img"
+            aria-label={`${title}, últimos seis meses`}
+          >
+            <title>{title}: últimos seis meses</title>
+            {[0, 1, 2, 3].map((line) => {
+              const y = 174 - line * 48;
+              return (
+                <line
+                  key={line}
+                  x1="44"
+                  x2="620"
+                  y1={y}
+                  y2={y}
+                  stroke="#303238"
+                  strokeDasharray="3 5"
+                />
+              );
+            })}
+            {data.map((item, index) => {
+              const x = 60 + index * 94;
+              const height = Math.max(
+                (item.income / maxValue) * 138,
+                item.income > 0 ? 2 : 0,
+              );
+              return (
+                <g key={monthKey(item.month)}>
+                  <title>{`${monthTitle(item.month)}: ${formatMoney(item.income)}`}</title>
+                  <rect
+                    x={x}
+                    y={174 - height}
+                    width="42"
+                    height={height}
+                    rx="7"
+                    fill="#E1E8EE"
+                  />
+                  <text
+                    x={x + 21}
+                    y="199"
+                    textAnchor="middle"
+                    fill="#7D808B"
+                    fontSize="11"
+                  >
+                    {labelMonth(item.month)}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      ) : (
+        <ChartEmpty />
+      )}
+    </section>
+  );
+}
+
+function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
+  const maxExpense = Math.max(...data.map((item) => item.expenses), 0);
+  const hasData = maxExpense > 0;
+  const ratioPoints = data
+    .map((item, index) => {
+      const ratio = historyCommitment(item);
+      if (ratio === null) return null;
+      const x = 81 + index * 94;
+      const y = 35 + (Math.max(0, 150 - Math.min(ratio, 150)) / 150) * 125;
+      return { x, y, ratio, key: monthKey(item.month) };
+    })
+    .filter((point): point is NonNullable<typeof point> => point !== null);
+  const path = ratioPoints
+    .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
+    .join(" ");
+  return (
+    <section className="surface p-5 sm:p-6">
+      <h3 className="text-sm font-semibold text-ink">
+        Despesas e comprometimento
+      </h3>
+      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+        <span className="inline-flex items-center gap-1.5">
+          <i className="size-2 rounded-sm bg-success-400" aria-hidden="true" />
+          Despesas pagas
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i className="size-2 rounded-full bg-warning-400" aria-hidden="true" />%
+          da renda
+        </span>
+      </div>
+      {hasData ? (
+        <div className="mt-4 overflow-x-auto">
+          <svg
+            className="h-[220px] min-w-[520px] w-full"
+            viewBox="0 0 640 220"
+            role="img"
+            aria-label="Despesas realizadas e percentual da renda comprometido nos últimos seis meses"
+          >
+            <title>
+              Despesas realizadas e comprometimento da renda: últimos seis meses
+            </title>
+            {[0, 1, 2, 3].map((line) => {
+              const y = 174 - line * 48;
+              return (
+                <line
+                  key={line}
+                  x1="44"
+                  x2="620"
+                  y1={y}
+                  y2={y}
+                  stroke="#303238"
+                  strokeDasharray="3 5"
+                />
+              );
+            })}
+            {data.map((item, index) => {
+              const x = 60 + index * 94;
+              const height = Math.max(
+                (item.expenses / maxExpense) * 138,
+                item.expenses > 0 ? 2 : 0,
+              );
+              return (
+                <g key={monthKey(item.month)}>
+                  <title>{`${monthTitle(item.month)}: ${formatMoney(item.expenses)} em despesas pagas`}</title>
+                  <rect
+                    x={x}
+                    y={174 - height}
+                    width="42"
+                    height={height}
+                    rx="7"
+                    fill="#55B477"
+                  />
+                  <text
+                    x={x + 21}
+                    y="199"
+                    textAnchor="middle"
+                    fill="#7D808B"
+                    fontSize="11"
+                  >
+                    {labelMonth(item.month)}
+                  </text>
+                </g>
+              );
+            })}
+            {ratioPoints.length > 1 && (
+              <path
+                d={path}
+                fill="none"
+                stroke="#D7A743"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+            {ratioPoints.map((point) => (
+              <g key={point.key}>
+                <title>{`${point.key}: ${point.ratio.toFixed(0)}% da renda recebida comprometida`}</title>
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r="4.5"
+                  fill="#D7A743"
+                  stroke="#131416"
+                  strokeWidth="2"
+                />
+              </g>
+            ))}
+          </svg>
+        </div>
+      ) : (
+        <ChartEmpty />
+      )}
+      <p className="mt-1 text-[10px] text-muted">
+        Comprometimento = despesas pagas ÷ renda recebida; meses sem renda não
+        recebem percentual.
+      </p>
+    </section>
+  );
+}
+
+function ChartEmpty() {
+  return (
+    <div className="mt-4 grid min-h-[220px] place-items-center rounded-xl bg-canvas px-5 text-center">
+      <p className="max-w-xs text-sm leading-5 text-muted">
+        Ainda não há lançamentos realizados suficientes para mostrar a evolução.
+      </p>
+    </div>
+  );
+}
+
+function addDays(date: Date, amount: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function formatDate(date: string) {
+  return new Intl.DateTimeFormat("pt-BR").format(new Date(`${date}T12:00:00`));
+}

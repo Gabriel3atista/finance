@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
+  { href: "/dashboard", label: "Painel", icon: "dashboard" },
   { href: "/mes", label: "Meu mês", icon: "month" },
   { href: "/projecao", label: "Projeção", icon: "forecast" },
   { href: "/historico", label: "Histórico", icon: "history" },
@@ -23,11 +24,11 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
     >
       {variant === "sidebar" && (
         <Link
-          href="/mes"
+          href="/dashboard"
           className="focus-ring mb-10 flex h-[68px] items-center gap-3 border-b border-line px-6"
           aria-label="Finance, página inicial"
         >
-          <span className="grid size-9 place-items-center rounded-xl bg-accent text-white">
+          <span className="grid size-9 place-items-center rounded-xl bg-primary-200 text-background-900">
             <SmallMark />
           </span>
           <span className="text-[15px] font-semibold tracking-tight text-ink">
@@ -49,7 +50,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`focus-ring flex items-center ${variant === "sidebar" ? "gap-3 rounded-xl px-3 py-3 text-sm" : "min-w-[68px] flex-col gap-1 rounded-xl px-2 py-1.5 text-[10px]"} ${active ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:bg-canvas hover:text-ink"}`}
+              className={`focus-ring flex items-center ${variant === "sidebar" ? "gap-3 rounded-xl px-3 py-3 text-sm" : "min-w-[60px] flex-col gap-1 rounded-xl px-1 py-1.5 text-[9px] sm:min-w-[68px] sm:px-2 sm:text-[10px]"} ${active ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:bg-canvas hover:text-ink"}`}
             >
               <NavIcon name={item.icon} active={active} />
               <span>{item.label}</span>
@@ -97,6 +98,15 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
     strokeLinejoin: "round" as const,
     "aria-hidden": true as const,
   };
+  if (name === "dashboard")
+    return (
+      <svg viewBox="0 0 24 24" {...common}>
+        <rect x="3.5" y="4" width="7" height="7" rx="1.5" />
+        <rect x="13.5" y="4" width="7" height="4.5" rx="1.5" />
+        <rect x="13.5" y="11.5" width="7" height="8.5" rx="1.5" />
+        <rect x="3.5" y="14" width="7" height="6" rx="1.5" />
+      </svg>
+    );
   if (name === "month")
     return (
       <svg viewBox="0 0 24 24" {...common}>

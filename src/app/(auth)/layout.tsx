@@ -1,0 +1,46 @@
+import type { ReactNode } from "react";
+
+export default function AuthLayout({ children }: { children: ReactNode }) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-background-900 px-5 py-10 sm:px-8">
+      <div className="grid w-full max-w-[960px] overflow-hidden rounded-[28px] border border-line bg-card-900 shadow-[0_18px_60px_rgb(0_0_0/35%)] lg:min-h-[570px] lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="hidden flex-col justify-between bg-secondary-800 p-10 lg:flex">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+            Finanças da família
+          </div>
+          <div className="max-w-[330px] pb-2">
+            <div className="mb-7 grid size-[52px] place-items-center rounded-2xl bg-primary-200 text-background-900 shadow-sm">
+              <svg
+                viewBox="0 0 24 24"
+                className="size-6"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 18.5h16M6.5 15V9.5M12 15V5.5M17.5 15v-3M5 7l5-3 5 2 4-3"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <p className="text-[32px] font-semibold leading-[1.12] tracking-[-0.045em] text-ink">
+              Mais clareza para decidir juntos.
+            </p>
+            <p className="mt-4 text-sm leading-6 text-muted">
+              Acompanhe o mês, organize as contas e planeje os próximos passos
+              em família.
+            </p>
+          </div>
+          <p className="text-xs text-muted">
+            Seus dados ficam visíveis apenas para o seu núcleo familiar.
+          </p>
+        </section>
+        <section className="flex items-center justify-center px-6 py-9 sm:px-10 lg:px-12">
+          {children}
+        </section>
+      </div>
+    </main>
+  );
+}

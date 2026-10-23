@@ -15,6 +15,7 @@ import {
 import { formatMonth } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
+import { cn } from "@/shared/lib/utils";
 import {
   Select,
   SelectContent,
@@ -112,7 +113,7 @@ export async function MonthlyLedger({
 
       {error && (
         <p
-          className="mb-5 rounded-xl border border-danger-800 bg-danger-900 px-4 py-3 text-sm text-danger-100"
+          className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
           role="alert"
         >
           {errorMessages[error] ?? "Não foi possível concluir a ação."}
@@ -128,7 +129,7 @@ export async function MonthlyLedger({
       )}
       {loadFailed && (
         <p
-          className="mb-5 rounded-xl border border-danger-800 bg-danger-900 px-4 py-3 text-sm text-danger-100"
+          className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
           role="alert"
         >
           Não foi possível carregar os lançamentos. Confira a conexão e se as
@@ -284,7 +285,12 @@ function EntryRow({
               {entry.title}
             </h3>
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${entry.entry_type === "income" ? "bg-success-900 text-success-100" : "bg-canvas text-muted"}`}
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                entry.entry_type === "income"
+                  ? "bg-success-900 text-success-100"
+                  : "bg-canvas text-muted",
+              )}
             >
               {entry.entry_type === "income" ? "Receita" : "Despesa"}
             </span>
@@ -301,7 +307,10 @@ function EntryRow({
         </div>
         <div className="shrink-0 text-right">
           <p
-            className={`text-sm font-semibold tabular-nums ${entry.entry_type === "income" ? "text-success-200" : "text-ink"}`}
+            className={cn(
+              "text-sm font-semibold tabular-nums",
+              entry.entry_type === "income" ? "text-success-200" : "text-ink",
+            )}
           >
             <FinancialValue>
               {entry.entry_type === "income" ? "+" : "−"}
@@ -309,7 +318,14 @@ function EntryRow({
             </FinancialValue>
           </p>
           <p
-            className={`mt-1 text-[10px] font-medium ${overdue ? "text-danger-300" : entry.status === "settled" ? "text-success-200" : "text-muted"}`}
+            className={cn(
+              "mt-1 text-[10px] font-medium",
+              overdue
+                ? "text-rose-300"
+                : entry.status === "settled"
+                  ? "text-success-200"
+                  : "text-muted",
+            )}
           >
             {overdue
               ? "Vencida"

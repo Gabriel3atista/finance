@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             Finanças da família
           </Eyebrow>
           <div className="max-w-[330px] pb-2">
-            <div className="mb-7 grid size-[52px] place-items-center rounded-2xl bg-primary-200 text-background-900 shadow-sm">
+            <div className="mb-7 grid size-[52px] place-items-center rounded-2xl bg-moon-200 text-background-900 shadow-sm">
               <svg
                 viewBox="0 0 24 24"
                 className="size-6"

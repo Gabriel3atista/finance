@@ -1,10 +1,5 @@
 import type { ReactNode } from "react";
-
-const tones = {
-  muted: "text-muted",
-  accent: "text-accent",
-  danger: "text-danger-200",
-} as const;
+import { cn } from "@/shared/lib/utils";
 
 export function Eyebrow({
   as,
@@ -12,14 +7,19 @@ export function Eyebrow({
   children,
 }: {
   as?: "p" | "div";
-  tone?: keyof typeof tones;
+  tone?: "muted" | "accent" | "danger";
   children: ReactNode;
 }) {
   const Component = as ?? "p";
 
   return (
     <Component
-      className={`eyebrow text-sm font-semibold uppercase tracking-[-0.6px] ${tones[tone]}`}
+      className={cn(
+        "eyebrow text-sm font-semibold uppercase tracking-[-0.6px]",
+        tone === "accent" && "text-accent",
+        tone === "danger" && "text-rose-200",
+        tone === "muted" && "text-muted",
+      )}
     >
       {children}
     </Component>

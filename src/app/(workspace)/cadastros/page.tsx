@@ -9,6 +9,7 @@ import {
 import { SeriesFields } from "@/features/transactions/components/entry-fields";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
+import { cn } from "@/shared/lib/utils";
 import {
   Select,
   SelectContent,
@@ -88,7 +89,7 @@ export default async function RecordsPage({
       {error && (
         <p
           role="alert"
-          className="mb-5 rounded-xl border border-danger-800 bg-danger-900 px-4 py-3 text-sm text-danger-100"
+          className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
         >
           {errors[error] ?? "Não foi possível concluir a ação."}
         </p>
@@ -305,7 +306,10 @@ function SeriesList({
             >
               <div className="min-w-0">
                 <h3
-                  className={`truncate text-sm font-medium ${item.active ? "text-ink" : "text-muted"}`}
+                  className={cn(
+                    "truncate text-sm font-medium",
+                    item.active ? "text-ink" : "text-muted",
+                  )}
                 >
                   {item.title}
                 </h3>

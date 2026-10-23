@@ -27,8 +27,8 @@ const currency = new Intl.NumberFormat("pt-BR", {
 });
 
 const chartConfig = {
-  income: { label: "Receita", color: "#E1E8EE" },
-  expenses: { label: "Despesa", color: "#F43F5E" },
+  income: { label: "Receita", color: "hsl(207.69 27.66% 90.78%)" },
+  expenses: { label: "Despesa", color: "hsl(349.72 89.16% 60.2%)" },
 };
 
 const periodOptions = [
@@ -46,7 +46,6 @@ export function MonthlyHistoryCharts({ data }: { data: DashboardMonth[] }) {
     <>
       <div className="mb-3 flex justify-end">
         <label className="field-label flex-row items-center gap-2">
-          Período dos gráficos
           <Select
             onValueChange={(value) => setPeriod(Number(value))}
             value={String(period)}
@@ -131,7 +130,7 @@ function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
         >
           <CartesianGrid
             vertical={false}
-            stroke="#303238"
+            stroke="hsl(225 7.69% 20.39%)"
             strokeDasharray="3 5"
           />
           <XAxis
@@ -141,14 +140,14 @@ function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
             tickFormatter={(value: string) =>
               chartData.find((item) => item.fullMonth === value)?.month ?? value
             }
-            tick={{ fill: "#7D808B", fontSize: 11 }}
+            tick={{ fill: "hsl(227.14 5.69% 51.76%)", fontSize: 11 }}
             tickMargin={10}
           />
           <YAxis
             axisLine={false}
             domain={[0, "auto"]}
             tickLine={false}
-            tick={{ fill: "#7D808B", fontSize: 10 }}
+            tick={{ fill: "hsl(227.14 5.69% 51.76%)", fontSize: 10 }}
             tickFormatter={(value: number) =>
               hidden
                 ? "•••"
@@ -163,7 +162,7 @@ function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
             width={58}
           />
           <ChartTooltip
-            cursor={{ fill: "rgba(125, 128, 139, 0.08)" }}
+            cursor={{ fill: "hsl(228.75 5.26% 50.98% / 8%)" }}
             content={<ChartTooltipContent />}
           />
           <Bar

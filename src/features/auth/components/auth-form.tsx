@@ -150,7 +150,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           className="mb-8 inline-flex items-center gap-3"
           aria-label="Finance"
         >
-          <span className="grid size-10 place-items-center rounded-[14px] bg-primary-200 text-background-900">
+          <span className="grid size-10 place-items-center rounded-[14px] bg-moon-200 text-background-900">
             <BrandMark />
           </span>
           <span className="text-base font-semibold tracking-tight text-ink">
@@ -202,7 +202,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         {(error || callbackError) && (
           <p
             role="alert"
-            className="rounded-xl bg-danger-900 px-3.5 py-3 text-sm text-danger-100"
+            className="rounded-xl bg-rose-900 px-3.5 py-3 text-sm text-rose-100"
           >
             {error ||
               (callbackError === "oauth"
@@ -219,11 +219,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           </p>
         )}
 
-        <Button
-          className="w-full min-h-11 active:scale-[0.98]"
-          disabled={busy}
-          type="submit"
-        >
+        <Button className="w-full min-h-11" disabled={busy} type="submit">
           {busy
             ? "Aguarde…"
             : mode === "login"
@@ -244,7 +240,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             <span className="h-px flex-1 bg-line" />
           </div>
           <Button
-            className="w-full min-h-11 active:scale-[0.98]"
+            className="w-full min-h-11"
             disabled={busy}
             onClick={signInWithGoogle}
             type="button"
@@ -322,19 +318,19 @@ function GoogleMark() {
   return (
     <svg viewBox="0 0 24 24" className="size-[18px]" aria-hidden="true">
       <path
-        fill="#4285F4"
+        fill="hsl(217.42 89% 60.78%)"
         d="M21.35 12.23c0-.71-.06-1.4-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.4h3.14c1.84-1.7 2.91-4.2 2.91-7.17Z"
       />
       <path
-        fill="#34A853"
+        fill="hsl(136.03 52.73% 43.14%)"
         d="M12 21.6c2.63 0 4.84-.87 6.45-2.35l-3.14-2.4c-.87.58-1.98.93-3.31.93-2.54 0-4.7-1.72-5.47-4.04H3.28v2.47A9.73 9.73 0 0 0 12 21.6Z"
       />
       <path
-        fill="#FBBC05"
+        fill="hsl(44.63 96.85% 50.2%)"
         d="M6.53 13.74a5.85 5.85 0 0 1 0-3.48V7.8H3.28a9.73 9.73 0 0 0 0 8.4l3.25-2.46Z"
       />
       <path
-        fill="#EA4335"
+        fill="hsl(4.64 81.17% 56.27%)"
         d="M12 6.22c1.43 0 2.72.5 3.73 1.48l2.8-2.8A9.37 9.37 0 0 0 12 2.4a9.73 9.73 0 0 0-8.72 5.4l3.25 2.46C7.3 7.94 9.46 6.22 12 6.22Z"
       />
     </svg>

@@ -2,6 +2,7 @@
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import type { ComponentProps } from "react";
+import { cn } from "@/shared/lib/utils";
 
 export const Select = SelectPrimitive.Root;
 export const SelectGroup = SelectPrimitive.Group;
@@ -14,7 +15,10 @@ export function SelectTrigger({
 }: ComponentProps<typeof SelectPrimitive.Trigger>) {
   return (
     <SelectPrimitive.Trigger
-      className={`focus-ring inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-xl border border-line bg-secondary-900 px-3 text-sm font-normal text-primary-200 outline-none transition-colors focus:border-primary-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={cn(
+        "ui-control focus-ring inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-xl border border-line bg-secondary-900 px-3 text-sm font-normal text-moon-200 outline-none focus:border-moon-600 disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
       {...props}
     >
       {children}
@@ -34,7 +38,10 @@ export function SelectContent({
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
-        className={`z-50 max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-line bg-secondary-900 p-1 text-ink shadow-xl ${className}`}
+        className={cn(
+          "ui-select-content z-50 max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl border border-line bg-secondary-900 p-1 text-ink shadow-xl",
+          className,
+        )}
         position={position}
         {...props}
       >
@@ -52,7 +59,7 @@ export function SelectLabel({
 }: ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
-      className={`px-2 py-1.5 text-xs font-semibold text-muted ${className}`}
+      className={cn("px-2 py-1.5 text-xs font-semibold text-muted", className)}
       {...props}
     />
   );
@@ -65,7 +72,10 @@ export function SelectItem({
 }: ComponentProps<typeof SelectPrimitive.Item>) {
   return (
     <SelectPrimitive.Item
-      className={`relative flex min-h-9 w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-secondary-800 focus:text-ink data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className}`}
+      className={cn(
+        "ui-control relative flex min-h-9 w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-secondary-800 focus:text-ink data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        className,
+      )}
       {...props}
     >
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

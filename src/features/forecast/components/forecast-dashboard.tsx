@@ -6,6 +6,7 @@ import {
   useValuesVisibility,
 } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
+import { cn } from "@/shared/lib/utils";
 import {
   formatMoney,
   localDateString,
@@ -161,7 +162,7 @@ export function ForecastDashboard({
 
       {error && (
         <p
-          className="mb-4 rounded-xl border border-danger-800 bg-danger-900 px-4 py-3 text-sm text-danger-100"
+          className="mb-4 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
           role="alert"
         >
           {errorMessages[error] ?? "Não foi possível concluir a ação."}
@@ -218,7 +219,10 @@ export function ForecastDashboard({
                       {entry.title}
                     </p>
                     <p
-                      className={`mt-1 text-xs ${entry.due_date! < today ? "text-danger-300" : "text-muted"}`}
+                      className={cn(
+                        "mt-1 text-xs",
+                        entry.due_date! < today ? "text-rose-300" : "text-muted",
+                      )}
                     >
                       {entry.due_date! < today ? "Vencida · " : "Vence · "}
                       {formatDate(entry.due_date!)}
@@ -358,7 +362,10 @@ function MonthForecastCard({
   const balance = totals.income - totalExpenses;
   return (
     <article
-      className={`surface overflow-hidden p-4 sm:p-5 ${balance < 0 ? "border-danger-800" : ""}`}
+      className={cn(
+        "surface overflow-hidden p-4 sm:p-5",
+        balance < 0 && "border-rose-800",
+      )}
     >
       <header className="flex items-start justify-between gap-2">
         <div>
@@ -370,7 +377,10 @@ function MonthForecastCard({
           </h2>
         </div>
         <span
-          className={`mt-1 size-2 rounded-full ${balance < 0 ? "bg-danger-400" : "bg-success-400"}`}
+          className={cn(
+            "mt-1 size-2 rounded-full",
+            balance < 0 ? "bg-rose-400" : "bg-success-400",
+          )}
           aria-hidden="true"
         />
       </header>
@@ -381,19 +391,28 @@ function MonthForecastCard({
       <div className="mt-4 border-t border-line pt-3">
         <p className="text-xs text-muted">Saldo mensal estimado</p>
         <p
-          className={`mt-1 text-xl font-semibold tabular-nums ${balance < 0 ? "text-danger-300" : "text-ink"}`}
+          className={cn(
+            "mt-1 text-xl font-semibold tabular-nums",
+            balance < 0 ? "text-rose-300" : "text-ink",
+          )}
         >
           <FinancialValue>{formatMoney(balance)}</FinancialValue>
         </p>
       </div>
       <div
-        className={`mt-3 flex items-center justify-between rounded-lg px-3 py-2 ${highCommitment ? "bg-warning-900" : "bg-secondary-800"}`}
+        className={cn(
+          "mt-3 flex items-center justify-between rounded-lg px-3 py-2",
+          highCommitment ? "bg-warning-900" : "bg-secondary-800",
+        )}
       >
         <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
           Comprometimento da renda
         </p>
         <p
-          className={`text-xs font-semibold tabular-nums ${highCommitment ? "text-warning-100" : "text-ink"}`}
+          className={cn(
+            "text-xs font-semibold tabular-nums",
+            highCommitment ? "text-warning-100" : "text-ink",
+          )}
         >
           {commitment === null ? "—" : `${commitment.toFixed(0)}%`}
           {highCommitment && (
@@ -407,7 +426,10 @@ function MonthForecastCard({
             Saldo acumulado
           </p>
           <p
-            className={`mt-0.5 text-sm font-semibold tabular-nums ${accumulated < 0 ? "text-danger-300" : "text-ink"}`}
+            className={cn(
+              "mt-0.5 text-sm font-semibold tabular-nums",
+              accumulated < 0 ? "text-rose-300" : "text-ink",
+            )}
           >
             <FinancialValue>{formatMoney(accumulated)}</FinancialValue>
           </p>
@@ -492,7 +514,14 @@ function ForecastEntry({
             <FinancialValue>{formatMoney(effective)}</FinancialValue>
           </p>
           <p
-            className={`mt-0.5 text-[9px] ${override ? "text-warning-200" : entry.status === "settled" ? "text-success-200" : "text-muted"}`}
+            className={cn(
+              "mt-0.5 text-[9px]",
+              override
+                ? "text-warning-200"
+                : entry.status === "settled"
+                  ? "text-success-200"
+                  : "text-muted",
+            )}
           >
             {badge}
           </p>
@@ -579,7 +608,10 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
             <FinancialValue>{formatMoney(estimate.amount)}</FinancialValue>
           </p>
           <p
-            className={`mt-0.5 text-[9px] ${isEdited ? "text-warning-200" : "text-muted"}`}
+            className={cn(
+              "mt-0.5 text-[9px]",
+              isEdited ? "text-warning-200" : "text-muted",
+            )}
           >
             {isEdited ? "Hipótese editada" : "Estimativa histórica"}
           </p>
@@ -663,7 +695,10 @@ function AmountLine({
     <div className="flex items-center justify-between gap-2">
       <dt className="text-xs text-muted">{label}</dt>
       <dd
-        className={`text-xs font-semibold tabular-nums ${positive ? "text-success-200" : "text-ink"}`}
+        className={cn(
+          "text-xs font-semibold tabular-nums",
+          positive ? "text-success-200" : "text-ink",
+        )}
       >
         <FinancialValue>{formatMoney(value)}</FinancialValue>
       </dd>
@@ -703,7 +738,7 @@ function MoneyBarChart({
                   x2="620"
                   y1={y}
                   y2={y}
-                  stroke="#303238"
+                  stroke="hsl(225 7.69% 20.39%)"
                   strokeDasharray="3 5"
                 />
               );
@@ -727,13 +762,13 @@ function MoneyBarChart({
                     width="42"
                     height={height}
                     rx="7"
-                    fill="#E1E8EE"
+                    fill="hsl(207.69 27.66% 90.78%)"
                   />
                   <text
                     x={x + 21}
                     y="199"
                     textAnchor="middle"
-                    fill="#7D808B"
+                    fill="hsl(227.14 5.69% 51.76%)"
                     fontSize="11"
                   >
                     {labelMonth(item.month)}
@@ -804,7 +839,7 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
                   x2="620"
                   y1={y}
                   y2={y}
-                  stroke="#303238"
+                  stroke="hsl(225 7.69% 20.39%)"
                   strokeDasharray="3 5"
                 />
               );
@@ -828,13 +863,13 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
                     width="42"
                     height={height}
                     rx="7"
-                    fill="#55B477"
+                    fill="hsl(141.47 38.78% 51.96%)"
                   />
                   <text
                     x={x + 21}
                     y="199"
                     textAnchor="middle"
-                    fill="#7D808B"
+                    fill="hsl(227.14 5.69% 51.76%)"
                     fontSize="11"
                   >
                     {labelMonth(item.month)}
@@ -846,7 +881,7 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
               <path
                 d={path}
                 fill="none"
-                stroke="#D7A743"
+                stroke="hsl(40.54 64.91% 55.29%)"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -859,8 +894,8 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
                   cx={point.x}
                   cy={point.y}
                   r="4.5"
-                  fill="#D7A743"
-                  stroke="#131416"
+                  fill="hsl(40.54 64.91% 55.29%)"
+                  stroke="hsl(220 7.32% 8.04%)"
                   strokeWidth="2"
                 />
               </g>

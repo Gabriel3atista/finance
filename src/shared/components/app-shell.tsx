@@ -16,8 +16,8 @@ export function AppShell({
 }) {
   return (
     <ValuesVisibilityProvider>
-      <div className="min-h-[100dvh] lg:grid lg:grid-cols-[244px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-line bg-secondary-900 lg:flex lg:flex-col">
+      <div className="min-h-[100dvh] lg:grid lg:h-[100dvh] lg:grid-cols-[244px_minmax(0,1fr)] lg:overflow-hidden">
+        <aside className="hidden border-r border-line bg-secondary-900 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col lg:overflow-y-auto">
           <AppNav variant="sidebar" />
           <div className="mt-auto px-6 pb-7">
             <div className="rounded-2xl bg-canvas px-4 py-4">
@@ -28,11 +28,11 @@ export function AppShell({
             </div>
           </div>
         </aside>
-        <div className="min-w-0">
-          <header className="flex min-h-[68px] items-center justify-between border-b border-line bg-secondary-900/90 px-5 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-10">
+        <div className="min-w-0 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col">
+          <header className="flex min-h-[68px] shrink-0 items-center justify-between border-b border-line bg-secondary-900/90 px-5 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-10">
             <div className="flex items-center gap-3 lg:hidden">
               <div
-                className="grid size-9 place-items-center rounded-xl bg-primary-200 text-background-900"
+                className="grid size-9 place-items-center rounded-xl bg-moon-200 text-background-900"
                 aria-hidden="true"
               >
                 <BrandMark />
@@ -61,8 +61,10 @@ export function AppShell({
               <SignOutButton />
             </div>
           </header>
-          <main className="mx-auto w-full max-w-[1440px] px-5 pb-28 pt-8 sm:px-8 sm:pt-10 lg:px-10 lg:pb-12">
-            {children}
+          <main className="min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            <div className="mx-auto w-full max-w-[1440px] px-5 pb-28 pt-8 sm:px-8 sm:pt-10 lg:px-10 lg:pb-12">
+              {children}
+            </div>
           </main>
         </div>
         <nav

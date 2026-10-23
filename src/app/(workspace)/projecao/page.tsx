@@ -19,7 +19,7 @@ export default async function ForecastPage({
     return <ForecastDashboard {...data} error={error} saved={saved} />;
   } catch {
     return (
-      <section className="mx-auto max-w-3xl rounded-2xl border border-danger-800 bg-danger-900 p-6 text-danger-100">
+      <section className="mx-auto max-w-3xl rounded-2xl border border-rose-800 bg-rose-900 p-6 text-rose-100">
         <h1 className="text-lg font-semibold">
           Não foi possível carregar a projeção
         </h1>

@@ -39,3 +39,8 @@ As skills deste repositório estão em `.agents/skills/`. Use este mapa para esc
 - Para botoes, campos de entrada e seletores, use os componentes shadcn em `src/components/ui` (`Button`, `Input` e `Select`). Nao use elementos HTML nativos quando houver um componente equivalente no shadcn.
 - Use um elemento nativo somente quando nao houver equivalente no shadcn. Se o projeto precisar de um controle sem equivalente, crie um componente local reutilizavel.
 - Centralize estilos e variantes dos controles nos componentes shadcn; nao repita classes de controle nas telas.
+
+## Paleta de cores
+
+- Quando o usuario indicar uma cor para a paleta do Tailwind, aplique-a ao tom `500` da escala correspondente, salvo se ele indicar outro tom.
+- Escreva os valores de cor em HSL.

@@ -13,6 +13,7 @@ import type {
   DashboardMonth,
 } from "@/features/dashboard/lib/data";
 import { MonthlyHistoryCharts } from "@/features/dashboard/components/monthly-history-charts";
+import { cn } from "@/shared/lib/utils";
 
 export function Dashboard({
   currentMonth,
@@ -47,12 +48,12 @@ export function Dashboard({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
+          <Button asChild variant="secondary">
             <Link href={`/mes?month=${monthString(currentMonth)}`}>
               Abrir meu mês
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="secondary">
             <Link href="/projecao">Ver projeção</Link>
           </Button>
         </div>
@@ -60,19 +61,19 @@ export function Dashboard({
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          label="Recebido no mês"
+          label="Receita do mês"
           value={settledIncome}
           month={monthTitle}
           tone="normal"
         />
         <SummaryCard
-          label="Pago no mês"
+          label="Despesas do mês"
           value={settledExpenses}
           month={monthTitle}
           tone="normal"
         />
         <SummaryCard
-          label="Saldo realizado"
+          label="Saldo"
           value={realizedBalance}
           month={monthTitle}
           tone={realizedBalance < 0 ? "negative" : "positive"}
@@ -96,7 +97,6 @@ export function Dashboard({
               Evolução financeira
             </h2>
           </div>
-          <p className="text-xs text-muted">Valores por competência</p>
         </header>
         <MonthlyHistoryCharts data={history} />
         <p className="mt-3 text-xs leading-5 text-muted">
@@ -168,18 +168,16 @@ function SummaryCard({
   month: string;
   tone: "normal" | "positive" | "negative";
 }) {
-  const valueColor =
-    tone === "negative"
-      ? "text-danger-200"
-      : tone === "positive"
-        ? "text-success-200"
-        : "text-ink";
-
   return (
     <article className="surface min-w-0 p-4 sm:p-5">
       <h2 className="text-sm text-muted">{label}</h2>
       <p
-        className={`mt-3 truncate text-[22px] font-semibold tracking-tight tabular-nums ${valueColor}`}
+        className={cn(
+          "mt-3 truncate text-[22px] font-semibold tracking-tight tabular-nums",
+          tone === "negative" && "text-rose-200",
+          tone === "positive" && "text-mint-200",
+          tone === "normal" && "text-ink",
+        )}
       >
         <FinancialValue>{formatMoney(value)}</FinancialValue>
       </p>
@@ -209,7 +207,10 @@ function DueRow({ entry }: { entry: DashboardDueEntry }) {
           </span>
         </span>
         <span
-          className={`mt-1 block text-xs ${overdue ? "text-danger-300" : "text-muted"}`}
+          className={cn(
+            "mt-1 block text-xs",
+            overdue ? "text-rose-300" : "text-muted",
+          )}
         >
           {overdue ? "Vencida · " : "Vence · "}
           {formatDate(entry.due_date!)}

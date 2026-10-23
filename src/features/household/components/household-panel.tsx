@@ -96,15 +96,11 @@ export function HouseholdPanel({
               />
             </label>
             {createState.error && (
-              <p role="alert" className="text-sm text-danger-300">
+              <p role="alert" className="text-sm text-rose-300">
                 {createState.error}
               </p>
             )}
-            <Button
-              disabled={creating}
-              type="submit"
-              className="active:scale-[0.98]"
-            >
+            <Button disabled={creating} type="submit">
               {creating ? "Criando…" : "Criar núcleo familiar"}
             </Button>
           </form>
@@ -179,7 +175,7 @@ export function HouseholdPanel({
             />
           </label>
           {inviteError && (
-            <p role="alert" className="text-sm text-danger-300">
+            <p role="alert" className="text-sm text-rose-300">
               {inviteError}
             </p>
           )}
@@ -191,11 +187,7 @@ export function HouseholdPanel({
               {inviteState}
             </p>
           )}
-          <Button
-            className="active:scale-[0.98]"
-            disabled={sending}
-            type="submit"
-          >
+          <Button disabled={sending} type="submit">
             {sending ? "Enviando…" : "Enviar convite por e-mail"}
           </Button>
         </form>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
@@ -18,22 +19,50 @@ const chartConfig = {
   expenses: { label: "Despesa", color: "#F43F5E" },
 };
 
+const periodOptions = [
+  { months: 3, label: "Últimos 3 meses" },
+  { months: 12, label: "1 ano" },
+  { months: 24, label: "2 anos" },
+  { months: 60, label: "5 anos" },
+];
+
 export function MonthlyHistoryCharts({ data }: { data: DashboardMonth[] }) {
+  const [period, setPeriod] = useState(12);
+  const filteredData = data.slice(-period);
+
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <MonthlyBarChart
-        title="Receita da família"
-        description="Receitas marcadas como recebidas"
-        data={data}
-        field="income"
-      />
-      <MonthlyBarChart
-        title="Despesas da família"
-        description="Despesas marcadas como pagas"
-        data={data}
-        field="expenses"
-      />
-    </div>
+    <>
+      <div className="mb-3 flex justify-end">
+        <label className="field-label flex-row items-center gap-2">
+          Período dos gráficos
+          <select
+            className="field-control min-h-9 w-auto py-1"
+            onChange={(event) => setPeriod(Number(event.target.value))}
+            value={period}
+          >
+            {periodOptions.map((option) => (
+              <option key={option.months} value={option.months}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <MonthlyBarChart
+          title="Receita da família"
+          description="Receitas marcadas como recebidas"
+          data={filteredData}
+          field="income"
+        />
+        <MonthlyBarChart
+          title="Despesas da família"
+          description="Despesas marcadas como pagas"
+          data={filteredData}
+          field="expenses"
+        />
+      </div>
+    </>
   );
 }
 
@@ -115,6 +144,7 @@ function MonthlyBarChart({
           <ChartTooltip
             cursor={{ fill: "rgba(125, 128, 139, 0.08)" }}
             content={<ChartTooltipContent />}
+            shared={false}
           />
           <Bar
             activeBar={{ fillOpacity: 0.78 }}

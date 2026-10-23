@@ -100,9 +100,7 @@ export function Dashboard({
               Evolução financeira
             </h2>
           </div>
-          <p className="text-xs text-muted">
-            Últimos 12 meses · valores por competência
-          </p>
+          <p className="text-xs text-muted">Valores por competência</p>
         </header>
         <MonthlyHistoryCharts data={history} />
         <p className="mt-3 text-xs leading-5 text-muted">

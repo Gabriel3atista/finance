@@ -44,7 +44,14 @@ export function ChartTooltipContent({
   payload?: ChartTooltipPayload[];
 }) {
   const point = payload?.[0];
-  if (!active || !point || point.value === undefined) return null;
+  if (
+    !active ||
+    !point ||
+    point.value === undefined ||
+    Number(point.value) <= 0
+  ) {
+    return null;
+  }
 
   return (
     <div className="rounded-xl border border-line bg-secondary-900 px-3 py-2.5 shadow-xl">

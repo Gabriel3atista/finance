@@ -1,4 +1,5 @@
 import { createClient } from "@/features/auth/lib/supabase/server";
+import { formatMonth } from "@/shared/lib/date";
 import {
   addMonths,
   getMonthEntries,
@@ -258,10 +259,7 @@ export function labelMonth(date: Date) {
 }
 
 export function monthTitle(date: Date) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-  }).format(date);
+  return formatMonth(date);
 }
 
 export function monthKey(date: Date) {

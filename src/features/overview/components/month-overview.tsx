@@ -1,19 +1,16 @@
 import { FeatureIcon } from "@/shared/components/feature-icon";
+import { Eyebrow } from "@/shared/components/eyebrow";
+import { formatMonth } from "@/shared/lib/date";
 
-const month = new Intl.DateTimeFormat("pt-BR", {
-  month: "long",
-  year: "numeric",
-}).format(new Date());
+const month = formatMonth(new Date());
 
 export function MonthOverview() {
   return (
     <section className="mx-auto max-w-5xl">
       <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-            Visão mensal
-          </p>
-          <h1 className="mt-2 text-[28px] font-semibold capitalize tracking-[-0.04em] text-ink sm:text-[34px]">
+          <Eyebrow>Visão mensal</Eyebrow>
+          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
             {month}
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-[15px]">
@@ -82,7 +79,7 @@ export function MonthOverview() {
                 key={label}
                 className="flex items-center justify-between py-3.5"
               >
-                <span className="text-sm capitalize text-ink">{label}</span>
+                <span className="text-sm text-ink">{label}</span>
                 <span className="text-xs text-muted">Aguardando dados</span>
               </div>
             ))}
@@ -123,9 +120,6 @@ function getNextMonths() {
     const date = new Date();
     date.setDate(1);
     date.setMonth(date.getMonth() + index + 1);
-    return new Intl.DateTimeFormat("pt-BR", {
-      month: "long",
-      year: "numeric",
-    }).format(date);
+    return formatMonth(date);
   });
 }

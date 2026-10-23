@@ -265,13 +265,6 @@ export function formatMoney(value: number) {
   }).format(value);
 }
 
-export function formatMonth(date: Date) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-  }).format(date);
-}
-
 export function localDateString(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }

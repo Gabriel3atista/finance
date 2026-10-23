@@ -1,4 +1,5 @@
 import { FeatureIcon } from "@/shared/components/feature-icon";
+import { Eyebrow } from "@/shared/components/eyebrow";
 
 export function EmptyFeaturePage({
   eyebrow,
@@ -14,9 +15,7 @@ export function EmptyFeaturePage({
   return (
     <section className="mx-auto max-w-5xl">
       <div className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-          {eyebrow}
-        </p>
+        <Eyebrow>{eyebrow}</Eyebrow>
         <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
           {title}
         </h1>

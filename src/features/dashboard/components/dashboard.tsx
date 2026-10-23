@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   formatMoney,
   localDateString,
   monthString,
 } from "@/features/transactions/lib/data";
+import { formatMonth } from "@/shared/lib/date";
+import { FinancialValue } from "@/shared/components/financial-values";
+import { Eyebrow } from "@/shared/components/eyebrow";
 import type {
   DashboardDueEntry,
   DashboardMonth,
@@ -27,19 +31,14 @@ export function Dashboard({
   realizedBalance: number;
   plannedExpenses: number;
 }) {
-  const monthTitle = new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-  }).format(currentMonth);
+  const monthTitle = formatMonth(currentMonth);
 
   return (
     <section className="mx-auto max-w-6xl">
       <header className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-            Visão geral da família
-          </p>
-          <h1 className="mt-2 text-[28px] font-semibold capitalize tracking-[-0.04em] text-ink sm:text-[34px]">
+          <Eyebrow>Visão geral da família</Eyebrow>
+          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
             Dashboard
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-[15px]">
@@ -48,15 +47,14 @@ export function Dashboard({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link
-            className="quiet-button"
-            href={`/mes?month=${monthString(currentMonth)}`}
-          >
-            Abrir meu mês
-          </Link>
-          <Link className="quiet-button" href="/projecao">
-            Ver projeção
-          </Link>
+          <Button asChild variant="outline">
+            <Link href={`/mes?month=${monthString(currentMonth)}`}>
+              Abrir meu mês
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/projecao">Ver projeção</Link>
+          </Button>
         </div>
       </header>
 
@@ -90,9 +88,7 @@ export function Dashboard({
       <section className="mt-8" aria-labelledby="history-title">
         <header className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-              Histórico realizado
-            </p>
+            <Eyebrow>Histórico realizado</Eyebrow>
             <h2
               className="mt-1 text-xl font-semibold tracking-tight text-ink"
               id="history-title"
@@ -112,9 +108,7 @@ export function Dashboard({
       <section className="surface mt-8 p-5 sm:p-6" aria-labelledby="due-title">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-              Para acompanhar
-            </p>
+            <Eyebrow>Para acompanhar</Eyebrow>
             <h2
               className="mt-1 text-lg font-semibold tracking-tight text-ink"
               id="due-title"
@@ -187,9 +181,9 @@ function SummaryCard({
       <p
         className={`mt-3 truncate text-[22px] font-semibold tracking-tight tabular-nums ${valueColor}`}
       >
-        {formatMoney(value)}
+        <FinancialValue>{formatMoney(value)}</FinancialValue>
       </p>
-      <p className="mt-1 text-xs capitalize text-muted">{month}</p>
+      <p className="mt-1 text-xs text-muted">{month}</p>
     </article>
   );
 }
@@ -222,7 +216,7 @@ function DueRow({ entry }: { entry: DashboardDueEntry }) {
         </span>
       </span>
       <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">
-        {formatMoney(entry.amount)}
+        <FinancialValue>{formatMoney(entry.amount)}</FinancialValue>
       </span>
     </Link>
   );

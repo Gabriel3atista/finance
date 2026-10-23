@@ -1,8 +1,10 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   addMonths,
   formatMoney,
-  formatMonth,
   getHouseholdMembers,
   getMonthEntries,
   localDateString,
@@ -10,6 +12,16 @@ import {
   type FinancialEntry,
   type HouseholdMember,
 } from "@/features/transactions/lib/data";
+import { formatMonth } from "@/shared/lib/date";
+import { FinancialValue } from "@/shared/components/financial-values";
+import { Eyebrow } from "@/shared/components/eyebrow";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EntryFields } from "@/features/transactions/components/entry-fields";
 import {
   cancelFinancialEntry,
@@ -70,10 +82,8 @@ export async function MonthlyLedger({
     <section className="mx-auto max-w-5xl">
       <header className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-            Operação mensal
-          </p>
-          <h1 className="mt-2 text-[28px] font-semibold capitalize tracking-[-0.04em] text-ink sm:text-[34px]">
+          <Eyebrow>Operação mensal</Eyebrow>
+          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
             {formatMonth(month)}
           </h1>
           <p className="mt-2 text-sm text-muted">
@@ -89,9 +99,9 @@ export async function MonthlyLedger({
             label="Mês anterior"
             symbol="←"
           />
-          <Link className="quiet-button" href="/mes">
-            Hoje
-          </Link>
+          <Button asChild variant="outline">
+            <Link href="/mes">Hoje</Link>
+          </Button>
           <MonthLink
             month={addMonths(month, 1)}
             label="Próximo mês"
@@ -130,17 +140,34 @@ export async function MonthlyLedger({
         <Summary
           title="Receitas previstas"
           value={formatMoney(income)}
-          detail={`${formatMoney(settledIncome)} recebidas`}
+          detail={
+            <>
+              <FinancialValue>{formatMoney(settledIncome)}</FinancialValue>{" "}
+              recebidas
+            </>
+          }
         />
         <Summary
           title="Despesas previstas"
           value={formatMoney(expenses)}
-          detail={`${formatMoney(settledExpenses)} pagas`}
+          detail={
+            <>
+              <FinancialValue>{formatMoney(settledExpenses)}</FinancialValue>{" "}
+              pagas
+            </>
+          }
         />
         <Summary
           title="Saldo previsto"
           value={formatMoney(income - expenses)}
-          detail={`${formatMoney(settledIncome - settledExpenses)} realizado`}
+          detail={
+            <>
+              <FinancialValue>
+                {formatMoney(settledIncome - settledExpenses)}
+              </FinancialValue>{" "}
+              realizado
+            </>
+          }
         />
       </div>
 
@@ -207,23 +234,24 @@ export async function MonthlyLedger({
             </p>
             <label className="field-label">
               Tipo
-              <select
-                className="field-control"
-                name="entry_type"
-                defaultValue="expense"
-              >
-                <option value="expense">Despesa</option>
-                <option value="income">Receita</option>
-              </select>
+              <Select name="entry_type" defaultValue="expense">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="expense">Despesa</SelectItem>
+                  <SelectItem value="income">Receita</SelectItem>
+                </SelectContent>
+              </Select>
             </label>
             <EntryFields
               members={members}
               currentUserId={userId}
               month={monthValue}
             />
-            <button className="primary-button w-full" type="submit">
+            <Button className="w-full" type="submit">
               Salvar lançamento
-            </button>
+            </Button>
           </form>
         </details>
       </div>
@@ -275,8 +303,10 @@ function EntryRow({
           <p
             className={`text-sm font-semibold tabular-nums ${entry.entry_type === "income" ? "text-success-200" : "text-ink"}`}
           >
-            {entry.entry_type === "income" ? "+" : "−"}
-            {formatMoney(Number(entry.amount))}
+            <FinancialValue>
+              {entry.entry_type === "income" ? "+" : "−"}
+              {formatMoney(Number(entry.amount))}
+            </FinancialValue>
           </p>
           <p
             className={`mt-1 text-[10px] font-medium ${overdue ? "text-danger-300" : entry.status === "settled" ? "text-success-200" : "text-muted"}`}
@@ -291,32 +321,32 @@ function EntryRow({
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <form action={setEntryStatus}>
-          <input type="hidden" name="id" value={entry.id} />
-          <input
+          <Input type="hidden" name="id" value={entry.id} />
+          <Input
             type="hidden"
             name="next_status"
             value={entry.status === "settled" ? "planned" : "settled"}
           />
-          <input type="hidden" name="return_to" value={returnTo} />
-          <button className="quiet-button text-xs" type="submit">
+          <Input type="hidden" name="return_to" value={returnTo} />
+          <Button size="sm" type="submit" variant="outline">
             {entry.status === "settled"
               ? "Desfazer"
               : entry.entry_type === "income"
                 ? "Marcar recebida"
                 : "Marcar paga"}
-          </button>
+          </Button>
         </form>
         {entry.status === "planned" && (
           <>
             <details className="group">
-              <summary className="quiet-button cursor-pointer list-none text-xs">
-                Editar
-              </summary>
+              <Button asChild size="sm" variant="outline">
+                <summary className="cursor-pointer list-none">Editar</summary>
+              </Button>
               <form
                 action={updateFinancialEntry}
                 className="mt-3 w-full space-y-3 rounded-xl border border-line bg-canvas/60 p-3 sm:min-w-[360px]"
               >
-                <input type="hidden" name="id" value={entry.id} />
+                <Input type="hidden" name="id" value={entry.id} />
                 <EntryFields
                   members={members}
                   currentUserId={currentUserId}
@@ -326,27 +356,35 @@ function EntryRow({
                 {entry.source_kind === "recurrence" && (
                   <label className="field-label">
                     Aplicar alteração
-                    <select
-                      className="field-control"
-                      name="scope"
-                      defaultValue="single"
-                    >
-                      <option value="single">Somente este mês</option>
-                      <option value="future">Este e próximos meses</option>
-                    </select>
+                    <Select name="scope" defaultValue="single">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="single">Somente este mês</SelectItem>
+                        <SelectItem value="future">
+                          Este e próximos meses
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </label>
                 )}
-                <button className="primary-button w-full" type="submit">
+                <Button className="w-full" type="submit">
                   Salvar edição
-                </button>
+                </Button>
               </form>
             </details>
             <form action={cancelFinancialEntry}>
-              <input type="hidden" name="id" value={entry.id} />
-              <input type="hidden" name="return_to" value={returnTo} />
-              <button className="quiet-button text-xs text-muted" type="submit">
+              <Input type="hidden" name="id" value={entry.id} />
+              <Input type="hidden" name="return_to" value={returnTo} />
+              <Button
+                className="text-muted"
+                size="sm"
+                type="submit"
+                variant="outline"
+              >
                 Cancelar
-              </button>
+              </Button>
             </form>
           </>
         )}
@@ -370,13 +408,13 @@ function Summary({
 }: {
   title: string;
   value: string;
-  detail: string;
+  detail: ReactNode;
 }) {
   return (
     <div className="surface min-h-[112px] p-4 sm:p-5">
       <p className="text-sm text-muted">{title}</p>
       <p className="mt-2 text-[21px] font-semibold tracking-tight text-ink tabular-nums">
-        {value}
+        <FinancialValue>{value}</FinancialValue>
       </p>
       <p className="mt-1 text-xs text-muted">{detail}</p>
     </div>
@@ -393,13 +431,11 @@ function MonthLink({
   symbol: string;
 }) {
   return (
-    <Link
-      className="quiet-button size-10 justify-center px-0 text-base"
-      href={`/mes?month=${monthString(month)}`}
-      aria-label={label}
-    >
-      {symbol}
-    </Link>
+    <Button asChild size="icon" variant="outline">
+      <Link href={`/mes?month=${monthString(month)}`} aria-label={label}>
+        {symbol}
+      </Link>
+    </Button>
   );
 }
 

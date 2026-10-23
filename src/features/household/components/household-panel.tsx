@@ -3,11 +3,13 @@
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   acceptHouseholdInvitation,
   createHousehold,
 } from "@/features/household/actions";
 import { createClient } from "@/features/auth/lib/supabase/client";
+import { Eyebrow } from "@/shared/components/eyebrow";
 
 type Invitation = { id: string; household_id: string; expires_at: string };
 type Household = { id: string; name: string; member_role: string };
@@ -74,9 +76,7 @@ export function HouseholdPanel({
     return (
       <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
         <section className="rounded-2xl border border-line bg-card-900 p-5 sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-accent">
-            Comece por aqui
-          </p>
+          <Eyebrow tone="accent">Comece por aqui</Eyebrow>
           <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
             Crie o núcleo da família
           </h2>
@@ -87,8 +87,8 @@ export function HouseholdPanel({
           <form action={createAction} className="mt-6 space-y-4">
             <label className="block text-sm font-medium text-ink">
               Nome do núcleo
-              <input
-                className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-line px-3.5 text-sm font-normal outline-none focus:border-accent"
+              <Input
+                className="mt-2 min-h-11 px-3.5 focus:border-accent"
                 name="name"
                 maxLength={100}
                 placeholder="Ex.: Família Silva"
@@ -111,9 +111,7 @@ export function HouseholdPanel({
         </section>
 
         <section className="rounded-2xl border border-line bg-card-900 p-5 sm:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-accent">
-            Convites recebidos
-          </p>
+          <Eyebrow tone="accent">Convites recebidos</Eyebrow>
           <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
             Acesse um núcleo existente
           </h2>
@@ -158,9 +156,7 @@ export function HouseholdPanel({
 
   return (
     <div className="mx-auto max-w-[640px] rounded-2xl border border-line bg-card-900 p-5 sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.13em] text-accent">
-        Núcleo familiar
-      </p>
+      <Eyebrow tone="accent">Núcleo familiar</Eyebrow>
       <h2 className="mt-3 text-2xl font-semibold tracking-tight text-ink">
         {household.name}
       </h2>
@@ -172,8 +168,8 @@ export function HouseholdPanel({
         <form onSubmit={sendInvitation} className="mt-6 space-y-4">
           <label className="block text-sm font-medium text-ink">
             E-mail da pessoa convidada
-            <input
-              className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-line px-3.5 text-sm font-normal outline-none focus:border-accent"
+            <Input
+              className="mt-2 min-h-11 px-3.5 focus:border-accent"
               autoComplete="email"
               type="email"
               required

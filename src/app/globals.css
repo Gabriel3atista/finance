@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .eyebrow {
+    font-family: var(--font-kantumruy-pro), sans-serif;
+  }
+}
+
 :root {
   color-scheme: dark;
   --background: #0b0c0f;
@@ -28,7 +34,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: "Inter Display", "Inter", Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
 }
@@ -71,27 +77,8 @@ button,
   .field-label {
     @apply flex flex-col gap-1.5 text-xs font-medium text-muted;
   }
-
-  .field-control {
-    @apply min-h-10 w-full rounded-xl border border-line bg-secondary-900 px-3 text-sm font-normal text-primary-200 outline-none transition-colors placeholder:text-foreground-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-900;
-  }
-
-  .primary-button {
-    @apply inline-flex min-h-10 items-center justify-center rounded-xl bg-primary-200 px-4 text-sm font-medium text-background-900 transition-colors hover:bg-primary-100 focus-ring active:scale-[0.98];
-  }
-
-  .quiet-button {
-    @apply inline-flex min-h-9 items-center justify-center rounded-lg border border-line bg-secondary-900 px-3 text-sm font-medium text-foreground-400 transition-colors hover:bg-secondary-800 hover:text-primary-200 focus-ring active:scale-[0.98];
-  }
 }
 
 summary::-webkit-details-marker {
   display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .primary-button,
-  .quiet-button {
-    transition: none;
-  }
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/features/auth/lib/supabase/client";
 
 export function SignOutButton() {
@@ -16,13 +17,15 @@ export function SignOutButton() {
   }
 
   return (
-    <button
-      className="focus-ring rounded-lg px-3 py-2 text-sm text-muted hover:bg-secondary-800 hover:text-ink disabled:opacity-50"
+    <Button
+      className="text-muted"
       disabled={busy}
       onClick={signOut}
+      size="sm"
       type="button"
+      variant="ghost"
     >
       {busy ? "Saindo…" : "Sair"}
-    </button>
+    </Button>
   );
 }

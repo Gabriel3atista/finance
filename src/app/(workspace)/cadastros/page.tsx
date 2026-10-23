@@ -1,10 +1,21 @@
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   createInstallmentPlan,
   createRecurringItem,
   deactivateSeries,
 } from "@/features/transactions/actions";
 import { SeriesFields } from "@/features/transactions/components/entry-fields";
+import { FinancialValue } from "@/shared/components/financial-values";
+import { Eyebrow } from "@/shared/components/eyebrow";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   formatMoney,
   getHouseholdMembers,
@@ -64,9 +75,7 @@ export default async function RecordsPage({
   return (
     <section className="mx-auto max-w-5xl">
       <header className="mb-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-          Organização
-        </p>
+        <Eyebrow>Organização</Eyebrow>
         <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
           Cadastros
         </h1>
@@ -113,14 +122,15 @@ export default async function RecordsPage({
           <form action={createRecurringItem} className="mt-5 space-y-4">
             <label className="field-label">
               Tipo
-              <select
-                className="field-control"
-                name="entry_type"
-                defaultValue="expense"
-              >
-                <option value="expense">Despesa</option>
-                <option value="income">Receita</option>
-              </select>
+              <Select name="entry_type" defaultValue="expense">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="expense">Despesa</SelectItem>
+                  <SelectItem value="income">Receita</SelectItem>
+                </SelectContent>
+              </Select>
             </label>
             <SeriesFields
               members={members}
@@ -130,11 +140,11 @@ export default async function RecordsPage({
             <label className="field-label">
               Última competência{" "}
               <span className="font-normal text-muted">(opcional)</span>
-              <input className="field-control" type="month" name="ends_on" />
+              <Input type="month" name="ends_on" />
             </label>
-            <button className="primary-button w-full" type="submit">
+            <Button className="w-full" type="submit">
               Salvar recorrência
-            </button>
+            </Button>
           </form>
         </details>
 
@@ -149,8 +159,7 @@ export default async function RecordsPage({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="field-label sm:col-span-2">
                 Descrição
-                <input
-                  className="field-control"
+                <Input
                   name="title"
                   maxLength={160}
                   required
@@ -159,8 +168,7 @@ export default async function RecordsPage({
               </label>
               <label className="field-label">
                 Valor total (R$)
-                <input
-                  className="field-control"
+                <Input
                   name="total_amount"
                   inputMode="decimal"
                   placeholder="0,00"
@@ -169,8 +177,7 @@ export default async function RecordsPage({
               </label>
               <label className="field-label">
                 Número de parcelas
-                <input
-                  className="field-control"
+                <Input
                   name="installment_count"
                   type="number"
                   min={1}
@@ -181,8 +188,7 @@ export default async function RecordsPage({
               </label>
               <label className="field-label">
                 Primeira competência
-                <input
-                  className="field-control"
+                <Input
                   name="first_month"
                   type="month"
                   defaultValue={currentMonth}
@@ -191,8 +197,7 @@ export default async function RecordsPage({
               </label>
               <label className="field-label">
                 Dia de vencimento
-                <input
-                  className="field-control"
+                <Input
                   name="due_day"
                   type="number"
                   min={1}
@@ -202,38 +207,34 @@ export default async function RecordsPage({
               </label>
               <label className="field-label">
                 Categoria
-                <input
-                  className="field-control"
-                  name="category"
-                  maxLength={80}
-                  placeholder="Opcional"
-                />
+                <Input name="category" maxLength={80} placeholder="Opcional" />
               </label>
               <label className="field-label">
                 Responsável
-                <select
-                  className="field-control"
-                  name="responsible_user_id"
-                  defaultValue=""
-                >
-                  <option value="">Sem responsável</option>
-                  {members.map((member) => (
-                    <option key={member.user_id} value={member.user_id}>
-                      {member.user_id === context.user.id
-                        ? "Eu"
-                        : "Outro membro"}
-                    </option>
-                  ))}
-                </select>
+                <Select name="responsible_user_id" defaultValue="__none">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">Sem responsável</SelectItem>
+                    {members.map((member) => (
+                      <SelectItem key={member.user_id} value={member.user_id}>
+                        {member.user_id === context.user.id
+                          ? "Eu"
+                          : "Outro membro"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </label>
             </div>
             <p className="text-xs leading-5 text-muted">
               Os centavos restantes são distribuídos entre as primeiras parcelas
               para que a soma feche exatamente com o total.
             </p>
-            <button className="primary-button w-full" type="submit">
+            <Button className="w-full" type="submit">
               Salvar parcelamento
-            </button>
+            </Button>
           </form>
         </details>
       </div>
@@ -310,16 +311,16 @@ function SeriesList({
                 </h3>
                 <p className="mt-1 text-xs text-muted">{item.detail}</p>
                 <p className="mt-1 text-xs font-medium text-ink">
-                  {item.amount}
+                  <FinancialValue>{item.amount}</FinancialValue>
                 </p>
               </div>
               {item.active ? (
                 <form action={deactivateSeries}>
-                  <input type="hidden" name="id" value={item.id} />
-                  <input type="hidden" name="kind" value={kind} />
-                  <button className="quiet-button text-xs" type="submit">
+                  <Input type="hidden" name="id" value={item.id} />
+                  <Input type="hidden" name="kind" value={kind} />
+                  <Button size="sm" type="submit" variant="outline">
                     Encerrar
-                  </button>
+                  </Button>
                 </form>
               ) : (
                 <span className="rounded-full bg-canvas px-2.5 py-1 text-[10px] text-muted">

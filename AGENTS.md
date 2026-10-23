@@ -4,20 +4,20 @@ As skills deste repositório estão em `.agents/skills/`. Use este mapa para esc
 
 ## Mapa de seleção
 
-| Skill | Use quando |
-| --- | --- |
-| `$emil-design-eng` | Criar ou revisar uma interface web de forma ampla, com foco em acabamento visual, componentes e decisões de interação. Para um pedido específico abaixo, prefira a skill especializada. |
-| `$animate` | Implementar uma animação ou transição. Decide primeiro se deve haver movimento e então orienta ferramenta, propriedades, tempo, interrupção e acessibilidade. |
-| `$animation-performance` | Diagnosticar animações com engasgos, quadros perdidos ou custo de renderização; investigar propriedades animadas, trabalho na thread principal e medições. |
-| `$animation-vocabulary` | Identificar o nome técnico de um efeito descrito informalmente. Responder com o termo do glossário, sem projetar ou implementar o efeito. |
-| `$apple-design` | Projetar ou revisar interações web inspiradas nos princípios da Apple: gestos, arrasto, momentum, folhas, molas, materiais translúcidos, tipografia ou acessibilidade relacionada. |
-| `$ask-sonner` | Configurar, usar, estilizar ou depurar a biblioteca Sonner e seus toasts. Consulte `API.md` da skill se precisar de nomes ou tipos exatos de propriedades. |
-| `$break-ui` | Procurar falhas de uma tela/componente com dados realistas de pior caso. A skill monta um modo de demonstração e reporta os problemas; implemente correções apenas se o usuário pedir. |
-| `$find-animation-opportunities` | Procurar, em modo somente leitura, pontos de uma interface que poderiam se beneficiar de movimento e também rejeitar animações desnecessárias. Não implementa. |
-| `$improve-animations` | Auditar o movimento de uma área ou do projeto e propor correções priorizadas. É somente leitura ao analisar e planejar; não aplique as correções durante essa auditoria. |
-| `$mobile-native` | Ajustar uma aplicação web para uso em celulares: viewport, áreas seguras, toque, rolagem, teclado virtual e diferenças que exigem validação em aparelho real. Não é para React Native. |
-| `$pick-ui-library` | Escolher uma biblioteca da lista curada para uma necessidade de frontend. Esta skill tem `disable-model-invocation`; só a use quando o usuário a chamar explicitamente. |
-| `$review-animations` | Revisar código ou alterações existentes de animação/movimento e apontar problemas com evidências. É uma revisão, não uma implementação; só a invoque explicitamente. |
+| Skill                           | Use quando                                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$emil-design-eng`              | Criar ou revisar uma interface web de forma ampla, com foco em acabamento visual, componentes e decisões de interação. Para um pedido específico abaixo, prefira a skill especializada. |
+| `$animate`                      | Implementar uma animação ou transição. Decide primeiro se deve haver movimento e então orienta ferramenta, propriedades, tempo, interrupção e acessibilidade.                           |
+| `$animation-performance`        | Diagnosticar animações com engasgos, quadros perdidos ou custo de renderização; investigar propriedades animadas, trabalho na thread principal e medições.                              |
+| `$animation-vocabulary`         | Identificar o nome técnico de um efeito descrito informalmente. Responder com o termo do glossário, sem projetar ou implementar o efeito.                                               |
+| `$apple-design`                 | Projetar ou revisar interações web inspiradas nos princípios da Apple: gestos, arrasto, momentum, folhas, molas, materiais translúcidos, tipografia ou acessibilidade relacionada.      |
+| `$ask-sonner`                   | Configurar, usar, estilizar ou depurar a biblioteca Sonner e seus toasts. Consulte `API.md` da skill se precisar de nomes ou tipos exatos de propriedades.                              |
+| `$break-ui`                     | Procurar falhas de uma tela/componente com dados realistas de pior caso. A skill monta um modo de demonstração e reporta os problemas; implemente correções apenas se o usuário pedir.  |
+| `$find-animation-opportunities` | Procurar, em modo somente leitura, pontos de uma interface que poderiam se beneficiar de movimento e também rejeitar animações desnecessárias. Não implementa.                          |
+| `$improve-animations`           | Auditar o movimento de uma área ou do projeto e propor correções priorizadas. É somente leitura ao analisar e planejar; não aplique as correções durante essa auditoria.                |
+| `$mobile-native`                | Ajustar uma aplicação web para uso em celulares: viewport, áreas seguras, toque, rolagem, teclado virtual e diferenças que exigem validação em aparelho real. Não é para React Native.  |
+| `$pick-ui-library`              | Escolher uma biblioteca da lista curada para uma necessidade de frontend. Esta skill tem `disable-model-invocation`; só a use quando o usuário a chamar explicitamente.                 |
+| `$review-animations`            | Revisar código ou alterações existentes de animação/movimento e apontar problemas com evidências. É uma revisão, não uma implementação; só a invoque explicitamente.                    |
 
 ## Como resolver sobreposições
 
@@ -33,3 +33,9 @@ As skills deste repositório estão em `.agents/skills/`. Use este mapa para esc
 - Skills com `disable-model-invocation: true` exigem chamada explícita do usuário. Neste conjunto, são `$pick-ui-library` e `$review-animations`.
 - Antes de executar, confira se a skill é de implementação, análise somente leitura ou planejamento. Respeite também os limites indicados no respectivo `SKILL.md` e a solicitação atual do usuário.
 - A skill fornece instruções de trabalho; ela não substitui o contexto do projeto, os pedidos do usuário nem a validação necessária para a tarefa.
+
+## Componentes de interface
+
+- Para botoes, campos de entrada e seletores, use os componentes shadcn em `src/components/ui` (`Button`, `Input` e `Select`). Nao use elementos HTML nativos quando houver um componente equivalente no shadcn.
+- Use um elemento nativo somente quando nao houver equivalente no shadcn. Se o projeto precisar de um controle sem equivalente, crie um componente local reutilizavel.
+- Centralize estilos e variantes dos controles nos componentes shadcn; nao repita classes de controle nas telas.

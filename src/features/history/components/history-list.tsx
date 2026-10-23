@@ -1,6 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { FinancialValue } from "@/shared/components/financial-values";
+import { Eyebrow } from "@/shared/components/eyebrow";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   type HistoricalBatch,
   type HistoricalEntry,
@@ -39,9 +48,7 @@ export function HistoryList({
       <section className="surface p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-              Histórico preservado
-            </p>
+            <Eyebrow>Histórico preservado</Eyebrow>
             <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink">
               Lançamentos desde 2024
             </h2>
@@ -53,18 +60,19 @@ export function HistoryList({
           {years.length > 0 && (
             <label className="field-label sm:w-40">
               Filtrar por ano
-              <select
-                className="field-control"
-                onChange={(event) => setYear(event.target.value)}
-                value={year}
-              >
-                <option value="all">Todos os anos</option>
-                {years.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+              <Select onValueChange={setYear} value={year}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os anos</SelectItem>
+                  {years.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
           )}
         </div>
@@ -118,7 +126,9 @@ export function HistoryList({
                           : "Cancelado"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-semibold tabular-nums text-ink">
-                      {currency.format(Number(entry.amount))}
+                      <FinancialValue>
+                        {currency.format(Number(entry.amount))}
+                      </FinancialValue>
                     </td>
                     <td className="px-4 py-3 text-[10px] text-muted">
                       <span className="block">

@@ -18,7 +18,7 @@ function textValue(formData: FormData, key: string, maxLength: number) {
 
 function responsibleValue(formData: FormData) {
   const value = String(formData.get("responsible_user_id") ?? "").trim();
-  return value || null;
+  return value && value !== "__none" ? value : null;
 }
 
 function validDueDate(value: FormDataEntryValue | null) {

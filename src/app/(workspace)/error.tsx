@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Eyebrow } from "@/shared/components/eyebrow";
+
 export default function WorkspaceError({ reset }: { reset: () => void }) {
   return (
     <section
@@ -7,9 +10,7 @@ export default function WorkspaceError({ reset }: { reset: () => void }) {
       className="mx-auto max-w-2xl rounded-2xl border border-danger-800 bg-danger-900 p-6 sm:p-8"
       role="alert"
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-danger-200">
-        Não foi possível carregar esta tela
-      </p>
+      <Eyebrow tone="danger">Não foi possível carregar esta tela</Eyebrow>
       <h1
         className="mt-2 text-xl font-semibold tracking-tight text-danger-100"
         id="workspace-error-title"
@@ -20,9 +21,9 @@ export default function WorkspaceError({ reset }: { reset: () => void }) {
         Confira sua conexão e tente carregar a página novamente. Se o problema
         continuar, tente mais tarde.
       </p>
-      <button className="quiet-button mt-5" onClick={reset} type="button">
+      <Button className="mt-5" onClick={reset} type="button" variant="outline">
         Tentar novamente
-      </button>
+      </Button>
     </section>
   );
 }

@@ -1,4 +1,12 @@
 import type { HouseholdMember } from "@/features/transactions/lib/data";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function EntryFields({
   members,
@@ -21,8 +29,7 @@ export function EntryFields({
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="field-label sm:col-span-2">
         Descrição
-        <input
-          className="field-control"
+        <Input
           name="title"
           maxLength={160}
           required
@@ -32,8 +39,7 @@ export function EntryFields({
       </label>
       <label className="field-label">
         Valor (R$)
-        <input
-          className="field-control"
+        <Input
           name="amount"
           inputMode="decimal"
           required
@@ -45,8 +51,7 @@ export function EntryFields({
       </label>
       <label className="field-label">
         Categoria
-        <input
-          className="field-control"
+        <Input
           name="category"
           maxLength={80}
           defaultValue={entry?.category ?? ""}
@@ -55,8 +60,7 @@ export function EntryFields({
       </label>
       <label className="field-label">
         Vencimento
-        <input
-          className="field-control"
+        <Input
           type="date"
           name="due_date"
           defaultValue={entry?.due_date ?? ""}
@@ -64,24 +68,28 @@ export function EntryFields({
       </label>
       <label className="field-label">
         Responsável
-        <select
-          className="field-control"
+        <Select
           name="responsible_user_id"
-          defaultValue={entry?.responsible_user_id ?? ""}
+          defaultValue={entry?.responsible_user_id ?? "__none"}
         >
-          <option value="">Sem responsável</option>
-          {members.map((member) => (
-            <option key={member.user_id} value={member.user_id}>
-              {member.user_id === currentUserId
-                ? "Eu"
-                : member.member_role === "owner"
-                  ? "Responsável do núcleo"
-                  : "Outro membro"}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none">Sem responsável</SelectItem>
+            {members.map((member) => (
+              <SelectItem key={member.user_id} value={member.user_id}>
+                {member.user_id === currentUserId
+                  ? "Eu"
+                  : member.member_role === "owner"
+                    ? "Responsável do núcleo"
+                    : "Outro membro"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </label>
-      <input type="hidden" name="competence_month" value={month} />
+      <Input type="hidden" name="competence_month" value={month} />
     </div>
   );
 }
@@ -99,36 +107,19 @@ export function SeriesFields({
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="field-label sm:col-span-2">
         Descrição
-        <input
-          className="field-control"
-          name="title"
-          maxLength={160}
-          required
-        />
+        <Input name="title" maxLength={160} required />
       </label>
       <label className="field-label">
         Valor (R$)
-        <input
-          className="field-control"
-          name="amount"
-          inputMode="decimal"
-          placeholder="0,00"
-          required
-        />
+        <Input name="amount" inputMode="decimal" placeholder="0,00" required />
       </label>
       <label className="field-label">
         Categoria
-        <input
-          className="field-control"
-          name="category"
-          maxLength={80}
-          placeholder="Opcional"
-        />
+        <Input name="category" maxLength={80} placeholder="Opcional" />
       </label>
       <label className="field-label">
         Dia de vencimento
-        <input
-          className="field-control"
+        <Input
           name="due_day"
           type="number"
           min={1}
@@ -138,24 +129,25 @@ export function SeriesFields({
       </label>
       <label className="field-label">
         Responsável
-        <select
-          className="field-control"
-          name="responsible_user_id"
-          defaultValue=""
-        >
-          <option value="">Sem responsável</option>
-          {members.map((member) => (
-            <option key={member.user_id} value={member.user_id}>
-              {member.user_id === currentUserId
-                ? "Eu"
-                : member.member_role === "owner"
-                  ? "Responsável do núcleo"
-                  : "Outro membro"}
-            </option>
-          ))}
-        </select>
+        <Select name="responsible_user_id" defaultValue="__none">
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none">Sem responsável</SelectItem>
+            {members.map((member) => (
+              <SelectItem key={member.user_id} value={member.user_id}>
+                {member.user_id === currentUserId
+                  ? "Eu"
+                  : member.member_role === "owner"
+                    ? "Responsável do núcleo"
+                    : "Outro membro"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </label>
-      <input type="hidden" name="starts_on" value={month} />
+      <Input type="hidden" name="starts_on" value={month} />
     </div>
   );
 }

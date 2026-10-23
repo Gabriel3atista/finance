@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { ResponsiveContainer, Tooltip } from "recharts";
+import { FinancialValue } from "@/shared/components/financial-values";
 
 export type ChartConfig = Record<string, { label: string; color: string }>;
 
@@ -31,9 +32,13 @@ export const ChartTooltip = Tooltip;
 
 type ChartTooltipPayload = {
   color?: string;
+  dataKey?: string;
   name?: string;
   value?: number | string;
-  payload?: { fullMonth?: string };
+  payload?: {
+    [key: string]: number | string | undefined;
+    fullMonth?: string;
+  };
 };
 
 export function ChartTooltipContent({
@@ -43,34 +48,45 @@ export function ChartTooltipContent({
   active?: boolean;
   payload?: ChartTooltipPayload[];
 }) {
-  const point = payload?.[0];
-  if (
-    !active ||
-    !point ||
-    point.value === undefined ||
-    Number(point.value) <= 0
-  ) {
+  const points = payload?.filter((point) => point.value !== undefined) ?? [];
+  if (!active || points.length === 0) {
     return null;
   }
 
   return (
     <div className="rounded-xl border border-line bg-secondary-900 px-3 py-2.5 shadow-xl">
-      <p className="text-xs font-medium capitalize text-muted">
-        {point.payload?.fullMonth}
+      <p className="text-xs font-medium text-muted">
+        {points[0].payload?.fullMonth}
       </p>
-      <div className="mt-1.5 flex items-center gap-2">
-        <span
-          aria-hidden="true"
-          className="size-2 rounded-full"
-          style={{ backgroundColor: point.color }}
-        />
-        <span className="text-xs text-muted">{point.name}</span>
-        <span className="text-sm font-semibold tabular-nums text-ink">
-          {new Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          }).format(Number(point.value))}
-        </span>
+      <div className="mt-1.5 grid gap-1.5">
+        {points.map((point) => {
+          const rowValue = point.dataKey
+            ? point.payload?.[point.dataKey]
+            : undefined;
+          const value = rowValue ?? point.value;
+
+          return (
+            <div
+              className="flex items-center gap-2"
+              key={point.dataKey ?? point.name}
+            >
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-full"
+                style={{ backgroundColor: point.color }}
+              />
+              <span className="text-xs text-muted">{point.name}</span>
+              <span className="ml-auto text-sm font-semibold tabular-nums text-ink">
+                <FinancialValue>
+                  {new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(Number(value))}
+                </FinancialValue>
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { safeInternalPath } from "@/features/auth/lib/safe-redirect";
 
@@ -168,9 +169,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         {mode !== "update-password" && (
           <label className="block text-sm font-medium text-ink">
             E-mail
-            <input
+            <Input
               autoComplete="email"
-              className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-line bg-secondary-900 px-3.5 text-sm font-normal text-primary-200 outline-none transition-colors placeholder:text-foreground-500 focus:border-primary-600"
+              className="mt-2 min-h-11 px-3.5"
               name="email"
               placeholder="voce@exemplo.com"
               required
@@ -182,11 +183,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         {mode !== "forgot" && (
           <label className="block text-sm font-medium text-ink">
             {mode === "update-password" ? "Nova senha" : "Senha"}
-            <input
+            <Input
               autoComplete={
                 mode === "login" ? "current-password" : "new-password"
               }
-              className="focus-ring mt-2 min-h-11 w-full rounded-xl border border-line bg-secondary-900 px-3.5 text-sm font-normal text-primary-200 outline-none transition-colors placeholder:text-foreground-500 focus:border-primary-600"
+              className="mt-2 min-h-11 px-3.5"
               name="password"
               placeholder={
                 mode === "login" ? "Sua senha" : "Pelo menos 8 caracteres"

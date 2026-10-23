@@ -1,5 +1,16 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Kantumruy_Pro } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+const kantumruyPro = Kantumruy_Pro({
+  subsets: ["latin"],
+  weight: "variable",
+  variable: "--font-kantumruy-pro",
+});
 
 export const metadata: Metadata = {
   title: "Finance — finanças da família",
@@ -28,11 +39,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR">
-      <head>
-        <link rel="preconnect" href="https://rsms.me" />
-        <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-      </head>
+    <html className={`${inter.variable} ${kantumruyPro.variable}`} lang="pt-BR">
       <body>{children}</body>
     </html>
   );

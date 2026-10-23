@@ -1,4 +1,11 @@
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  FinancialValue,
+  useValuesVisibility,
+} from "@/shared/components/financial-values";
+import { Eyebrow } from "@/shared/components/eyebrow";
 import {
   formatMoney,
   localDateString,
@@ -130,9 +137,7 @@ export function ForecastDashboard({
     <section className="mx-auto max-w-6xl">
       <header className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-            Planejamento familiar
-          </p>
+          <Eyebrow>Planejamento familiar</Eyebrow>
           <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
             Projeção financeira
           </h1>
@@ -141,12 +146,9 @@ export function ForecastDashboard({
             previstos permanecem separados dos pagamentos realizados.
           </p>
         </div>
-        <Link
-          href="/cadastros"
-          className="quiet-button self-start sm:self-auto"
-        >
-          Gerenciar recorrências
-        </Link>
+        <Button asChild className="self-start sm:self-auto" variant="outline">
+          <Link href="/cadastros">Gerenciar recorrências</Link>
+        </Button>
       </header>
       {forecast.some((item) => item.estimates.length > 0) && (
         <p className="mb-4 max-w-3xl rounded-xl bg-warning-900 px-4 py-3 text-xs leading-5 text-warning-100">
@@ -223,7 +225,9 @@ export function ForecastDashboard({
                     </p>
                   </div>
                   <p className="shrink-0 text-sm font-semibold tabular-nums text-ink">
-                    {formatMoney(effectiveAmount(entry, overrides))}
+                    <FinancialValue>
+                      {formatMoney(effectiveAmount(entry, overrides))}
+                    </FinancialValue>
                   </p>
                 </div>
               ))}
@@ -236,9 +240,7 @@ export function ForecastDashboard({
         </section>
 
         <section className="surface p-5 sm:p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-            Saldo de partida
-          </p>
+          <Eyebrow>Saldo de partida</Eyebrow>
           <h2 className="mt-2 text-[15px] font-semibold text-ink">
             Saldo inicial da família
           </h2>
@@ -252,7 +254,7 @@ export function ForecastDashboard({
                 Informado em {formatDate(balanceAsOf)}
               </p>
               <p className="mt-1 text-lg font-semibold tabular-nums text-ink">
-                {formatMoney(openingBalance)}
+                <FinancialValue>{formatMoney(openingBalance)}</FinancialValue>
               </p>
             </div>
           ) : (
@@ -263,8 +265,7 @@ export function ForecastDashboard({
           <form action={saveOpeningBalance} className="mt-4 space-y-3">
             <label className="field-label">
               Saldo disponível (R$)
-              <input
-                className="field-control"
+              <Input
                 name="opening_balance"
                 inputMode="decimal"
                 defaultValue={
@@ -278,8 +279,7 @@ export function ForecastDashboard({
             </label>
             <label className="field-label">
               Data da conferência
-              <input
-                className="field-control"
+              <Input
                 type="date"
                 name="balance_as_of"
                 max={today}
@@ -287,15 +287,20 @@ export function ForecastDashboard({
                 required
               />
             </label>
-            <button className="primary-button w-full" type="submit">
+            <Button className="w-full" type="submit">
               Salvar saldo inicial
-            </button>
+            </Button>
           </form>
           {settings && (
             <form action={clearOpeningBalance} className="mt-2">
-              <button className="quiet-button w-full text-xs" type="submit">
+              <Button
+                className="w-full"
+                size="sm"
+                type="submit"
+                variant="outline"
+              >
                 Remover saldo e acumulado
-              </button>
+              </Button>
             </form>
           )}
         </section>
@@ -303,9 +308,7 @@ export function ForecastDashboard({
 
       <section className="mt-7">
         <header className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-            Histórico realizado
-          </p>
+          <Eyebrow>Histórico realizado</Eyebrow>
           <h2 className="mt-1 text-xl font-semibold tracking-tight text-ink">
             Evolução financeira
           </h2>
@@ -359,10 +362,10 @@ function MonthForecastCard({
     >
       <header className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+          <Eyebrow>
             {index === 0 ? "Mês atual" : `${index}º mês à frente`}
-          </p>
-          <h2 className="mt-1 text-base font-semibold capitalize text-ink">
+          </Eyebrow>
+          <h2 className="mt-1 text-base font-semibold text-ink">
             {monthTitle(month)}
           </h2>
         </div>
@@ -380,7 +383,7 @@ function MonthForecastCard({
         <p
           className={`mt-1 text-xl font-semibold tabular-nums ${balance < 0 ? "text-danger-300" : "text-ink"}`}
         >
-          {formatMoney(balance)}
+          <FinancialValue>{formatMoney(balance)}</FinancialValue>
         </p>
       </div>
       <div
@@ -406,7 +409,7 @@ function MonthForecastCard({
           <p
             className={`mt-0.5 text-sm font-semibold tabular-nums ${accumulated < 0 ? "text-danger-300" : "text-ink"}`}
           >
-            {formatMoney(accumulated)}
+            <FinancialValue>{formatMoney(accumulated)}</FinancialValue>
           </p>
         </div>
       ) : (
@@ -416,7 +419,9 @@ function MonthForecastCard({
       )}
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
         <span>
-          {formatMoney(totals.settledIncome + totals.settledExpenses)}{" "}
+          <FinancialValue>
+            {formatMoney(totals.settledIncome + totals.settledExpenses)}
+          </FinancialValue>{" "}
           realizados
         </span>
         <span>{totals.plannedCount} previstos</span>
@@ -484,7 +489,7 @@ function ForecastEntry({
         </div>
         <div className="shrink-0 text-right">
           <p className="text-xs font-semibold tabular-nums text-ink">
-            {formatMoney(effective)}
+            <FinancialValue>{formatMoney(effective)}</FinancialValue>
           </p>
           <p
             className={`mt-0.5 text-[9px] ${override ? "text-warning-200" : entry.status === "settled" ? "text-success-200" : "text-muted"}`}
@@ -502,11 +507,11 @@ function ForecastEntry({
             action={saveForecastOverride}
             className="mt-2 space-y-2 rounded-lg bg-canvas p-2.5"
           >
-            <input type="hidden" name="entry_id" value={entry.id} />
+            <Input type="hidden" name="entry_id" value={entry.id} />
             <label className="field-label">
               Valor hipotético (R$)
-              <input
-                className="field-control min-h-9"
+              <Input
+                className="min-h-9"
                 name="override_amount"
                 inputMode="decimal"
                 defaultValue={effective.toFixed(2).replace(".", ",")}
@@ -515,8 +520,8 @@ function ForecastEntry({
             </label>
             <label className="field-label">
               Observação <span className="font-normal">(opcional)</span>
-              <input
-                className="field-control min-h-9"
+              <Input
+                className="min-h-9"
                 name="note"
                 maxLength={160}
                 defaultValue={override?.note ?? ""}
@@ -527,22 +532,26 @@ function ForecastEntry({
               A hipótese altera somente esta projeção; não muda o lançamento nem
               registra pagamento.
             </p>
-            <button
-              className="quiet-button min-h-8 w-full text-xs"
+            <Button
+              className="w-full"
+              size="sm"
               type="submit"
+              variant="outline"
             >
               Aplicar hipótese
-            </button>
+            </Button>
           </form>
           {override && (
             <form action={clearForecastOverride} className="mt-1.5">
-              <input type="hidden" name="entry_id" value={entry.id} />
-              <button
-                className="text-[10px] text-muted underline underline-offset-2"
+              <Input type="hidden" name="entry_id" value={entry.id} />
+              <Button
+                className="text-[10px] underline underline-offset-2"
+                size="sm"
                 type="submit"
+                variant="ghost"
               >
                 Voltar ao valor previsto
-              </button>
+              </Button>
             </form>
           )}
         </details>
@@ -567,7 +576,7 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
         </div>
         <div className="shrink-0 text-right">
           <p className="text-xs font-semibold tabular-nums text-ink">
-            {formatMoney(estimate.amount)}
+            <FinancialValue>{formatMoney(estimate.amount)}</FinancialValue>
           </p>
           <p
             className={`mt-0.5 text-[9px] ${isEdited ? "text-warning-200" : "text-muted"}`}
@@ -584,16 +593,16 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
           action={saveCategoryForecastOverride}
           className="mt-2 space-y-2 rounded-lg bg-canvas p-2.5"
         >
-          <input type="hidden" name="category" value={estimate.category} />
-          <input
+          <Input type="hidden" name="category" value={estimate.category} />
+          <Input
             type="hidden"
             name="competence_month"
             value={estimate.competenceMonth}
           />
           <label className="field-label">
             Valor hipotético (R$)
-            <input
-              className="field-control min-h-9"
+            <Input
+              className="min-h-9"
               name="override_amount"
               inputMode="decimal"
               defaultValue={estimate.amount.toFixed(2).replace(".", ",")}
@@ -602,8 +611,8 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
           </label>
           <label className="field-label">
             Observação <span className="font-normal">(opcional)</span>
-            <input
-              className="field-control min-h-9"
+            <Input
+              className="min-h-9"
               name="note"
               maxLength={160}
               defaultValue={estimate.note ?? ""}
@@ -614,24 +623,26 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
             A média vem dos valores realizados da categoria. Esta hipótese não
             cria lançamento nem registra pagamento.
           </p>
-          <button className="quiet-button min-h-8 w-full text-xs" type="submit">
+          <Button className="w-full" size="sm" type="submit" variant="outline">
             Aplicar hipótese
-          </button>
+          </Button>
         </form>
         {isEdited && (
           <form action={clearCategoryForecastOverride} className="mt-1.5">
-            <input type="hidden" name="category" value={estimate.category} />
-            <input
+            <Input type="hidden" name="category" value={estimate.category} />
+            <Input
               type="hidden"
               name="competence_month"
               value={estimate.competenceMonth}
             />
-            <button
-              className="text-[10px] text-muted underline underline-offset-2"
+            <Button
+              className="text-[10px] underline underline-offset-2"
+              size="sm"
               type="submit"
+              variant="ghost"
             >
               Voltar à média histórica
-            </button>
+            </Button>
           </form>
         )}
       </details>
@@ -654,7 +665,7 @@ function AmountLine({
       <dd
         className={`text-xs font-semibold tabular-nums ${positive ? "text-success-200" : "text-ink"}`}
       >
-        {formatMoney(value)}
+        <FinancialValue>{formatMoney(value)}</FinancialValue>
       </dd>
     </div>
   );
@@ -667,6 +678,7 @@ function MoneyBarChart({
   title: string;
   data: HistoryMonth[];
 }) {
+  const { hidden } = useValuesVisibility();
   const maxValue = Math.max(...data.map((item) => item.income), 0);
   const hasData = maxValue > 0;
   return (
@@ -704,7 +716,11 @@ function MoneyBarChart({
               );
               return (
                 <g key={monthKey(item.month)}>
-                  <title>{`${monthTitle(item.month)}: ${formatMoney(item.income)}`}</title>
+                  <title>
+                    {hidden
+                      ? monthTitle(item.month)
+                      : `${monthTitle(item.month)}: ${formatMoney(item.income)}`}
+                  </title>
                   <rect
                     x={x}
                     y={174 - height}
@@ -735,6 +751,7 @@ function MoneyBarChart({
 }
 
 function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
+  const { hidden } = useValuesVisibility();
   const maxExpense = Math.max(...data.map((item) => item.expenses), 0);
   const hasData = maxExpense > 0;
   const ratioPoints = data
@@ -760,8 +777,11 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
           Despesas pagas
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <i className="size-2 rounded-full bg-warning-400" aria-hidden="true" />%
-          da renda
+          <i
+            className="size-2 rounded-full bg-warning-400"
+            aria-hidden="true"
+          />
+          % da renda
         </span>
       </div>
       {hasData ? (
@@ -797,7 +817,11 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
               );
               return (
                 <g key={monthKey(item.month)}>
-                  <title>{`${monthTitle(item.month)}: ${formatMoney(item.expenses)} em despesas pagas`}</title>
+                  <title>
+                    {hidden
+                      ? monthTitle(item.month)
+                      : `${monthTitle(item.month)}: ${formatMoney(item.expenses)} em despesas pagas`}
+                  </title>
                   <rect
                     x={x}
                     y={174 - height}

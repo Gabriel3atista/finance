@@ -1,14 +1,15 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   addMonths,
-  getSignedInContext,
   localDateString,
   moneyInputToNumber,
   monthDate,
 } from "@/features/transactions/lib/data";
+import { getSignedInContext } from "@/features/transactions/lib/server-context";
+
+type MutationResult = { error?: string; success?: string };
 
 async function getUserContext() {
   const context = await getSignedInContext();
@@ -27,7 +28,9 @@ function parseIsoDate(value: FormDataEntryValue | null) {
     : value;
 }
 
-export async function saveOpeningBalance(formData: FormData) {
+export async function saveOpeningBalance(
+  formData: FormData,
+): Promise<MutationResult> {
   const openingBalance = moneyInputToNumber(formData.get("opening_balance"));
   const balanceAsOf = parseIsoDate(formData.get("balance_as_of"));
   if (
@@ -36,7 +39,7 @@ export async function saveOpeningBalance(formData: FormData) {
     !balanceAsOf ||
     balanceAsOf > localDateString()
   ) {
-    redirect("/projecao?error=invalid-balance");
+    return { error: "invalid-balance" };
   }
 
   const context = await getUserContext();
@@ -52,12 +55,11 @@ export async function saveOpeningBalance(formData: FormData) {
       },
       { onConflict: "household_id" },
     );
-  if (error) redirect("/projecao?error=save-balance");
-  revalidatePath("/projecao");
-  redirect("/projecao?saved=balance");
+  if (error) return { error: "save-balance" };
+  return { success: "balance" };
 }
 
-export async function clearOpeningBalance() {
+export async function clearOpeningBalance(): Promise<MutationResult> {
   const context = await getUserContext();
   const { error } = await context.supabase
     .from("household_finance_settings")
@@ -68,12 +70,13 @@ export async function clearOpeningBalance() {
       updated_at: new Date().toISOString(),
     })
     .eq("household_id", context.householdId);
-  if (error) redirect("/projecao?error=save-balance");
-  revalidatePath("/projecao");
-  redirect("/projecao?saved=balance-cleared");
+  if (error) return { error: "save-balance" };
+  return { success: "balance-cleared" };
 }
 
-export async function saveForecastOverride(formData: FormData) {
+export async function saveForecastOverride(
+  formData: FormData,
+): Promise<MutationResult> {
   const entryId = String(formData.get("entry_id") ?? "");
   const overrideAmount = moneyInputToNumber(formData.get("override_amount"));
   const noteValue = String(formData.get("note") ?? "").trim();
@@ -84,7 +87,7 @@ export async function saveForecastOverride(formData: FormData) {
     overrideAmount > 999999999999.99 ||
     noteValue.length > 160
   ) {
-    redirect("/projecao?error=invalid-override");
+    return { error: "invalid-override" };
   }
 
   const context = await getUserContext();
@@ -95,7 +98,7 @@ export async function saveForecastOverride(formData: FormData) {
     .eq("household_id", context.householdId)
     .maybeSingle();
   if (entryError || !entry || entry.status !== "planned") {
-    redirect("/projecao?error=entry-unavailable");
+    return { error: "entry-unavailable" };
   }
 
   const { error } = await context.supabase
@@ -111,12 +114,13 @@ export async function saveForecastOverride(formData: FormData) {
       },
       { onConflict: "household_id,entry_id" },
     );
-  if (error) redirect("/projecao?error=save-override");
-  revalidatePath("/projecao");
-  redirect("/projecao?saved=override");
+  if (error) return { error: "save-override" };
+  return { success: "override" };
 }
 
-export async function clearForecastOverride(formData: FormData) {
+export async function clearForecastOverride(
+  formData: FormData,
+): Promise<MutationResult> {
   const entryId = String(formData.get("entry_id") ?? "");
   const context = await getUserContext();
   const { error } = await context.supabase
@@ -124,12 +128,13 @@ export async function clearForecastOverride(formData: FormData) {
     .delete()
     .eq("household_id", context.householdId)
     .eq("entry_id", entryId);
-  if (error) redirect("/projecao?error=clear-override");
-  revalidatePath("/projecao");
-  redirect("/projecao?saved=override-cleared");
+  if (error) return { error: "clear-override" };
+  return { success: "override-cleared" };
 }
 
-export async function saveCategoryForecastOverride(formData: FormData) {
+export async function saveCategoryForecastOverride(
+  formData: FormData,
+): Promise<MutationResult> {
   const category = String(formData.get("category") ?? "").trim();
   const competenceMonth = String(formData.get("competence_month") ?? "");
   const overrideAmount = moneyInputToNumber(formData.get("override_amount"));
@@ -143,7 +148,7 @@ export async function saveCategoryForecastOverride(formData: FormData) {
     overrideAmount > 999999999999.99 ||
     noteValue.length > 160
   ) {
-    redirect("/projecao?error=invalid-override");
+    return { error: "invalid-override" };
   }
   const current = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const lastForecastMonth = monthDate(addMonths(current, 3));
@@ -151,7 +156,7 @@ export async function saveCategoryForecastOverride(formData: FormData) {
     competenceMonth < monthDate(current) ||
     competenceMonth > lastForecastMonth
   ) {
-    redirect("/projecao?error=invalid-override");
+    return { error: "invalid-override" };
   }
 
   const context = await getUserContext();
@@ -169,12 +174,13 @@ export async function saveCategoryForecastOverride(formData: FormData) {
       },
       { onConflict: "household_id,competence_month,category" },
     );
-  if (error) redirect("/projecao?error=save-override");
-  revalidatePath("/projecao");
-  redirect("/projecao?saved=override");
+  if (error) return { error: "save-override" };
+  return { success: "override" };
 }
 
-export async function clearCategoryForecastOverride(formData: FormData) {
+export async function clearCategoryForecastOverride(
+  formData: FormData,
+): Promise<MutationResult> {
   const category = String(formData.get("category") ?? "").trim();
   const competenceMonth = String(formData.get("competence_month") ?? "");
   const context = await getUserContext();
@@ -184,7 +190,6 @@ export async function clearCategoryForecastOverride(formData: FormData) {
     .eq("household_id", context.householdId)
     .eq("competence_month", competenceMonth)
     .eq("category", category);
-  if (error) redirect("/projecao?error=clear-override");
-  revalidatePath("/projecao");
-  redirect("/projecao?saved=override-cleared");
+  if (error) return { error: "clear-override" };
+  return { success: "override-cleared" };
 }

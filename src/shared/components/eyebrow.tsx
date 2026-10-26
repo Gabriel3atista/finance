@@ -15,7 +15,7 @@ export function Eyebrow({
   return (
     <Component
       className={cn(
-        "eyebrow text-sm font-semibold uppercase tracking-[-0.6px]",
+        "font-eyebrow text-sm font-semibold uppercase tracking-[-0.6px]",
         tone === "accent" && "text-accent",
         tone === "danger" && "text-rose-200",
         tone === "muted" && "text-muted",

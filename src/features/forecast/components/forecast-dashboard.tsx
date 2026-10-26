@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,39 +23,87 @@ import {
   monthTitle,
   monthTotals,
   type CategoryEstimate,
-  type ForecastMonth,
   type ForecastOverride,
   type HistoryMonth,
 } from "@/features/forecast/lib/data";
-import {
-  clearCategoryForecastOverride,
-  clearForecastOverride,
-  clearOpeningBalance,
-  saveCategoryForecastOverride,
-  saveForecastOverride,
-  saveOpeningBalance,
-} from "@/features/forecast/actions";
+import { getForecastData } from "@/features/forecast/lib/data";
+import { queryKeys } from "@/shared/lib/query-keys";
+import { useForecastMutations } from "@/features/forecast/hooks/use-forecast-mutations";
+import { useEnsurePeriodEntries } from "@/features/transactions/hooks/use-ensure-period-entries";
+import { addMonths, monthString } from "@/features/transactions/lib/data";
 
 export function ForecastDashboard({
-  forecast,
-  overrides,
-  settings,
-  history,
-  overdue,
-  error,
-  saved,
+  householdId,
+  userId,
 }: {
-  forecast: ForecastMonth[];
-  overrides: Map<string, ForecastOverride>;
-  settings: {
-    openingBalance: number | null;
-    balanceAsOf: string | null;
-  } | null;
-  history: HistoryMonth[];
-  overdue: FinancialEntry[];
-  error?: string;
-  saved?: string;
+  householdId: string;
+  userId: string;
 }) {
+  const currentMonth = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth(),
+    1,
+  );
+  const forecastMonths = Array.from({ length: 4 }, (_, index) =>
+    monthString(addMonths(currentMonth, index)),
+  );
+  const ensureEntries = useEnsurePeriodEntries(
+    householdId,
+    userId,
+    forecastMonths,
+  );
+  const forecastQuery = useQuery({
+    queryKey: queryKeys.forecast(householdId),
+    queryFn: () => getForecastData(householdId),
+    enabled: ensureEntries.isReady,
+  });
+  const mutations = useForecastMutations(householdId);
+  if (forecastQuery.isPending && !ensureEntries.isError) {
+    return (
+      <section
+        className="mx-auto max-w-5xl"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <Eyebrow>Planejamento</Eyebrow>
+        <h1 className="mt-2 text-3xl font-semibold text-ink">Projeção</h1>
+        <p className="mt-2 text-sm text-muted">Carregando sua projeção…</p>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {[0, 1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-52 animate-pulse"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+  if (forecastQuery.isError || ensureEntries.isError || !forecastQuery.data) {
+    return (
+      <section
+        role="alert"
+        className="mx-auto max-w-3xl rounded-2xl border border-rose-800 bg-rose-900 p-6 text-rose-100"
+      >
+        <h1 className="text-lg font-semibold">
+          Não foi possível carregar a projeção
+        </h1>
+        <p className="mt-2 text-sm leading-6">
+          Confira sua conexão e tente novamente.
+        </p>
+      </section>
+    );
+  }
+  const { forecast, overrides, settings, history, overdue } =
+    forecastQuery.data;
+  const mutationError = Object.values(mutations).find(
+    (mutation) => mutation.isError,
+  )?.error;
+  const savedMessage = Object.values(mutations).some(
+    (mutation) => mutation.isSuccess,
+  )
+    ? "Alteração salva e projeção atualizada."
+    : null;
   const openingBalance = settings?.openingBalance ?? null;
   const balanceAsOf = settings?.balanceAsOf ?? null;
   let runningBalance = openingBalance;
@@ -123,16 +174,8 @@ export function ForecastDashboard({
     "save-override": "Não foi possível salvar a hipótese.",
     "clear-override": "Não foi possível remover a hipótese.",
   };
-  const savedMessage =
-    saved === "balance"
-      ? "Saldo inicial salvo; a projeção acumulada foi recalculada."
-      : saved === "balance-cleared"
-        ? "Saldo inicial removido. O saldo acumulado ficará oculto."
-        : saved === "override-cleared"
-          ? "Hipótese removida; o valor previsto original voltou à projeção."
-          : saved
-            ? "Alteração salva e projeção atualizada."
-            : null;
+  const mutationErrorCode =
+    mutationError instanceof Error ? mutationError.message : "";
 
   return (
     <section className="mx-auto max-w-6xl">
@@ -160,12 +203,13 @@ export function ForecastDashboard({
         </p>
       )}
 
-      {error && (
+      {mutationError && (
         <p
           className="mb-4 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
           role="alert"
         >
-          {errorMessages[error] ?? "Não foi possível concluir a ação."}
+          {errorMessages[mutationErrorCode] ??
+            "Não foi possível concluir a ação."}
         </p>
       )}
       {savedMessage && (
@@ -182,6 +226,7 @@ export function ForecastDashboard({
           <MonthForecastCard
             key={monthKey(item.month)}
             {...item}
+            mutations={mutations}
             overrides={overrides}
             highCommitment={
               item.commitment !== null &&
@@ -193,7 +238,7 @@ export function ForecastDashboard({
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(290px,0.65fr)]">
-        <section className="surface p-5 sm:p-6">
+        <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
           <header className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[15px] font-semibold text-ink">
@@ -221,7 +266,9 @@ export function ForecastDashboard({
                     <p
                       className={cn(
                         "mt-1 text-xs",
-                        entry.due_date! < today ? "text-rose-300" : "text-muted",
+                        entry.due_date! < today
+                          ? "text-rose-300"
+                          : "text-muted",
                       )}
                     >
                       {entry.due_date! < today ? "Vencida · " : "Vence · "}
@@ -243,7 +290,7 @@ export function ForecastDashboard({
           )}
         </section>
 
-        <section className="surface p-5 sm:p-6">
+        <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
           <Eyebrow>Saldo de partida</Eyebrow>
           <h2 className="mt-2 text-[15px] font-semibold text-ink">
             Saldo inicial da família
@@ -266,8 +313,16 @@ export function ForecastDashboard({
               Saldo acumulado oculto até informar um saldo inicial.
             </div>
           )}
-          <form action={saveOpeningBalance} className="mt-4 space-y-3">
-            <label className="field-label">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              mutations.saveOpeningBalance.mutate(
+                new FormData(event.currentTarget),
+              );
+            }}
+            className="mt-4 space-y-3"
+          >
+            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
               Saldo disponível (R$)
               <Input
                 name="opening_balance"
@@ -281,7 +336,7 @@ export function ForecastDashboard({
                 required
               />
             </label>
-            <label className="field-label">
+            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
               Data da conferência
               <Input
                 type="date"
@@ -291,17 +346,30 @@ export function ForecastDashboard({
                 required
               />
             </label>
-            <Button className="w-full" type="submit">
-              Salvar saldo inicial
+            <Button
+              className="w-full"
+              disabled={mutations.saveOpeningBalance.isPending}
+              type="submit"
+            >
+              {mutations.saveOpeningBalance.isPending
+                ? "Salvando…"
+                : "Salvar saldo inicial"}
             </Button>
           </form>
           {settings && (
-            <form action={clearOpeningBalance} className="mt-2">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                mutations.clearOpeningBalance.mutate();
+              }}
+              className="mt-2"
+            >
               <Button
                 className="w-full"
                 size="sm"
                 type="submit"
                 variant="outline"
+                disabled={mutations.clearOpeningBalance.isPending}
               >
                 Remover saldo e acumulado
               </Button>
@@ -346,6 +414,7 @@ function MonthForecastCard({
   index,
   overrides,
   highCommitment,
+  mutations,
 }: {
   month: Date;
   entries: FinancialEntry[];
@@ -357,13 +426,14 @@ function MonthForecastCard({
   index: number;
   overrides: Map<string, ForecastOverride>;
   highCommitment: boolean;
+  mutations: ReturnType<typeof useForecastMutations>;
 }) {
   const totalExpenses = totals.expenses + estimateTotal;
   const balance = totals.income - totalExpenses;
   return (
     <article
       className={cn(
-        "surface overflow-hidden p-4 sm:p-5",
+        "rounded-[18px] border border-line bg-secondary-900 shadow-card overflow-hidden p-4 sm:p-5",
         balance < 0 && "border-rose-800",
       )}
     >
@@ -452,7 +522,7 @@ function MonthForecastCard({
         )}
       </div>
       <details className="mt-4 border-t border-line pt-3">
-        <summary className="cursor-pointer text-xs font-medium text-accent">
+        <summary className="[&::-webkit-details-marker]:hidden cursor-pointer text-xs font-medium text-accent">
           Lançamentos ({entries.length + estimates.length})
         </summary>
         {entries.length || estimates.length ? (
@@ -462,10 +532,15 @@ function MonthForecastCard({
                 key={entry.id}
                 entry={entry}
                 override={overrides.get(entry.id)}
+                mutations={mutations}
               />
             ))}
             {estimates.map((estimate) => (
-              <ForecastEstimate key={estimate.key} estimate={estimate} />
+              <ForecastEstimate
+                key={estimate.key}
+                estimate={estimate}
+                mutations={mutations}
+              />
             ))}
           </div>
         ) : (
@@ -488,9 +563,11 @@ function MonthForecastCard({
 function ForecastEntry({
   entry,
   override,
+  mutations,
 }: {
   entry: FinancialEntry;
   override?: ForecastOverride;
+  mutations: ReturnType<typeof useForecastMutations>;
 }) {
   const effective = override?.override_amount ?? Number(entry.amount);
   const badge =
@@ -529,15 +606,20 @@ function ForecastEntry({
       </div>
       {entry.status === "planned" && (
         <details className="mt-2">
-          <summary className="cursor-pointer text-[10px] font-medium text-muted">
+          <summary className="[&::-webkit-details-marker]:hidden cursor-pointer text-[10px] font-medium text-muted">
             {override ? "Editar hipótese" : "Ajustar estimativa"}
           </summary>
           <form
-            action={saveForecastOverride}
+            onSubmit={(event) => {
+              event.preventDefault();
+              mutations.saveForecastOverride.mutate(
+                new FormData(event.currentTarget),
+              );
+            }}
             className="mt-2 space-y-2 rounded-lg bg-canvas p-2.5"
           >
             <Input type="hidden" name="entry_id" value={entry.id} />
-            <label className="field-label">
+            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
               Valor hipotético (R$)
               <Input
                 className="min-h-9"
@@ -547,7 +629,7 @@ function ForecastEntry({
                 required
               />
             </label>
-            <label className="field-label">
+            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
               Observação <span className="font-normal">(opcional)</span>
               <Input
                 className="min-h-9"
@@ -566,18 +648,28 @@ function ForecastEntry({
               size="sm"
               type="submit"
               variant="outline"
+              disabled={mutations.saveForecastOverride.isPending}
             >
               Aplicar hipótese
             </Button>
           </form>
           {override && (
-            <form action={clearForecastOverride} className="mt-1.5">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                mutations.clearForecastOverride.mutate(
+                  new FormData(event.currentTarget),
+                );
+              }}
+              className="mt-1.5"
+            >
               <Input type="hidden" name="entry_id" value={entry.id} />
               <Button
                 className="text-[10px] underline underline-offset-2"
                 size="sm"
                 type="submit"
                 variant="ghost"
+                disabled={mutations.clearForecastOverride.isPending}
               >
                 Voltar ao valor previsto
               </Button>
@@ -589,7 +681,13 @@ function ForecastEntry({
   );
 }
 
-function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
+function ForecastEstimate({
+  estimate,
+  mutations,
+}: {
+  estimate: CategoryEstimate;
+  mutations: ReturnType<typeof useForecastMutations>;
+}) {
   const isEdited =
     estimate.amount !== estimate.baseAmount || Boolean(estimate.note);
   return (
@@ -618,11 +716,16 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
         </div>
       </div>
       <details className="mt-2">
-        <summary className="cursor-pointer text-[10px] font-medium text-muted">
+        <summary className="[&::-webkit-details-marker]:hidden cursor-pointer text-[10px] font-medium text-muted">
           {isEdited ? "Editar hipótese" : "Ajustar estimativa"}
         </summary>
         <form
-          action={saveCategoryForecastOverride}
+          onSubmit={(event) => {
+            event.preventDefault();
+            mutations.saveCategoryForecastOverride.mutate(
+              new FormData(event.currentTarget),
+            );
+          }}
           className="mt-2 space-y-2 rounded-lg bg-canvas p-2.5"
         >
           <Input type="hidden" name="category" value={estimate.category} />
@@ -631,7 +734,7 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
             name="competence_month"
             value={estimate.competenceMonth}
           />
-          <label className="field-label">
+          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
             Valor hipotético (R$)
             <Input
               className="min-h-9"
@@ -641,7 +744,7 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
               required
             />
           </label>
-          <label className="field-label">
+          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
             Observação <span className="font-normal">(opcional)</span>
             <Input
               className="min-h-9"
@@ -655,12 +758,26 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
             A média vem dos valores realizados da categoria. Esta hipótese não
             cria lançamento nem registra pagamento.
           </p>
-          <Button className="w-full" size="sm" type="submit" variant="outline">
+          <Button
+            className="w-full"
+            disabled={mutations.saveCategoryForecastOverride.isPending}
+            size="sm"
+            type="submit"
+            variant="outline"
+          >
             Aplicar hipótese
           </Button>
         </form>
         {isEdited && (
-          <form action={clearCategoryForecastOverride} className="mt-1.5">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              mutations.clearCategoryForecastOverride.mutate(
+                new FormData(event.currentTarget),
+              );
+            }}
+            className="mt-1.5"
+          >
             <Input type="hidden" name="category" value={estimate.category} />
             <Input
               type="hidden"
@@ -672,6 +789,7 @@ function ForecastEstimate({ estimate }: { estimate: CategoryEstimate }) {
               size="sm"
               type="submit"
               variant="ghost"
+              disabled={mutations.clearCategoryForecastOverride.isPending}
             >
               Voltar à média histórica
             </Button>
@@ -717,7 +835,7 @@ function MoneyBarChart({
   const maxValue = Math.max(...data.map((item) => item.income), 0);
   const hasData = maxValue > 0;
   return (
-    <section className="surface p-5 sm:p-6">
+    <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
       <h3 className="text-sm font-semibold text-ink">{title}</h3>
       <p className="mt-1 text-xs text-muted">Renda recebida por competência</p>
       {hasData ? (
@@ -802,7 +920,7 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
     .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
     .join(" ");
   return (
-    <section className="surface p-5 sm:p-6">
+    <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
       <h3 className="text-sm font-semibold text-ink">
         Despesas e comprometimento
       </h3>

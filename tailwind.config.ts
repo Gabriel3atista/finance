@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   future: {
@@ -101,14 +102,26 @@ const config: Config = {
         "accent-soft": "hsl(207.5 30% 15.69%)",
       },
       fontFamily: {
-        sans: ["Inter Display", "Inter", "Arial", "sans-serif"],
+        sans: ["var(--font-inter)", "Arial", "sans-serif"],
+        eyebrow: ["var(--font-kantumruy-pro)", "sans-serif"],
       },
       boxShadow: {
         card: "0 1px 2px hsl(0 0% 0% / 24%), 0 12px 32px hsl(0 0% 0% / 20%)",
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addVariant }) => {
+      addVariant(
+        "mobile-app",
+        "@media (max-width: 767px), (display-mode: standalone)",
+      );
+      addVariant(
+        "standalone-wide",
+        "@media (display-mode: standalone) and (min-width: 768px)",
+      );
+    }),
+  ],
 };
 
 export default config;

@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { HistoryList } from "@/features/history/components/history-list";
-import { getHistoricalData } from "@/features/history/lib/data";
+import { getSignedInContext } from "@/features/transactions/lib/server-context";
 
 import { Eyebrow } from "@/shared/components/eyebrow";
 
 export default async function HistoryPage() {
-  const data = await getHistoricalData();
-  if (!data) redirect("/login");
+  const context = await getSignedInContext();
+  if (!context) redirect("/login");
 
   return (
     <div className="space-y-8">
@@ -20,7 +20,7 @@ export default async function HistoryPage() {
           desde 2024.
         </p>
       </header>
-      <HistoryList batches={data.batches} entries={data.entries} />
+      <HistoryList householdId={context.householdId} />
     </div>
   );
 }

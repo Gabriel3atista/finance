@@ -2,103 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  .eyebrow {
-    font-family: var(--font-kantumruy-pro), sans-serif;
+@layer base {
+  a,
+  button,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    @apply touch-manipulation;
   }
 }
 
-:root {
-  color-scheme: dark;
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --background: hsl(225 15.38% 5.1%);
-  --foreground: hsl(227.14 5.69% 51.76%);
-  --surface: hsl(220 7.32% 8.04%);
-  --border: hsl(225 7.69% 20.39%);
-  --moon: hsl(207.69 27.66% 90.78%);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  min-height: 100%;
-  background: var(--background);
-  overscroll-behavior: none;
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter), Arial, sans-serif;
-  font-optical-sizing: auto;
-  -webkit-font-smoothing: antialiased;
-}
-
-a,
-button,
-[role="button"] {
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-@media (pointer: coarse) {
-  input,
-  textarea,
-  select {
-    font-size: 16px;
-  }
-}
-
-::selection {
-  background: hsl(207.69 19.7% 25.88%);
-  color: hsl(204 45.45% 97.84%);
-}
-
-.surface {
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: var(--surface);
-  box-shadow:
-    0 1px 2px hsl(0 0% 0% / 24%),
-    0 12px 32px hsl(0 0% 0% / 20%);
-}
-
-.focus-ring:focus-visible {
-  outline: 3px solid hsl(208.89 10.93% 48.43%);
-  outline-offset: 3px;
-}
-
-@layer components {
-  .ui-button {
-    transition:
-      color 150ms var(--ease-out),
-      background-color 150ms var(--ease-out),
-      border-color 150ms var(--ease-out);
-  }
-
-  .ui-control {
-    transition:
-      color 150ms var(--ease-out),
-      background-color 150ms var(--ease-out),
-      border-color 150ms var(--ease-out),
-      box-shadow 150ms var(--ease-out);
-  }
-
-  .ui-select-content {
-    transform-origin: var(--radix-select-content-transform-origin);
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    transition:
-      opacity 150ms var(--ease-out),
-      transform 150ms var(--ease-out);
-  }
-
+@layer utilities {
   @starting-style {
     .ui-select-content[data-side="bottom"] {
       opacity: 0;
@@ -110,37 +23,4 @@ button,
       transform: translateY(0.5rem) scale(0.97);
     }
   }
-
-  .field-label {
-    @apply flex flex-col gap-1.5 text-xs font-medium text-muted;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-button {
-    transition:
-      color 150ms ease,
-      background-color 150ms ease,
-      border-color 150ms ease;
-  }
-
-  .ui-control {
-    transition-duration: 100ms;
-  }
-
-  .ui-select-content {
-    transform: none;
-    transition: opacity 100ms ease;
-  }
-
-  @starting-style {
-    .ui-select-content[data-side="bottom"],
-    .ui-select-content[data-side="top"] {
-      opacity: 0;
-    }
-  }
-}
-
-summary::-webkit-details-marker {
-  display: none;
 }

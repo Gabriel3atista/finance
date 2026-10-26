@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Kantumruy_Pro } from "next/font/google";
 import { cn } from "@/shared/lib/utils";
+import { QueryProvider } from "@/shared/components/query-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -40,8 +41,17 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html className={cn(inter.variable, kantumruyPro.variable)} lang="pt-BR">
-      <body>{children}</body>
+    <html
+      className={cn(
+        inter.variable,
+        kantumruyPro.variable,
+        "min-h-full overscroll-none bg-background-900 [color-scheme:dark] [-webkit-text-size-adjust:100%]",
+      )}
+      lang="pt-BR"
+    >
+      <body className="min-h-screen min-h-[100dvh] bg-background-900 font-sans text-foreground-400 antialiased [font-optical-sizing:auto] selection:bg-moon-800 selection:text-moon-50">
+        <QueryProvider>{children}</QueryProvider>
+      </body>
     </html>
   );
 }

@@ -27,7 +27,7 @@ export function EntryFields({
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <label className="field-label sm:col-span-2">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted sm:col-span-2">
         Descrição
         <Input
           name="title"
@@ -37,7 +37,7 @@ export function EntryFields({
           placeholder="Ex.: Salário, energia, mercado"
         />
       </label>
-      <label className="field-label">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Valor (R$)
         <Input
           name="amount"
@@ -49,7 +49,7 @@ export function EntryFields({
           placeholder="0,00"
         />
       </label>
-      <label className="field-label">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Categoria
         <Input
           name="category"
@@ -58,7 +58,7 @@ export function EntryFields({
           placeholder="Opcional"
         />
       </label>
-      <label className="field-label">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Vencimento
         <Input
           type="date"
@@ -66,7 +66,7 @@ export function EntryFields({
           defaultValue={entry?.due_date ?? ""}
         />
       </label>
-      <label className="field-label">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Responsável
         <Select
           name="responsible_user_id"
@@ -105,19 +105,19 @@ export function SeriesFields({
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <label className="field-label sm:col-span-2">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted sm:col-span-2">
         Descrição
         <Input name="title" maxLength={160} required />
       </label>
-      <label className="field-label">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Valor (R$)
         <Input name="amount" inputMode="decimal" placeholder="0,00" required />
       </label>
-      <label className="field-label">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Categoria
         <Input name="category" maxLength={80} placeholder="Opcional" />
       </label>
-      <label className="field-label">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Dia de vencimento
         <Input
           name="due_day"
@@ -127,7 +127,7 @@ export function SeriesFields({
           placeholder="Opcional"
         />
       </label>
-      <label className="field-label">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Responsável
         <Select name="responsible_user_id" defaultValue="__none">
           <SelectTrigger>

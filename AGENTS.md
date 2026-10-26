@@ -36,9 +36,12 @@ As skills deste repositório estão em `.agents/skills/`. Use este mapa para esc
 
 ## Componentes de interface
 
-- Para botoes, campos de entrada e seletores, use os componentes shadcn em `src/components/ui` (`Button`, `Input` e `Select`). Nao use elementos HTML nativos quando houver um componente equivalente no shadcn.
-- Use um elemento nativo somente quando nao houver equivalente no shadcn. Se o projeto precisar de um controle sem equivalente, crie um componente local reutilizavel.
-- Centralize estilos e variantes dos controles nos componentes shadcn; nao repita classes de controle nas telas.
+- Antes de criar qualquer componente de interface, procure primeiro se o shadcn/ui oferece um componente equivalente, incluindo componentes que podem ser adicionados ao projeto.
+- Use os componentes shadcn existentes ou adicione a implementação oficial do shadcn quando ela estiver disponível. Isso vale para qualquer componente, não apenas botões, campos e seletores.
+- Crie um componente local reutilizável somente quando o shadcn/ui não oferecer um equivalente. Nesse caso, mantenha a implementação e os estilos centralizados nesse componente.
+- Não substitua um componente shadcn disponível por uma implementação manual com HTML ou outra biblioteca.
+- Prefira classes utilitárias do Tailwind para layout, espaçamento, cores, tipografia, estados e responsividade. Adicione CSS próprio somente quando não houver uma solução direta com utilitários, variantes ou configuração do Tailwind.
+- Antes de adicionar um seletor ou regra em CSS, confira se pode expressar o mesmo estilo no `className` ou em uma variante/plugin do Tailwind.
 
 ## Paleta de cores
 

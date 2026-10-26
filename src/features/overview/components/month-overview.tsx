@@ -33,7 +33,7 @@ export function MonthOverview() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.85fr)]">
-        <div className="surface min-h-[315px] p-5 sm:p-7">
+        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-h-[315px] p-5 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[15px] font-semibold text-ink">
@@ -61,7 +61,7 @@ export function MonthOverview() {
           </div>
         </div>
 
-        <div className="surface min-h-[315px] p-5 sm:p-7">
+        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-h-[315px] p-5 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[15px] font-semibold text-ink">
@@ -95,7 +95,7 @@ export function MonthOverview() {
 
 function SummaryCard({ title, icon }: { title: string; icon: string }) {
   return (
-    <div className="surface flex min-h-[119px] items-start justify-between p-5 sm:p-6">
+    <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card flex min-h-[119px] items-start justify-between p-5 sm:p-6">
       <div>
         <p className="text-sm text-muted">{title}</p>
         <p

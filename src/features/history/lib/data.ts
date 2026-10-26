@@ -1,4 +1,6 @@
-import { getSignedInContext } from "@/features/transactions/lib/data";
+"use client";
+
+import { createClient } from "@/features/auth/lib/supabase/client";
 
 export type HistoricalBatch = {
   id: string;
@@ -24,23 +26,22 @@ export type HistoricalEntry = {
   source_cell: string;
 };
 
-export async function getHistoricalData() {
-  const context = await getSignedInContext();
-  if (!context) return null;
+export async function getHistoricalData(householdId: string) {
+  const supabase = createClient();
 
   const [batchesResult, entriesResult] = await Promise.all([
-    context.supabase
+    supabase
       .from("import_batches")
       .select("id, source_file_name, source_file_sha256, status, created_at")
-      .eq("household_id", context.householdId)
+      .eq("household_id", householdId)
       .eq("status", "committed")
       .order("created_at", { ascending: false }),
-    context.supabase
+    supabase
       .from("financial_entries")
       .select(
         "id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, import_batch_id, source_sheet, source_row, source_cell",
       )
-      .eq("household_id", context.householdId)
+      .eq("household_id", householdId)
       .eq("source_kind", "historical_import")
       .order("competence_month", { ascending: false })
       .order("source_sheet", { ascending: true })

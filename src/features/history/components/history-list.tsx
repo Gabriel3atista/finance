@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
 import {
@@ -10,24 +11,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  type HistoricalBatch,
-  type HistoricalEntry,
-} from "@/features/history/lib/data";
+import { getHistoricalData } from "@/features/history/lib/data";
+import { queryKeys } from "@/shared/lib/query-keys";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
 
-export function HistoryList({
-  batches,
-  entries,
-}: {
-  batches: HistoricalBatch[];
-  entries: HistoricalEntry[];
-}) {
+export function HistoryList({ householdId }: { householdId: string }) {
+  const historyQuery = useQuery({
+    queryKey: queryKeys.history(householdId),
+    queryFn: () => getHistoricalData(householdId),
+  });
   const [year, setYear] = useState("all");
+  const batches = historyQuery.data?.batches ?? [];
+  const entries = historyQuery.data?.entries ?? [];
+  if (historyQuery.isPending) {
+    return (
+      <div
+        className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-h-64 animate-pulse p-6"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        Carregando histórico…
+      </div>
+    );
+  }
+  if (historyQuery.isError) {
+    return (
+      <div
+        className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-6 text-sm text-rose-200"
+        role="alert"
+      >
+        Não foi possível carregar o histórico financeiro. Tente novamente.
+      </div>
+    );
+  }
   const years = Array.from(
     new Set(entries.map((entry) => entry.competence_month.slice(0, 4))),
   )
@@ -45,7 +65,7 @@ export function HistoryList({
 
   return (
     <div className="space-y-6">
-      <section className="surface p-5 sm:p-6">
+      <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <Eyebrow>Histórico preservado</Eyebrow>
@@ -58,7 +78,7 @@ export function HistoryList({
             </p>
           </div>
           {years.length > 0 && (
-            <label className="field-label sm:w-40">
+            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted sm:w-40">
               Filtrar por ano
               <Select onValueChange={setYear} value={year}>
                 <SelectTrigger>
@@ -79,12 +99,12 @@ export function HistoryList({
       </section>
 
       {entries.length === 0 ? (
-        <div className="surface px-5 py-8 text-center text-sm text-muted">
+        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card px-5 py-8 text-center text-sm text-muted">
           Nenhum lançamento histórico foi encontrado.
         </div>
       ) : (
         <section
-          className="surface overflow-hidden"
+          className="rounded-[18px] border border-line bg-secondary-900 shadow-card overflow-hidden"
           aria-label="Lançamentos históricos"
         >
           <div className="overflow-x-auto">
@@ -156,8 +176,8 @@ export function HistoryList({
       )}
 
       {batches.length > 0 && (
-        <details className="surface p-5 sm:p-6">
-          <summary className="cursor-pointer text-sm font-semibold text-ink">
+        <details className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
+          <summary className="[&::-webkit-details-marker]:hidden cursor-pointer text-sm font-semibold text-ink">
             Fontes preservadas ({batches.length})
           </summary>
           <ul className="mt-4 divide-y divide-line">

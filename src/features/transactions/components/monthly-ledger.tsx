@@ -1,17 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   addMonths,
   formatMoney,
-  getHouseholdMembers,
-  getMonthEntries,
   localDateString,
   monthString,
   type FinancialEntry,
   type HouseholdMember,
 } from "@/features/transactions/lib/data";
+import { useMonthData } from "@/features/transactions/hooks/use-month-data";
+import { queryKeys } from "@/shared/lib/query-keys";
 import { formatMonth } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
@@ -24,10 +28,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EntryFields } from "@/features/transactions/components/entry-fields";
+import { MobileMonthView } from "@/features/transactions/components/mobile-month-view";
+import { useMobileApp } from "@/shared/hooks/use-mobile-app";
 import {
   cancelFinancialEntry,
   createFinancialEntry,
-  setEntryStatus,
   updateFinancialEntry,
 } from "@/features/transactions/actions";
 
@@ -41,7 +46,7 @@ const errorMessages: Record<string, string> = {
   "cancel-entry": "Não foi possível cancelar o lançamento.",
 };
 
-export async function MonthlyLedger({
+export function MonthlyLedger({
   month,
   householdId,
   userId,
@@ -54,17 +59,77 @@ export async function MonthlyLedger({
   error?: string;
   saved?: string;
 }) {
-  let entries: FinancialEntry[] = [];
-  let members: HouseholdMember[] = [];
-  let loadFailed = false;
-  try {
-    [entries, members] = await Promise.all([
-      getMonthEntries(householdId, month),
-      getHouseholdMembers(householdId),
-    ]);
-  } catch {
-    loadFailed = true;
-  }
+  const isMobileApp = useMobileApp();
+  const monthValue = monthString(month);
+  const {
+    entries: entriesQuery,
+    members: membersQuery,
+    setStatus,
+    ensureEntries,
+  } = useMonthData({
+    householdId,
+    userId,
+    month: monthValue,
+  });
+  const queryClient = useQueryClient();
+  const [mutationMessage, setMutationMessage] = useState("");
+  const invalidateFinance = () => {
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.monthEntries(householdId, monthValue),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.dashboard(householdId),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.forecast(householdId),
+    });
+  };
+  const createEntry = useMutation({
+    mutationFn: async (form: FormData) => {
+      const result = await createFinancialEntry(form);
+      if (result.error) throw new Error(result.error);
+    },
+    onSuccess: () => {
+      setMutationMessage("saved");
+      invalidateFinance();
+    },
+    onError: (caught) =>
+      setMutationMessage(
+        caught instanceof Error ? caught.message : "save-entry",
+      ),
+  });
+  const updateEntry = useMutation({
+    mutationFn: async (form: FormData) => {
+      const result = await updateFinancialEntry(form);
+      if (result.error) throw new Error(result.error);
+    },
+    onSuccess: () => {
+      setMutationMessage("saved");
+      invalidateFinance();
+    },
+    onError: (caught) =>
+      setMutationMessage(
+        caught instanceof Error ? caught.message : "update-entry",
+      ),
+  });
+  const cancelEntry = useMutation({
+    mutationFn: async (form: FormData) => {
+      const result = await cancelFinancialEntry(form);
+      if (result.error) throw new Error(result.error);
+    },
+    onSuccess: () => {
+      setMutationMessage("saved");
+      invalidateFinance();
+    },
+    onError: (caught) =>
+      setMutationMessage(
+        caught instanceof Error ? caught.message : "cancel-entry",
+      ),
+  });
+  const entries = entriesQuery.data ?? [];
+  const members = membersQuery.data ?? [];
+  const loadFailed =
+    entriesQuery.isError || membersQuery.isError || ensureEntries.isError;
   const income = sum(entries, "income");
   const expenses = sum(entries, "expense");
   const settledIncome = sum(entries, "income", "settled");
@@ -77,7 +142,42 @@ export async function MonthlyLedger({
     (entry) =>
       entry.status === "planned" && entry.due_date && entry.due_date < today,
   ).length;
-  const monthValue = monthString(month);
+  if (
+    (entriesQuery.isPending && !ensureEntries.isError) ||
+    membersQuery.isPending
+  ) {
+    return isMobileApp ? (
+      <div aria-live="polite" aria-busy="true">
+        <section className="mx-auto max-w-xl">
+          <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-24 animate-pulse" />
+        </section>
+      </div>
+    ) : (
+      <div aria-live="polite" aria-busy="true">
+        <section className="mx-auto max-w-5xl">
+          <header className="mb-7">
+            <Eyebrow>Resumo mensal</Eyebrow>
+            <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
+              {formatMonth(month)}
+            </h1>
+            <p className="mt-2 text-sm text-muted">Carregando saldo...</p>
+          </header>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[0, 1, 2].map((item) => (
+              <div
+                key={item}
+                className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-28 animate-pulse"
+              />
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (isMobileApp) {
+    return <MobileMonthView currentBalance={settledIncome - settledExpenses} />;
+  }
 
   return (
     <section className="mx-auto max-w-5xl">
@@ -127,6 +227,25 @@ export async function MonthlyLedger({
           Alterações salvas.
         </p>
       )}
+      {setStatus.isError && (
+        <p
+          className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
+          role="alert"
+        >
+          NÃ£o foi possÃ­vel atualizar o lanÃ§amento. Tente novamente.
+        </p>
+      )}
+      {mutationMessage && (
+        <p
+          className={`mb-5 rounded-xl px-4 py-3 text-sm ${mutationMessage === "saved" ? "border border-success-800 bg-success-900 text-success-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
+          role={mutationMessage === "saved" ? "status" : "alert"}
+        >
+          {mutationMessage === "saved"
+            ? "Alterações salvas."
+            : (errorMessages[mutationMessage] ??
+              "Não foi possível salvar. Tente novamente.")}
+        </p>
+      )}
       {loadFailed && (
         <p
           className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
@@ -173,7 +292,7 @@ export async function MonthlyLedger({
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(270px,0.8fr)]">
-        <div className="surface p-5 sm:p-7">
+        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-7">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-[15px] font-semibold text-ink">
@@ -196,6 +315,23 @@ export async function MonthlyLedger({
                   members={members}
                   currentUserId={userId}
                   month={monthValue}
+                  onSetStatus={(id, nextStatus) =>
+                    setStatus.mutate({ id, nextStatus })
+                  }
+                  statusPending={
+                    setStatus.isPending && setStatus.variables?.id === entry.id
+                  }
+                  onUpdate={(form) => {
+                    setMutationMessage("");
+                    updateEntry.mutate(form);
+                  }}
+                  onCancel={(form) => {
+                    setMutationMessage("");
+                    cancelEntry.mutate(form);
+                  }}
+                  rowMutationPending={
+                    updateEntry.isPending || cancelEntry.isPending
+                  }
                 />
               ))}
             </div>
@@ -219,21 +355,28 @@ export async function MonthlyLedger({
         </div>
 
         <details
-          className="surface h-fit p-5 sm:p-6"
+          className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-fit p-5 sm:p-6"
           open={saved === "1" ? false : undefined}
         >
-          <summary className="cursor-pointer list-none text-[15px] font-semibold text-ink marker:hidden">
+          <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none text-[15px] font-semibold text-ink marker:hidden">
             Novo lançamento <span className="ml-1 text-accent">＋</span>
             <span className="mt-1 block text-sm font-normal text-muted">
               Receita ou despesa avulsa
             </span>
           </summary>
-          <form action={createFinancialEntry} className="mt-5 space-y-4">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setMutationMessage("");
+              createEntry.mutate(new FormData(event.currentTarget));
+            }}
+            className="mt-5 space-y-4"
+          >
             <p className="text-xs leading-5 text-muted">
               Para cartão, registre a fatura como uma única despesa. Não some as
               compras individuais junto com o pagamento da fatura.
             </p>
-            <label className="field-label">
+            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
               Tipo
               <Select name="entry_type" defaultValue="expense">
                 <SelectTrigger>
@@ -250,7 +393,11 @@ export async function MonthlyLedger({
               currentUserId={userId}
               month={monthValue}
             />
-            <Button className="w-full" type="submit">
+            <Button
+              className="w-full"
+              disabled={createEntry.isPending}
+              type="submit"
+            >
               Salvar lançamento
             </Button>
           </form>
@@ -265,11 +412,21 @@ function EntryRow({
   members,
   currentUserId,
   month,
+  onSetStatus,
+  statusPending,
+  onUpdate,
+  onCancel,
+  rowMutationPending,
 }: {
   entry: FinancialEntry;
   members: HouseholdMember[];
   currentUserId: string;
   month: string;
+  onSetStatus: (id: string, nextStatus: "planned" | "settled") => void;
+  statusPending: boolean;
+  onUpdate: (form: FormData) => void;
+  onCancel: (form: FormData) => void;
+  rowMutationPending: boolean;
 }) {
   const overdue =
     entry.status === "planned" &&
@@ -336,30 +493,43 @@ function EntryRow({
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <form action={setEntryStatus}>
-          <Input type="hidden" name="id" value={entry.id} />
-          <Input
-            type="hidden"
-            name="next_status"
-            value={entry.status === "settled" ? "planned" : "settled"}
-          />
-          <Input type="hidden" name="return_to" value={returnTo} />
-          <Button size="sm" type="submit" variant="outline">
+        <div>
+          <Button
+            disabled={statusPending}
+            onClick={() =>
+              onSetStatus(
+                entry.id,
+                entry.status === "settled" ? "planned" : "settled",
+              )
+            }
+            size="sm"
+            type="button"
+            variant="outline"
+          >
             {entry.status === "settled"
-              ? "Desfazer"
-              : entry.entry_type === "income"
-                ? "Marcar recebida"
-                : "Marcar paga"}
+              ? statusPending
+                ? "Atualizando…"
+                : "Desfazer"
+              : statusPending
+                ? "Atualizando…"
+                : entry.entry_type === "income"
+                  ? "Marcar recebida"
+                  : "Marcar paga"}
           </Button>
-        </form>
+        </div>
         {entry.status === "planned" && (
           <>
             <details className="group">
               <Button asChild size="sm" variant="outline">
-                <summary className="cursor-pointer list-none">Editar</summary>
+                <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none">
+                  Editar
+                </summary>
               </Button>
               <form
-                action={updateFinancialEntry}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  onUpdate(new FormData(event.currentTarget));
+                }}
                 className="mt-3 w-full space-y-3 rounded-xl border border-line bg-canvas/60 p-3 sm:min-w-[360px]"
               >
                 <Input type="hidden" name="id" value={entry.id} />
@@ -370,7 +540,7 @@ function EntryRow({
                   entry={entry}
                 />
                 {entry.source_kind === "recurrence" && (
-                  <label className="field-label">
+                  <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
                     Aplicar alteração
                     <Select name="scope" defaultValue="single">
                       <SelectTrigger>
@@ -385,12 +555,21 @@ function EntryRow({
                     </Select>
                   </label>
                 )}
-                <Button className="w-full" type="submit">
+                <Button
+                  className="w-full"
+                  disabled={rowMutationPending}
+                  type="submit"
+                >
                   Salvar edição
                 </Button>
               </form>
             </details>
-            <form action={cancelFinancialEntry}>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                onCancel(new FormData(event.currentTarget));
+              }}
+            >
               <Input type="hidden" name="id" value={entry.id} />
               <Input type="hidden" name="return_to" value={returnTo} />
               <Button
@@ -398,6 +577,7 @@ function EntryRow({
                 size="sm"
                 type="submit"
                 variant="outline"
+                disabled={rowMutationPending}
               >
                 Cancelar
               </Button>
@@ -427,7 +607,7 @@ function Summary({
   detail: ReactNode;
 }) {
   return (
-    <div className="surface min-h-[112px] p-4 sm:p-5">
+    <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-h-[112px] p-4 sm:p-5">
       <p className="text-sm text-muted">{title}</p>
       <p className="mt-2 text-[21px] font-semibold tracking-tight text-ink tabular-nums">
         <FinancialValue>{value}</FinancialValue>

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   formatMoney,
@@ -8,30 +11,77 @@ import {
 import { formatMonth } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
-import type {
-  DashboardDueEntry,
-  DashboardMonth,
-} from "@/features/dashboard/lib/data";
+import type { DashboardDueEntry } from "@/features/dashboard/lib/data";
 import { MonthlyHistoryCharts } from "@/features/dashboard/components/monthly-history-charts";
 import { cn } from "@/shared/lib/utils";
+import { getDashboardData } from "@/features/dashboard/lib/data";
+import { queryKeys } from "@/shared/lib/query-keys";
+import { useEnsurePeriodEntries } from "@/features/transactions/hooks/use-ensure-period-entries";
 
 export function Dashboard({
-  currentMonth,
-  history,
-  upcoming,
-  settledIncome,
-  settledExpenses,
-  realizedBalance,
-  plannedExpenses,
+  householdId,
+  userId,
 }: {
-  currentMonth: Date;
-  history: DashboardMonth[];
-  upcoming: DashboardDueEntry[];
-  settledIncome: number;
-  settledExpenses: number;
-  realizedBalance: number;
-  plannedExpenses: number;
+  householdId: string;
+  userId: string;
 }) {
+  const ensureMonth = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth(),
+    1,
+  );
+  const ensureEntries = useEnsurePeriodEntries(householdId, userId, [
+    monthString(ensureMonth),
+  ]);
+  const { data, isPending, isError } = useQuery({
+    queryKey: queryKeys.dashboard(householdId),
+    queryFn: () => getDashboardData(householdId),
+    enabled: ensureEntries.isReady,
+  });
+  if (isPending && !ensureEntries.isError) {
+    return (
+      <section
+        className="mx-auto max-w-6xl"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <header className="mb-7">
+          <Eyebrow>Visão geral da família</Eyebrow>
+          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink">
+            Dashboard
+          </h1>
+          <p className="mt-2 text-sm text-muted">Carregando seu resumo…</p>
+        </header>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-28 animate-pulse"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+  if (isError || ensureEntries.isError || !data) {
+    return (
+      <div
+        role="alert"
+        className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-6 text-sm text-rose-200"
+      >
+        Não foi possível carregar o painel financeiro. Tente novamente.
+      </div>
+    );
+  }
+  const {
+    currentMonth,
+    history,
+    upcoming,
+    settledIncome,
+    settledExpenses,
+    realizedBalance,
+    plannedExpenses,
+  } = data;
   const monthTitle = formatMonth(currentMonth);
 
   return (
@@ -105,7 +155,10 @@ export function Dashboard({
         </p>
       </section>
 
-      <section className="surface mt-8 p-5 sm:p-6" aria-labelledby="due-title">
+      <section
+        className="rounded-[18px] border border-line bg-secondary-900 shadow-card mt-8 p-5 sm:p-6"
+        aria-labelledby="due-title"
+      >
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <Eyebrow>Para acompanhar</Eyebrow>
@@ -169,7 +222,7 @@ function SummaryCard({
   tone: "normal" | "positive" | "negative";
 }) {
   return (
-    <article className="surface min-w-0 p-4 sm:p-5">
+    <article className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-w-0 p-4 sm:p-5">
       <h2 className="text-sm text-muted">{label}</h2>
       <p
         className={cn(
@@ -194,7 +247,7 @@ function DueRow({ entry }: { entry: DashboardDueEntry }) {
 
   return (
     <Link
-      className="flex items-center justify-between gap-3 py-3 focus-ring"
+      className="flex items-center justify-between gap-3 py-3 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600"
       href={href}
     >
       <span className="min-w-0">

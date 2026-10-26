@@ -1,52 +1,88 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  acceptHouseholdInvitation,
-  createHousehold,
-} from "@/features/household/actions";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { Eyebrow } from "@/shared/components/eyebrow";
-
-type Invitation = { id: string; household_id: string; expires_at: string };
-type Household = { id: string; name: string; member_role: string };
+import { fetchHouseholdPage } from "@/features/household/lib/queries";
+import { queryKeys } from "@/shared/lib/query-keys";
 
 export function HouseholdPanel({
-  household,
-  invitations,
-  invitationError,
+  userId,
+  email,
 }: {
-  household: Household | null;
-  invitations: Invitation[];
-  invitationError: string;
+  userId: string;
+  email: string;
 }) {
   const router = useRouter();
-  const [createState, createAction, creating] = useActionState(
-    createHousehold,
-    { error: "" },
-  );
+  const queryClient = useQueryClient();
+  const householdQuery = useQuery({
+    queryKey: queryKeys.household(userId),
+    queryFn: () => fetchHouseholdPage(userId, email),
+  });
+  const [createError, setCreateError] = useState("");
+  const [acceptError, setAcceptError] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteState, setInviteState] = useState("");
   const [inviteError, setInviteError] = useState("");
-  const [sending, setSending] = useState(false);
-
-  async function sendInvitation(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSending(true);
-    setInviteError("");
-    setInviteState("");
-
-    try {
+  const household = householdQuery.data?.household ?? null;
+  const invitations = householdQuery.data?.invitations ?? [];
+  const createMutation = useMutation({
+    mutationFn: async (name: string) => {
       const supabase = createClient();
-      const { error } = await supabase.functions.invoke("household-invite", {
-        body: {
-          householdId: household?.id,
-          email: inviteEmail.trim().toLowerCase(),
-        },
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("login");
+      const { error } = await supabase
+        .from("households")
+        .insert({ name, created_by: user.id });
+      if (error) throw error;
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.household(userId) }),
+    onError: () =>
+      setCreateError(
+        "NÃ£o foi possÃ­vel criar o nÃºcleo familiar. Tente novamente.",
+      ),
+  });
+  const acceptMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const supabase = createClient();
+      const { data: invitation, error: invitationError } = await supabase
+        .from("household_invitations")
+        .select("household_id")
+        .eq("id", invitationId)
+        .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+      if (invitationError || !invitation)
+        throw new Error("invitation-unavailable");
+      const { error } = await supabase.from("household_members").insert({
+        household_id: invitation.household_id,
+        user_id: userId,
+        member_role: "member",
       });
+      if (error) throw error;
+    },
+    onSuccess: () => router.push("/dashboard"),
+    onError: () =>
+      setAcceptError(
+        "Este convite não está mais disponível. Atualize a página e tente novamente.",
+      ),
+  });
+  const invitationMutation = useMutation({
+    mutationFn: async (targetEmail: string) => {
+      const { error } = await createClient().functions.invoke(
+        "household-invite",
+        {
+          body: { householdId: household?.id, email: targetEmail },
+        },
+      );
       if (error) {
         const context = (error as { context?: Response }).context;
         const payload = (await context
@@ -55,9 +91,47 @@ export function HouseholdPanel({
           .catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error ?? error.message);
       }
+    },
+    onSuccess: async () => {
       setInviteEmail("");
       setInviteState("Convite enviado. Ele expira em sete dias.");
-      router.refresh();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.household(userId),
+      });
+    },
+  });
+
+  if (householdQuery.isPending) {
+    return (
+      <div
+        className="grid gap-8 lg:grid-cols-[1fr_0.9fr]"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-64 animate-pulse" />
+        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-64 animate-pulse" />
+      </div>
+    );
+  }
+  if (householdQuery.isError) {
+    return (
+      <div
+        role="alert"
+        className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-6 text-sm text-rose-200"
+      >
+        NÃ£o foi possÃ­vel carregar as informaÃ§Ãµes do nÃºcleo familiar. Tente
+        novamente.
+      </div>
+    );
+  }
+
+  async function sendInvitation(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setInviteError("");
+    setInviteState("");
+
+    try {
+      await invitationMutation.mutateAsync(inviteEmail.trim().toLowerCase());
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "";
       setInviteError(
@@ -67,8 +141,6 @@ export function HouseholdPanel({
             ? "Não foi possível enviar o e-mail. Verifique a configuração de SMTP no Supabase."
             : "Não foi possível enviar. Confira o e-mail e tente novamente.",
       );
-    } finally {
-      setSending(false);
     }
   }
 
@@ -84,7 +156,21 @@ export function HouseholdPanel({
             Você será a pessoa responsável e poderá convidar sua esposa para
             compartilhar os mesmos dados.
           </p>
-          <form action={createAction} className="mt-6 space-y-4">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              setCreateError("");
+              const name = String(
+                new FormData(event.currentTarget).get("name") ?? "",
+              ).trim();
+              if (!name || name.length > 100) {
+                setCreateError("Informe um nome de até 100 caracteres.");
+                return;
+              }
+              createMutation.mutate(name);
+            }}
+            className="mt-6 space-y-4"
+          >
             <label className="block text-sm font-medium text-ink">
               Nome do núcleo
               <Input
@@ -95,13 +181,13 @@ export function HouseholdPanel({
                 required
               />
             </label>
-            {createState.error && (
+            {createError && (
               <p role="alert" className="text-sm text-rose-300">
-                {createState.error}
+                {createError}
               </p>
             )}
-            <Button disabled={creating} type="submit">
-              {creating ? "Criando…" : "Criar núcleo familiar"}
+            <Button disabled={createMutation.isPending} type="submit">
+              {createMutation.isPending ? "Criando…" : "Criar núcleo familiar"}
             </Button>
           </form>
         </section>
@@ -130,18 +216,31 @@ export function HouseholdPanel({
                     </p>
                   </div>
                   <form
-                    action={acceptHouseholdInvitation.bind(null, invitation.id)}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setAcceptError("");
+                      acceptMutation.mutate(invitation.id);
+                    }}
                   >
-                    <Button size="sm" type="submit">
+                    <Button
+                      disabled={acceptMutation.isPending}
+                      size="sm"
+                      type="submit"
+                    >
                       Aceitar convite
                     </Button>
                   </form>
                 </div>
               ))}
+              {acceptError && (
+                <p role="alert" className="text-sm text-rose-300">
+                  {acceptError}
+                </p>
+              )}
             </div>
           ) : (
             <p className="mt-3 text-sm leading-6 text-muted">
-              {invitationError ||
+              {acceptError ||
                 "Quando alguém convidar seu e-mail, o convite aparecerá aqui."}
             </p>
           )}
@@ -187,8 +286,10 @@ export function HouseholdPanel({
               {inviteState}
             </p>
           )}
-          <Button disabled={sending} type="submit">
-            {sending ? "Enviando…" : "Enviar convite por e-mail"}
+          <Button disabled={invitationMutation.isPending} type="submit">
+            {invitationMutation.isPending
+              ? "Enviando…"
+              : "Enviar convite por e-mail"}
           </Button>
         </form>
       ) : (

@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
 import { MonthlyLedger } from "@/features/transactions/components/monthly-ledger";
-import {
-  getSignedInContext,
-  parseMonth,
-} from "@/features/transactions/lib/data";
+import { parseMonth } from "@/features/transactions/lib/data";
+import { getSignedInContext } from "@/features/transactions/lib/server-context";
 
 export default async function MonthPage({
   searchParams,

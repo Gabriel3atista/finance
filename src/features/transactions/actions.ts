@@ -1,15 +1,14 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   monthDate,
   dateForDay,
-  getSignedInContext,
   moneyInputToNumber,
   parseMonth,
   parseMonthInput,
 } from "@/features/transactions/lib/data";
+import { getSignedInContext } from "@/features/transactions/lib/server-context";
 
 function textValue(formData: FormData, key: string, maxLength: number) {
   const value = String(formData.get(key) ?? "").trim();
@@ -38,12 +37,11 @@ async function getUserContext() {
   return context;
 }
 
-function refreshFinancePages() {
-  revalidatePath("/mes");
-  revalidatePath("/cadastros");
-}
+type MutationResult = { error?: string; success?: string };
 
-export async function createFinancialEntry(formData: FormData) {
+export async function createFinancialEntry(
+  formData: FormData,
+): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
   const category = textValue(formData, "category", 80);
   const amount = moneyInputToNumber(formData.get("amount"));
@@ -61,7 +59,7 @@ export async function createFinancialEntry(formData: FormData) {
     dueDate === undefined ||
     (entryType !== "income" && entryType !== "expense")
   )
-    redirect("/mes?error=invalid-entry");
+    return { error: "invalid-entry" };
 
   const context = await getUserContext();
   const responsibleUserId = responsibleValue(formData);
@@ -78,12 +76,13 @@ export async function createFinancialEntry(formData: FormData) {
     responsible_user_id: responsibleUserId,
     created_by: context.user.id,
   });
-  if (error) redirect("/mes?error=save-entry");
-  refreshFinancePages();
-  redirect(`/mes?month=${competenceMonth.slice(0, 7)}&saved=1`);
+  if (error) return { error: "save-entry" };
+  return { success: "created" };
 }
 
-export async function createRecurringItem(formData: FormData) {
+export async function createRecurringItem(
+  formData: FormData,
+): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
   const category = textValue(formData, "category", 80);
   const amount = moneyInputToNumber(formData.get("amount"));
@@ -107,7 +106,7 @@ export async function createRecurringItem(formData: FormData) {
       (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31)) ||
     (entryType !== "income" && entryType !== "expense")
   )
-    redirect("/cadastros?error=invalid-recurrence");
+    return { error: "invalid-recurrence" };
 
   const context = await getUserContext();
   const { error } = await context.supabase.from("recurring_items").insert({
@@ -122,12 +121,13 @@ export async function createRecurringItem(formData: FormData) {
     responsible_user_id: responsibleValue(formData),
     created_by: context.user.id,
   });
-  if (error) redirect("/cadastros?error=save-recurrence");
-  refreshFinancePages();
-  redirect("/cadastros?saved=recurrence");
+  if (error) return { error: "save-recurrence" };
+  return { success: "recurrence" };
 }
 
-export async function createInstallmentPlan(formData: FormData) {
+export async function createInstallmentPlan(
+  formData: FormData,
+): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
   const category = textValue(formData, "category", 80);
   const totalAmount = moneyInputToNumber(formData.get("total_amount"));
@@ -149,7 +149,7 @@ export async function createInstallmentPlan(formData: FormData) {
     (dueDay !== null &&
       (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31))
   )
-    redirect("/cadastros?error=invalid-installment");
+    return { error: "invalid-installment" };
 
   const context = await getUserContext();
   const { error } = await context.supabase.from("installment_plans").insert({
@@ -163,12 +163,13 @@ export async function createInstallmentPlan(formData: FormData) {
     responsible_user_id: responsibleValue(formData),
     created_by: context.user.id,
   });
-  if (error) redirect("/cadastros?error=save-installment");
-  refreshFinancePages();
-  redirect("/cadastros?saved=installment");
+  if (error) return { error: "save-installment" };
+  return { success: "installment" };
 }
 
-export async function updateFinancialEntry(formData: FormData) {
+export async function updateFinancialEntry(
+  formData: FormData,
+): Promise<MutationResult> {
   const id = String(formData.get("id") ?? "");
   const title = textValue(formData, "title", 160);
   const category = textValue(formData, "category", 80);
@@ -185,7 +186,7 @@ export async function updateFinancialEntry(formData: FormData) {
     amount > 999999999999.99 ||
     dueDate === undefined
   )
-    redirect("/mes?error=invalid-entry");
+    return { error: "invalid-entry" };
 
   const context = await getUserContext();
   const { data: entry } = await context.supabase
@@ -195,7 +196,7 @@ export async function updateFinancialEntry(formData: FormData) {
     .eq("household_id", context.householdId)
     .maybeSingle();
   if (!entry || entry.status !== "planned")
-    redirect("/mes?error=entry-unavailable");
+    return { error: "entry-unavailable" };
 
   const values = {
     title,
@@ -216,7 +217,7 @@ export async function updateFinancialEntry(formData: FormData) {
       .eq("recurring_item_id", entry.recurring_item_id)
       .gte("competence_month", entry.competence_month)
       .eq("status", "planned");
-    if (fetchError) redirect("/mes?error=update-series");
+    if (fetchError) return { error: "update-series" };
 
     const dueDay = dueDate ? Number(dueDate.slice(-2)) : null;
     const updateResults = await Promise.all(
@@ -236,7 +237,7 @@ export async function updateFinancialEntry(formData: FormData) {
       ),
     );
     if (updateResults.some((result) => result.error))
-      redirect("/mes?error=update-series");
+      return { error: "update-series" };
 
     const { error: definitionError } = await context.supabase
       .from("recurring_items")
@@ -249,7 +250,7 @@ export async function updateFinancialEntry(formData: FormData) {
       })
       .eq("id", entry.recurring_item_id)
       .eq("household_id", context.householdId);
-    if (definitionError) redirect("/mes?error=update-series");
+    if (definitionError) return { error: "update-series" };
   } else {
     const { error } = await context.supabase
       .from("financial_entries")
@@ -257,34 +258,14 @@ export async function updateFinancialEntry(formData: FormData) {
       .eq("id", id)
       .eq("household_id", context.householdId)
       .eq("status", "planned");
-    if (error) redirect("/mes?error=update-entry");
+    if (error) return { error: "update-entry" };
   }
-  refreshFinancePages();
-  redirect(`/mes?month=${entry.competence_month.slice(0, 7)}&saved=1`);
+  return { success: entry.competence_month.slice(0, 7) };
 }
 
-export async function setEntryStatus(formData: FormData) {
-  const id = String(formData.get("id") ?? "");
-  const nextStatus = String(formData.get("next_status") ?? "");
-  if (!id || (nextStatus !== "planned" && nextStatus !== "settled")) {
-    redirect("/mes?error=invalid-entry");
-  }
-  const context = await getUserContext();
-  const { error } = await context.supabase
-    .from("financial_entries")
-    .update({
-      status: nextStatus,
-      settled_at: nextStatus === "settled" ? new Date().toISOString() : null,
-    })
-    .eq("id", id)
-    .eq("household_id", context.householdId)
-    .in("status", ["planned", "settled"]);
-  if (error) redirect("/mes?error=update-entry");
-  refreshFinancePages();
-  redirect(safeMonthReturn(formData.get("return_to")));
-}
-
-export async function cancelFinancialEntry(formData: FormData) {
+export async function cancelFinancialEntry(
+  formData: FormData,
+): Promise<MutationResult> {
   const id = String(formData.get("id") ?? "");
   const context = await getUserContext();
   const { error } = await context.supabase
@@ -293,25 +274,26 @@ export async function cancelFinancialEntry(formData: FormData) {
     .eq("id", id)
     .eq("household_id", context.householdId)
     .eq("status", "planned");
-  if (error) redirect("/mes?error=cancel-entry");
-  refreshFinancePages();
-  redirect(safeMonthReturn(formData.get("return_to")));
+  if (error) return { error: "cancel-entry" };
+  return { success: "cancelled" };
 }
 
-export async function deactivateSeries(formData: FormData) {
+export async function deactivateSeries(
+  formData: FormData,
+): Promise<MutationResult> {
   const kind = String(formData.get("kind") ?? "");
   const id = String(formData.get("id") ?? "");
   const context = await getUserContext();
   const table = kind === "recurrence" ? "recurring_items" : "installment_plans";
   if (!id || (kind !== "recurrence" && kind !== "installment")) {
-    redirect("/cadastros?error=invalid-series");
+    return { error: "invalid-series" };
   }
   const { error } = await context.supabase
     .from(table)
     .update({ is_active: false })
     .eq("id", id)
     .eq("household_id", context.householdId);
-  if (error) redirect("/cadastros?error=deactivate-series");
+  if (error) return { error: "deactivate-series" };
   const currentMonth = monthDate(new Date());
   const entryColumn =
     kind === "recurrence" ? "recurring_item_id" : "installment_plan_id";
@@ -322,13 +304,6 @@ export async function deactivateSeries(formData: FormData) {
     .eq(entryColumn, id)
     .gte("competence_month", currentMonth)
     .eq("status", "planned");
-  if (cancelError) redirect("/cadastros?error=deactivate-series");
-  refreshFinancePages();
-  redirect("/cadastros?deactivated=1");
-}
-
-function safeMonthReturn(value: FormDataEntryValue | null) {
-  if (typeof value === "string" && /^\/mes\?month=\d{4}-\d{2}$/.test(value))
-    return value;
-  return "/mes";
+  if (cancelError) return { error: "deactivate-series" };
+  return { success: "deactivated" };
 }

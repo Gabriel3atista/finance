@@ -23,7 +23,7 @@ export function EmptyFeaturePage({
           {description}
         </p>
       </div>
-      <div className="surface flex min-h-[310px] flex-col items-center justify-center px-6 py-12 text-center sm:min-h-[370px]">
+      <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card flex min-h-[310px] flex-col items-center justify-center px-6 py-12 text-center sm:min-h-[370px]">
         <div className="grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent">
           <FeatureIcon name={icon} />
         </div>

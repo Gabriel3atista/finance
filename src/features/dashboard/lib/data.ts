@@ -1,11 +1,13 @@
-import { createClient } from "@/features/auth/lib/supabase/server";
+"use client";
+
+import { createClient } from "@/features/auth/lib/supabase/client";
 import {
   addMonths,
-  getMonthEntries,
   localDateString,
   monthDate,
   type FinancialEntry,
 } from "@/features/transactions/lib/data";
+import { fetchMonthEntries } from "@/features/transactions/lib/queries";
 
 export type DashboardMonth = {
   month: Date;
@@ -19,7 +21,7 @@ export type DashboardDueEntry = Pick<
 >;
 
 export async function getDashboardData(householdId: string) {
-  const supabase = await createClient();
+  const supabase = createClient();
   const today = new Date();
   const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const firstMonth = addMonths(currentMonth, -59);
@@ -27,7 +29,7 @@ export async function getDashboardData(householdId: string) {
   const dueLimit = localDateString(addDays(today, 30));
 
   const [currentEntries, historyResult, dueResult] = await Promise.all([
-    getMonthEntries(householdId, currentMonth),
+    fetchMonthEntries(householdId, currentMonth),
     getSettledHistory(
       supabase,
       householdId,

@@ -19,5 +19,26 @@ export default async function WorkspaceLayout({
     .maybeSingle();
 
   if (!member) redirect("/household");
-  return <AppShell userEmail={user.email ?? ""}>{children}</AppShell>;
+
+  const metadata = user.user_metadata ?? {};
+  const userName =
+    (typeof metadata.full_name === "string" && metadata.full_name) ||
+    (typeof metadata.name === "string" && metadata.name) ||
+    user.email?.split("@")[0] ||
+    "Usuário";
+  const userAvatarUrl =
+    (typeof metadata.avatar_url === "string" && metadata.avatar_url) ||
+    (typeof metadata.picture === "string" && metadata.picture) ||
+    "";
+
+  return (
+    <AppShell
+      userEmail={user.email ?? ""}
+      userId={user.id}
+      userName={userName}
+      fallbackAvatarUrl={userAvatarUrl}
+    >
+      {children}
+    </AppShell>
+  );
 }

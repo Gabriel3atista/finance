@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { AppNav } from "@/shared/components/app-nav";
-import { Eyebrow } from "@/shared/components/eyebrow";
+import { ProfileFooter } from "@/shared/components/profile-footer";
+import { ProfileMenuDrawer } from "@/shared/components/profile-menu-drawer";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import {
   ValuesVisibilityProvider,
@@ -10,41 +12,64 @@ import {
 export function AppShell({
   children,
   userEmail,
+  userId,
+  userName,
+  fallbackAvatarUrl,
 }: {
   children: ReactNode;
   userEmail: string;
+  userId: string;
+  userName: string;
+  fallbackAvatarUrl: string;
 }) {
   return (
     <ValuesVisibilityProvider>
-      <div className="min-h-[100dvh] lg:grid lg:h-[100dvh] lg:grid-cols-[244px_minmax(0,1fr)] lg:overflow-hidden">
-        <aside className="hidden border-r border-line bg-secondary-900 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col lg:overflow-y-auto">
+      <div className="app-shell-root min-h-[100dvh] lg:grid lg:h-[100dvh] lg:grid-cols-[244px_minmax(0,1fr)] lg:overflow-hidden standalone-wide:!flex standalone-wide:h-[100dvh] standalone-wide:min-h-0 standalone-wide:flex-col">
+        <aside className="app-shell-sidebar hidden border-r border-line bg-secondary-900 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col lg:overflow-y-auto standalone-wide:!hidden">
           <AppNav variant="sidebar" />
-          <div className="mt-auto px-6 pb-7">
-            <div className="rounded-2xl bg-canvas px-4 py-4">
-              <Eyebrow>Finance</Eyebrow>
-              <p className="mt-2 text-sm leading-5 text-ink">
-                Clareza para cuidar do que importa.
-              </p>
-            </div>
-          </div>
+          <ProfileFooter
+            userId={userId}
+            userEmail={userEmail}
+            userName={userName}
+            fallbackAvatarUrl={fallbackAvatarUrl}
+          />
         </aside>
-        <div className="min-w-0 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col">
-          <header className="flex min-h-[68px] shrink-0 items-center justify-between border-b border-line bg-secondary-900/90 px-5 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-10">
-            <div className="flex items-center gap-3 lg:hidden">
-              <div
-                className="grid size-9 place-items-center rounded-xl bg-moon-200 text-background-900"
-                aria-hidden="true"
+        <div className="app-shell-content min-w-0 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col standalone-wide:!h-auto standalone-wide:min-h-0 standalone-wide:flex-1">
+          <header className="app-shell-header flex min-h-[68px] shrink-0 items-center justify-between border-b border-line px-5 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-10 mobile-app:!border-b-0">
+            <div className="app-shell-mobile-header flex w-full items-center justify-between lg:hidden mobile-app:!flex">
+              <ProfileMenuDrawer
+                userId={userId}
+                userName={userName}
+                userEmail={userEmail}
+                fallbackAvatarUrl={fallbackAvatarUrl}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Notificações"
+                title="Notificações"
+                className="size-10 rounded-full"
               >
-                <BrandMark />
-              </div>
-              <span className="text-[15px] font-semibold tracking-tight text-ink">
-                Finance
-              </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                  <path d="M10 21h4" />
+                </svg>
+              </Button>
             </div>
-            <div className="hidden text-sm text-muted lg:block">
+            <div className="app-shell-desktop-context hidden text-sm text-muted lg:block mobile-app:!hidden">
               Finanças da família
             </div>
-            <div className="flex items-center gap-3">
+            <div className="app-shell-desktop-actions hidden items-center gap-3 lg:flex mobile-app:!hidden">
               <ValuesVisibilityToggle />
               <span
                 className="hidden max-w-[220px] truncate text-sm text-muted sm:inline"
@@ -62,44 +87,18 @@ export function AppShell({
             </div>
           </header>
           <main className="min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-            <div className="mx-auto w-full max-w-[1440px] px-5 pb-28 pt-8 sm:px-8 sm:pt-10 lg:px-10 lg:pb-12">
+            <div className="mx-auto w-full max-w-[1440px] px-3 pb-28 pt-3 sm:px-8 sm:pt-10 lg:px-10 lg:pb-12">
               {children}
             </div>
           </main>
         </div>
         <nav
-          className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-secondary-900/95 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 backdrop-blur lg:hidden"
+          className="app-shell-mobile-nav fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-secondary-900/60 p-1 shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-xl lg:hidden standalone-wide:!block"
           aria-label="Navegação principal"
         >
           <AppNav variant="mobile" />
         </nav>
       </div>
     </ValuesVisibilityProvider>
-  );
-}
-
-function BrandMark() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="size-[19px]"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M5 17.5 10 12l3.2 3.1L19 8"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M14.5 8H19v4.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

@@ -1,13 +1,15 @@
-import { createClient } from "@/features/auth/lib/supabase/server";
+"use client";
+
+import { createClient } from "@/features/auth/lib/supabase/client";
 import { formatMonth } from "@/shared/lib/date";
 import {
   addMonths,
-  getMonthEntries,
   localDateString,
   monthDate,
   monthString,
   type FinancialEntry,
 } from "@/features/transactions/lib/data";
+import { fetchMonthEntries } from "@/features/transactions/lib/queries";
 
 export type ForecastOverride = {
   entry_id: string;
@@ -38,7 +40,7 @@ export type HistoryMonth = {
 };
 
 export async function getForecastData(householdId: string) {
-  const supabase = await createClient();
+  const supabase = createClient();
   const current = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const months = Array.from({ length: 4 }, (_, index) =>
     addMonths(current, index),
@@ -46,7 +48,7 @@ export async function getForecastData(householdId: string) {
   const forecast: ForecastMonth[] = await Promise.all(
     months.map(async (month) => ({
       month,
-      entries: await getMonthEntries(householdId, month),
+      entries: await fetchMonthEntries(householdId, month),
       estimates: [],
     })),
   );

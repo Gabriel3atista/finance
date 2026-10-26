@@ -18,13 +18,13 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
   return (
     <div
       className={cn(
-        variant === "sidebar" ? "flex flex-col" : "mx-auto flex max-w-lg justify-around",
+        variant === "sidebar" ? "flex flex-col" : "mx-auto flex max-w-lg",
       )}
     >
       {variant === "sidebar" && (
         <Link
           href="/dashboard"
-          className="focus-ring mb-10 flex h-[68px] items-center gap-3 border-b border-line px-6"
+          className="focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mb-10 flex h-[68px] items-center gap-3 border-b border-line px-6"
           aria-label="Finance, página inicial"
         >
           <span className="grid size-9 place-items-center rounded-xl bg-moon-200 text-background-900">
@@ -37,7 +37,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
       )}
       <div
         className={cn(
-          variant === "sidebar" ? "space-y-1 px-3" : "flex w-full justify-around",
+          variant === "sidebar" ? "space-y-1 px-3" : "flex w-full gap-1",
         )}
       >
         {items.map((item) => {
@@ -48,17 +48,23 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "focus-ring flex items-center",
+                "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 flex items-center",
                 variant === "sidebar" && "gap-3 rounded-xl px-3 py-3 text-sm",
                 variant === "mobile" &&
-                  "min-w-[60px] flex-col gap-1 rounded-xl px-1 py-1.5 text-[9px] sm:min-w-[68px] sm:px-2 sm:text-[10px]",
+                  "size-11 shrink-0 justify-center rounded-full",
                 active
-                  ? "bg-white font-semibold text-black"
-                  : "text-muted hover:bg-canvas hover:text-ink",
+                  ? variant === "mobile"
+                    ? "bg-moon-200 text-background-900"
+                    : "bg-white font-semibold text-black"
+                  : variant === "mobile"
+                    ? "text-muted hover:bg-white/10 hover:text-ink"
+                    : "text-muted hover:bg-canvas hover:text-ink",
               )}
+              aria-label={variant === "mobile" ? item.label : undefined}
+              title={variant === "mobile" ? item.label : undefined}
             >
               <NavIcon name={item.icon} active={active} />
-              <span>{item.label}</span>
+              {variant === "sidebar" && <span>{item.label}</span>}
             </Link>
           );
         })}

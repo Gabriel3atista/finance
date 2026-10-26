@@ -40,8 +40,8 @@ export function AppShell({
             />
           </aside>
           <div className="app-shell-content min-w-0 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col standalone-wide:!h-auto standalone-wide:min-h-0 standalone-wide:flex-1">
-            <header className="app-shell-header relative flex min-h-[68px] shrink-0 items-center justify-between px-4 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-10 mobile-app:!border-b-0">
-              <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+            <header className="app-shell-header relative flex min-h-[calc(68px_+_env(safe-area-inset-top))] shrink-0 items-center justify-between px-4 pt-[env(safe-area-inset-top)] sm:px-8 lg:px-10 mobile-app:!border-b-0">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[env(safe-area-inset-top)] z-10 flex items-center justify-center">
                 <AppShellHeaderSlot />
               </div>
               <div className="app-shell-mobile-header flex w-full items-center justify-between lg:hidden mobile-app:!flex">

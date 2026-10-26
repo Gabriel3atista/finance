@@ -1,11 +1,23 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  AnimatePresence,
+  LayoutGroup,
+  motion,
+  useReducedMotion,
+} from "motion/react";
 import { useLayoutEffect, useRef } from "react";
 
 type NumberToken =
-  | { kind: "digit"; key: string; value: string }
-  | { kind: "static"; key: string; value: string };
+  | { kind: "digit"; key: string; value: string; region: "number" | "affix" }
+  | { kind: "static"; key: string; value: string; region: "number" | "affix" };
+
+type LayoutTransition = {
+  layout: {
+    duration: number;
+    ease: typeof DIGIT_EASE;
+  };
+};
 
 const DIGIT_STAGGER_SECONDS = 0.1;
 const DIGIT_EASE = [0.77, 0, 0.175, 1] as const;
@@ -21,16 +33,35 @@ export function AnimatedNumber({
 }) {
   const shouldReduceMotion = useReducedMotion();
   const formatter = new Intl.NumberFormat(locale, format);
-  const parts = formatter.formatToParts(value);
+  const formattedParts = formatter.formatToParts(value);
+  const parts = positionSignBeforeNumber(
+    ensureSignSlot(formattedParts, formatter.formatToParts(-1)),
+  );
   const formattedValue = parts.map((part) => part.value).join("");
   const tokens = tokenizeParts(parts);
+  const numberTokens = tokens.filter((token) => token.region === "number");
+  const signToken = tokens.find((token) => token.key === "sign");
+  const firstNumberToken = tokens.findIndex((token) => token.region === "number");
+  const lastNumberToken = tokens.findLastIndex((token) => token.region === "number");
+  const prefixTokens = tokens
+    .slice(0, firstNumberToken)
+    .filter((token) => token.key !== "sign");
+  const suffixTokens = tokens.slice(lastNumberToken + 1);
   const previousDigits = useRef(new Map<string, string>());
+  const hasRenderedValue = useRef(false);
   const changedDigitOrder = new Map<string, number>();
+  const layoutTransition: LayoutTransition = {
+    layout: {
+      duration: shouldReduceMotion ? 0.15 : 0.3,
+      ease: DIGIT_EASE,
+    },
+  };
 
   for (const token of tokens) {
     if (
       token.kind === "digit" &&
-      previousDigits.current.has(token.key) &&
+      token.region === "number" &&
+      hasRenderedValue.current &&
       previousDigits.current.get(token.key) !== token.value
     ) {
       changedDigitOrder.set(token.key, changedDigitOrder.size);
@@ -40,41 +71,112 @@ export function AnimatedNumber({
   useLayoutEffect(() => {
     previousDigits.current = new Map(
       tokens.flatMap((token) =>
-        token.kind === "digit" ? [[token.key, token.value] as const] : [],
+        token.kind === "digit" && token.region === "number"
+          ? [[token.key, token.value] as const]
+          : [],
       ),
     );
+    hasRenderedValue.current = true;
   }, [tokens]);
 
   return (
     <span className="inline-flex items-baseline whitespace-pre">
       <span className="sr-only">{formattedValue}</span>
-      <span
-        aria-hidden="true"
-        className="inline-flex items-baseline whitespace-pre tabular-nums"
-      >
-        {tokens.map((token) =>
-          token.kind === "digit" ? (
-            <AnimatedDigit
-              digit={token.value}
-              key={token.key}
-              reduceMotion={Boolean(shouldReduceMotion)}
-              staggerIndex={changedDigitOrder.get(token.key) ?? 0}
-            />
-          ) : (
-            <span key={token.key}>{token.value}</span>
-          ),
-        )}
-      </span>
+      <LayoutGroup>
+        <span aria-hidden="true" className="inline-flex items-baseline whitespace-pre">
+          {prefixTokens.map((token) => renderToken(token, layoutTransition, {
+            animateOnMount: hasRenderedValue.current && token.kind === "digit" && !previousDigits.current.has(token.key),
+            reduceMotion: Boolean(shouldReduceMotion),
+            staggerIndex: changedDigitOrder.get(token.key) ?? 0,
+          }))}
+          <motion.span
+            className="relative inline-flex items-baseline whitespace-pre tabular-nums"
+            layout="size"
+            transition={layoutTransition}
+          >
+            {signToken?.kind === "digit" ? (
+              <AnimatedDigit
+                animateOnMount={
+                  hasRenderedValue.current &&
+                  !previousDigits.current.has(signToken.key)
+                }
+                className="absolute right-full -mr-4 inline-grid align-baseline"
+                digit={signToken.value}
+                key={signToken.key}
+                layoutTransition={layoutTransition}
+                reduceMotion={Boolean(shouldReduceMotion)}
+                staggerIndex={0}
+              />
+            ) : null}
+            <motion.span
+              animate={{
+                transform: signToken?.value
+                  ? "translateX(1rem)"
+                  : "translateX(0px)",
+              }}
+              className="inline-flex items-baseline whitespace-pre"
+              transition={{
+                duration: shouldReduceMotion ? 0.15 : 0.3,
+                ease: DIGIT_EASE,
+              }}
+            >
+              {numberTokens.map((token) => renderToken(token, layoutTransition, {
+                animateOnMount: hasRenderedValue.current && token.kind === "digit" && !previousDigits.current.has(token.key),
+                reduceMotion: Boolean(shouldReduceMotion),
+                staggerIndex: changedDigitOrder.get(token.key) ?? 0,
+              }))}
+            </motion.span>
+          </motion.span>
+          {suffixTokens.map((token) => renderToken(token, layoutTransition, {
+            animateOnMount: hasRenderedValue.current && token.kind === "digit" && !previousDigits.current.has(token.key),
+            reduceMotion: Boolean(shouldReduceMotion),
+            staggerIndex: changedDigitOrder.get(token.key) ?? 0,
+          }))}
+        </span>
+      </LayoutGroup>
     </span>
+  );
+}
+
+function renderToken(
+  token: NumberToken,
+  layoutTransition: LayoutTransition,
+  animation: { animateOnMount: boolean; reduceMotion: boolean; staggerIndex: number },
+) {
+  if (token.kind === "digit") {
+    return (
+      <AnimatedDigit
+        animateOnMount={animation.animateOnMount}
+        digit={token.value}
+        key={token.key}
+        layoutTransition={layoutTransition}
+        reduceMotion={animation.reduceMotion}
+        staggerIndex={animation.staggerIndex}
+      />
+    );
+  }
+
+  return token.region === "number" ? (
+    <motion.span key={token.key} layout transition={layoutTransition}>
+      {token.value}
+    </motion.span>
+  ) : (
+    <span key={token.key}>{token.value}</span>
   );
 }
 
 function AnimatedDigit({
   digit,
+  animateOnMount,
+  className = "relative inline-grid align-baseline",
+  layoutTransition,
   reduceMotion,
   staggerIndex,
 }: {
   digit: string;
+  animateOnMount: boolean;
+  className?: string;
+  layoutTransition: LayoutTransition;
   reduceMotion: boolean;
   staggerIndex: number;
 }) {
@@ -115,9 +217,13 @@ function AnimatedDigit({
   };
 
   return (
-    <span className="relative inline-grid align-baseline">
+    <motion.span
+      className={className}
+      layout
+      transition={layoutTransition}
+    >
       <span className="invisible col-start-1 row-start-1">{digit}</span>
-      <AnimatePresence custom={custom} initial={false} mode="sync">
+      <AnimatePresence custom={custom} initial={animateOnMount} mode="sync">
         <motion.span
           animate="current"
           className="col-start-1 row-start-1"
@@ -130,7 +236,7 @@ function AnimatedDigit({
           {digit}
         </motion.span>
       </AnimatePresence>
-    </span>
+    </motion.span>
   );
 }
 
@@ -153,6 +259,7 @@ function tokenizeParts(parts: Intl.NumberFormatPart[]): NumberToken[] {
           kind: "digit",
           key: `integer-${position}`,
           value: digit,
+          region: "number",
         });
       }
       continue;
@@ -164,17 +271,53 @@ function tokenizeParts(parts: Intl.NumberFormatPart[]): NumberToken[] {
           kind: "digit",
           key: `fraction-${fractionIndex++}`,
           value: digit,
+          region: "number",
         });
       }
       continue;
     }
 
+    const isSign = part.type === "minusSign" || part.type === "plusSign";
     tokens.push({
-      kind: "static",
-      key: `static-${staticIndex++}`,
+      kind: isSign ? "digit" : "static",
+      key: isSign ? "sign" : `static-${staticIndex++}`,
       value: part.value,
+      region: isNumericPart(part.type) ? "number" : "affix",
     });
   }
 
   return tokens;
+}
+
+function ensureSignSlot(
+  parts: Intl.NumberFormatPart[],
+  negativeParts: Intl.NumberFormatPart[],
+): Intl.NumberFormatPart[] {
+  if (parts.some((part) => part.type === "minusSign" || part.type === "plusSign")) {
+    return parts;
+  }
+
+  const minusSignIndex = negativeParts.findIndex((part) => part.type === "minusSign");
+  if (minusSignIndex < 0) return parts;
+
+  const signSlot: Intl.NumberFormatPart = { type: "minusSign", value: "" };
+  return [...parts, signSlot];
+}
+
+function positionSignBeforeNumber(parts: Intl.NumberFormatPart[]) {
+  const signIndex = parts.findIndex(
+    (part) => part.type === "minusSign" || part.type === "plusSign",
+  );
+  const numberIndex = parts.findIndex((part) => isNumericPart(part.type));
+  if (signIndex < 0 || numberIndex < 0) return parts;
+
+  const result = [...parts];
+  const [sign] = result.splice(signIndex, 1);
+  const adjustedNumberIndex = result.findIndex((part) => isNumericPart(part.type));
+  result.splice(adjustedNumberIndex, 0, sign);
+  return result;
+}
+
+function isNumericPart(type: Intl.NumberFormatPartTypes): boolean {
+  return ["integer", "group", "decimal", "fraction"].includes(type);
 }

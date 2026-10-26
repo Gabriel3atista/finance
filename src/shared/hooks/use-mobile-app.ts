@@ -10,12 +10,12 @@ function subscribe(onChange: () => void) {
   return () => mediaQuery.removeEventListener("change", onChange);
 }
 
-function getSnapshot() {
+function getSnapshot(): boolean | null {
   return window.matchMedia(MOBILE_APP_MEDIA_QUERY).matches;
 }
 
-function getServerSnapshot() {
-  return false;
+function getServerSnapshot(): boolean | null {
+  return null;
 }
 
 export function useMobileApp() {

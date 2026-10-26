@@ -49,7 +49,7 @@ export default function RootLayout({
       )}
       lang="pt-BR"
     >
-      <body className="min-h-screen min-h-[100dvh] bg-background-900 font-sans text-foreground-400 antialiased [font-optical-sizing:auto] selection:bg-moon-800 selection:text-moon-50">
+      <body className="min-h-[100dvh] bg-background-900 font-sans text-foreground-400 antialiased [font-optical-sizing:auto] selection:bg-moon-800 selection:text-moon-50">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

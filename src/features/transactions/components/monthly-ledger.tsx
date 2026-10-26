@@ -33,6 +33,7 @@ import { EntryFields } from "@/features/transactions/components/entry-fields";
 import { MobileMonthView } from "@/features/transactions/components/mobile-month-view";
 import { useMobileApp } from "@/shared/hooks/use-mobile-app";
 import { useAppShellHeaderContent } from "@/shared/components/app-shell-header-slot";
+import { ResponsivePageSkeleton } from "@/shared/components/responsive-page-skeleton";
 import {
   cancelFinancialEntry,
   createFinancialEntry,
@@ -98,7 +99,7 @@ export function MonthlyLedger({
   const previousMonthQuery = useQuery({
     queryKey: queryKeys.monthEntries(householdId, previousMonthValue),
     queryFn: () => fetchMonthEntries(householdId, previousMonth),
-    enabled: isMobileApp && Boolean(householdId),
+    enabled: Boolean(isMobileApp && householdId),
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   });
@@ -190,6 +191,28 @@ export function MonthlyLedger({
   const entriesNeedInitialLoad =
     entriesQuery.isPending && entriesQuery.data === undefined;
   const isLoading = entriesNeedInitialLoad && !ensureEntries.isError;
+
+  if (isMobileApp === null) {
+    return (
+      <ResponsivePageSkeleton>
+        <div className="mx-auto max-w-xl space-y-3">
+          <div className="flex h-10 items-center justify-between gap-2 px-3">
+            {Array.from({ length: 7 }, (_, index) => (
+              <div
+                aria-hidden="true"
+                className="w-8 size-4 animate-pulse rounded-xl bg-background-800"
+                key={index}
+              />
+            ))}
+          </div>
+          <div
+            aria-hidden="true"
+            className="h-40 animate-pulse rounded-3xl bg-background-800"
+          />
+        </div>
+      </ResponsivePageSkeleton>
+    );
+  }
 
   if (!isMobileApp && (isLoading || membersQuery.isPending)) {
     return (

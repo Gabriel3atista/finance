@@ -53,25 +53,54 @@ export function FinancialValue({ children }: { children: ReactNode }) {
 export function ValuesVisibilityToggle({
   className = "",
   iconOnly = false,
+  loading = false,
 }: {
   className?: string;
   iconOnly?: boolean;
+  loading?: boolean;
 }) {
   const { hidden, toggle } = useValuesVisibility();
   const label = hidden ? "Mostrar valores" : "Ocultar valores";
 
   return (
     <Button
-      aria-label={label}
+      aria-busy={loading}
+      aria-label={loading ? "Carregando valores" : label}
       aria-pressed={hidden}
       className={`gap-2 px-2.5 ${className}`}
+      disabled={loading}
       onClick={toggle}
       size="sm"
       title={label}
       type="button"
       variant="ghost"
     >
-      <VisibilityIcon hidden={hidden} />
+      {loading ? (
+        <svg
+          aria-hidden="true"
+          className="size-5 shrink-0 animate-spin"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="9"
+            stroke="currentColor"
+            strokeWidth="3"
+          />
+          <path
+            className="opacity-75"
+            d="M21 12a9 9 0 00-9-9"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeWidth="3"
+          />
+        </svg>
+      ) : (
+        <VisibilityIcon hidden={hidden} />
+      )}
       <span className={iconOnly ? "sr-only" : "hidden text-xs sm:inline"}>
         {label}
       </span>

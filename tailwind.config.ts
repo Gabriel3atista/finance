@@ -103,7 +103,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Arial", "sans-serif"],
-        eyebrow: ["var(--font-kantumruy-pro)", "sans-serif"],
+        "kantumruy-pro": ["var(--font-kantumruy-pro)", "sans-serif"],
       },
       boxShadow: {
         card: "0 1px 2px hsl(0 0% 0% / 24%), 0 12px 32px hsl(0 0% 0% / 20%)",

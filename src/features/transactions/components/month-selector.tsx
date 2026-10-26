@@ -77,7 +77,7 @@ export function MonthSelector({
         {months.map(({ key, label, relativeMonth }) =>
           masked ? (
             <span
-              className="font-eyebrow flex h-10 items-center justify-center text-xs font-medium uppercase text-black"
+              className="font-kantumruy-pro flex h-10 items-center justify-center text-sm font-medium uppercase text-black"
               key={key}
             >
               {label}
@@ -86,7 +86,7 @@ export function MonthSelector({
             <Button
               aria-current={relativeMonth === 0 ? "date" : undefined}
               className={cn(
-                "font-eyebrow h-10 w-full min-w-0 rounded-full px-2 text-xs font-medium uppercase",
+                "font-kantumruy-pro h-10 w-full min-w-0 rounded-full px-2 text-sm font-medium uppercase",
                 relativeMonth === 0
                   ? "bg-transparent text-muted hover:bg-transparent hover:text-muted"
                   : "bg-transparent text-muted hover:bg-transparent hover:text-ink",

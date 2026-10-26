@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,10 +11,12 @@ import {
   formatMoney,
   localDateString,
   monthString,
+  parseMonth,
   type FinancialEntry,
   type HouseholdMember,
 } from "@/features/transactions/lib/data";
 import { useMonthData } from "@/features/transactions/hooks/use-month-data";
+import { fetchMonthEntries } from "@/features/transactions/lib/queries";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { formatMonth } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
@@ -30,6 +32,7 @@ import {
 import { EntryFields } from "@/features/transactions/components/entry-fields";
 import { MobileMonthView } from "@/features/transactions/components/mobile-month-view";
 import { useMobileApp } from "@/shared/hooks/use-mobile-app";
+import { useAppShellHeaderContent } from "@/shared/components/app-shell-header-slot";
 import {
   cancelFinancialEntry,
   createFinancialEntry,
@@ -47,7 +50,7 @@ const errorMessages: Record<string, string> = {
 };
 
 export function MonthlyLedger({
-  month,
+  month: initialMonth,
   householdId,
   userId,
   error,
@@ -59,8 +62,46 @@ export function MonthlyLedger({
   error?: string;
   saved?: string;
 }) {
+  const [month, setMonth] = useState(initialMonth);
+  const initialMonthValue = monthString(initialMonth);
+
+  useEffect(() => {
+    setMonth(parseMonth(initialMonthValue));
+  }, [initialMonthValue]);
+
+  useEffect(() => {
+    const syncMonthFromUrl = () => {
+      const monthQuery = new URLSearchParams(window.location.search).get(
+        "month",
+      );
+      setMonth(parseMonth(monthQuery ?? undefined));
+    };
+
+    window.addEventListener("popstate", syncMonthFromUrl);
+    return () => window.removeEventListener("popstate", syncMonthFromUrl);
+  }, []);
+
+  const selectMonth = (nextMonth: Date) => {
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set("month", monthString(nextMonth));
+    nextUrl.searchParams.delete("error");
+    nextUrl.searchParams.delete("saved");
+    window.history.pushState(null, "", nextUrl.toString());
+    setMonth(nextMonth);
+  };
+
+  useAppShellHeaderContent(String(month.getFullYear()));
   const isMobileApp = useMobileApp();
   const monthValue = monthString(month);
+  const previousMonth = addMonths(month, -1);
+  const previousMonthValue = monthString(previousMonth);
+  const previousMonthQuery = useQuery({
+    queryKey: queryKeys.monthEntries(householdId, previousMonthValue),
+    queryFn: () => fetchMonthEntries(householdId, previousMonth),
+    enabled: isMobileApp && Boolean(householdId),
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+  });
   const {
     entries: entriesQuery,
     members: membersQuery,
@@ -134,6 +175,10 @@ export function MonthlyLedger({
   const expenses = sum(entries, "expense");
   const settledIncome = sum(entries, "income", "settled");
   const settledExpenses = sum(entries, "expense", "settled");
+  const previousMonthBalance = previousMonthQuery.data
+    ? sum(previousMonthQuery.data, "income", "settled") -
+      sum(previousMonthQuery.data, "expense", "settled")
+    : undefined;
   const pendingCount = entries.filter(
     (entry) => entry.status === "planned",
   ).length;
@@ -142,17 +187,12 @@ export function MonthlyLedger({
     (entry) =>
       entry.status === "planned" && entry.due_date && entry.due_date < today,
   ).length;
-  if (
-    (entriesQuery.isPending && !ensureEntries.isError) ||
-    membersQuery.isPending
-  ) {
-    return isMobileApp ? (
-      <div aria-live="polite" aria-busy="true">
-        <section className="mx-auto max-w-xl">
-          <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-24 animate-pulse" />
-        </section>
-      </div>
-    ) : (
+  const entriesNeedInitialLoad =
+    entriesQuery.isPending && entriesQuery.data === undefined;
+  const isLoading = entriesNeedInitialLoad && !ensureEntries.isError;
+
+  if (!isMobileApp && (isLoading || membersQuery.isPending)) {
+    return (
       <div aria-live="polite" aria-busy="true">
         <section className="mx-auto max-w-5xl">
           <header className="mb-7">
@@ -176,7 +216,16 @@ export function MonthlyLedger({
   }
 
   if (isMobileApp) {
-    return <MobileMonthView currentBalance={settledIncome - settledExpenses} />;
+    return (
+      <MobileMonthView
+        currentBalance={settledIncome - settledExpenses}
+        previousBalance={previousMonthBalance}
+        isBalancePending={isLoading}
+        isPreviousBalancePending={previousMonthQuery.isPending}
+        month={month}
+        onMonthSelect={selectMonth}
+      />
+    );
   }
 
   return (

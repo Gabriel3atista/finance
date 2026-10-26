@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ensureMonthEntries } from "@/features/transactions/lib/queries";
+import { queryKeys } from "@/shared/lib/query-keys";
 
 export function useEnsurePeriodEntries(
   householdId: string,
   userId: string,
   months: string[],
 ) {
-  const monthsKey = months.join(",");
-  const ensureKey = `${householdId}:${userId}:${monthsKey}`;
-  const requestedKey = useRef("");
-  const mutation = useMutation({
-    mutationFn: async () => {
+  const ensureKey = `${householdId}:${userId}:${[...months].sort().join(",")}`;
+  const query = useQuery({
+    queryKey: queryKeys.ensurePeriodEntries(householdId, userId, months),
+    queryFn: async () => {
       await Promise.all(
         months.map((month) =>
           ensureMonthEntries(
@@ -25,23 +24,13 @@ export function useEnsurePeriodEntries(
       );
       return ensureKey;
     },
+    enabled: Boolean(householdId && userId && months.length),
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
-  useEffect(() => {
-    if (
-      !householdId ||
-      !userId ||
-      !months.length ||
-      requestedKey.current === ensureKey
-    )
-      return;
-    requestedKey.current = ensureKey;
-    mutation.reset();
-    mutation.mutate();
-  }, [ensureKey, householdId, months.length, mutation, userId]);
-
   return {
-    ...mutation,
-    isReady: mutation.data === ensureKey,
+    ...query,
+    isReady: query.data === ensureKey && !query.isFetching,
   };
 }

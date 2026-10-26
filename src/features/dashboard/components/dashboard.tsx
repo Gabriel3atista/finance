@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
+  addMonths,
   formatMoney,
   localDateString,
   monthString,
 } from "@/features/transactions/lib/data";
 import { formatMonth } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
+import { BalanceChangeIndicator } from "@/shared/components/balance-change-indicator";
 import { Eyebrow } from "@/shared/components/eyebrow";
 import type { DashboardDueEntry } from "@/features/dashboard/lib/data";
 import { MonthlyHistoryCharts } from "@/features/dashboard/components/monthly-history-charts";
@@ -83,6 +85,13 @@ export function Dashboard({
     plannedExpenses,
   } = data;
   const monthTitle = formatMonth(currentMonth);
+  const previousMonthKey = monthString(addMonths(currentMonth, -1));
+  const previousMonth = history.find(
+    (month) => monthString(month.month) === previousMonthKey,
+  );
+  const previousRealizedBalance = previousMonth
+    ? previousMonth.income - previousMonth.expenses
+    : undefined;
 
   return (
     <section className="mx-auto max-w-6xl">
@@ -126,6 +135,7 @@ export function Dashboard({
           label="Saldo"
           value={realizedBalance}
           month={monthTitle}
+          previousValue={previousRealizedBalance}
           tone={realizedBalance < 0 ? "negative" : "positive"}
         />
         <SummaryCard
@@ -214,11 +224,13 @@ function SummaryCard({
   label,
   value,
   month,
+  previousValue,
   tone,
 }: {
   label: string;
   value: number;
   month: string;
+  previousValue?: number;
   tone: "normal" | "positive" | "negative";
 }) {
   return (
@@ -234,7 +246,15 @@ function SummaryCard({
       >
         <FinancialValue>{formatMoney(value)}</FinancialValue>
       </p>
-      <p className="mt-1 text-xs text-muted">{month}</p>
+      <div className="mt-1 flex items-center justify-between gap-2">
+        <p className="text-xs text-muted">{month}</p>
+        {previousValue !== undefined && (
+          <BalanceChangeIndicator
+            currentBalance={value}
+            previousBalance={previousValue}
+          />
+        )}
+      </div>
     </article>
   );
 }

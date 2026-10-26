@@ -45,7 +45,7 @@ export function FinancialValue({ children }: { children: ReactNode }) {
 
   return (
     <span aria-label={hidden ? "Valor oculto" : undefined}>
-      {hidden ? "••••" : children}
+      {hidden ? "•••••••" : children}
     </span>
   );
 }
@@ -69,7 +69,7 @@ export function ValuesVisibilityToggle({
       size="sm"
       title={label}
       type="button"
-      variant="outline"
+      variant="ghost"
     >
       <VisibilityIcon hidden={hidden} />
       <span className={iconOnly ? "sr-only" : "hidden text-xs sm:inline"}>
@@ -93,7 +93,7 @@ function VisibilityIcon({ hidden }: { hidden: boolean }) {
   return (
     <svg
       aria-hidden="true"
-      className="size-4 shrink-0"
+      className="size-5 shrink-0"
       fill="none"
       viewBox="0 0 24 24"
     >

@@ -27,6 +27,8 @@ export function useMonthData({
     queryFn: () =>
       fetchMonthEntries(householdId, new Date(`${month}-01T00:00:00`)),
     enabled: Boolean(householdId && month && ensureEntries.isReady),
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
   const members = useQuery({
     queryKey: queryKeys.members(householdId),

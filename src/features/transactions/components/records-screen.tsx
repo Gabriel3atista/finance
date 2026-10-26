@@ -78,6 +78,9 @@ export function RecordsScreen({
       queryKey: queryKeys.installmentPlans(householdId),
     });
     void queryClient.invalidateQueries({
+      queryKey: queryKeys.ensurePeriodEntriesForHousehold(householdId),
+    });
+    void queryClient.invalidateQueries({
       queryKey: ["month-entries", householdId],
     });
     void queryClient.invalidateQueries({

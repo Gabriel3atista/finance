@@ -5,6 +5,19 @@ export const queryKeys = {
   members: (householdId: string) => ["household-members", householdId] as const,
   monthEntries: (householdId: string, month: string) =>
     ["month-entries", householdId, month] as const,
+  ensurePeriodEntries: (
+    householdId: string,
+    userId: string,
+    months: string[],
+  ) =>
+    [
+      "ensure-period-entries",
+      householdId,
+      userId,
+      ...[...months].sort(),
+    ] as const,
+  ensurePeriodEntriesForHousehold: (householdId: string) =>
+    ["ensure-period-entries", householdId] as const,
   recurringItems: (householdId: string) =>
     ["recurring-items", householdId] as const,
   installmentPlans: (householdId: string) =>

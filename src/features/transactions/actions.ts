@@ -175,6 +175,7 @@ export async function updateFinancialEntry(
   const category = textValue(formData, "category", 80);
   const amount = moneyInputToNumber(formData.get("amount"));
   const dueDate = validDueDate(formData.get("due_date"));
+  const entryType = String(formData.get("entry_type"));
   const scope = String(formData.get("scope") ?? "single");
   if (
     !id ||
@@ -184,7 +185,8 @@ export async function updateFinancialEntry(
     !Number.isFinite(amount) ||
     amount <= 0 ||
     amount > 999999999999.99 ||
-    dueDate === undefined
+    dueDate === undefined ||
+    (entryType !== "income" && entryType !== "expense")
   )
     return { error: "invalid-entry" };
 
@@ -200,6 +202,7 @@ export async function updateFinancialEntry(
 
   const values = {
     title,
+    entry_type: entryType,
     amount,
     category: category || null,
     due_date: dueDate,
@@ -243,6 +246,7 @@ export async function updateFinancialEntry(
       .from("recurring_items")
       .update({
         title,
+        entry_type: entryType,
         planned_amount: amount,
         category: category || null,
         due_day: dueDate ? Number(dueDate.slice(-2)) : null,

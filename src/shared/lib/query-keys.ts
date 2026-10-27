@@ -5,6 +5,8 @@ export const queryKeys = {
   members: (householdId: string) => ["household-members", householdId] as const,
   monthEntries: (householdId: string, month: string) =>
     ["month-entries", householdId, month] as const,
+  householdMonthEntries: (householdId: string) =>
+    ["month-entries", householdId] as const,
   ensurePeriodEntries: (
     householdId: string,
     userId: string,

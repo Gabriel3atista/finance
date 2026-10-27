@@ -126,17 +126,39 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   async function signInWithGoogle() {
     setBusy(true);
     setError("");
+    const isStandalonePwa =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone ===
+        true;
+    const authWindow = isStandalonePwa
+      ? window.open("about:blank", "_blank")
+      : null;
+
     try {
       const supabase = createClient();
       const safeNext = safeInternalPath(searchParams.get("next"));
       const callback = new URL("/auth/callback", window.location.origin);
       callback.searchParams.set("next", safeNext);
-      const { error: authError } = await supabase.auth.signInWithOAuth({
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: callback.toString() },
+        options: {
+          redirectTo: callback.toString(),
+          ...(isStandalonePwa && { skipBrowserRedirect: true }),
+        },
       });
       if (authError) throw authError;
+
+      if (isStandalonePwa) {
+        if (!data.url) throw new Error("Não foi possível iniciar o login.");
+
+        if (authWindow) {
+          authWindow.location.replace(data.url);
+        } else {
+          window.location.assign(data.url);
+        }
+      }
     } catch (caught) {
+      authWindow?.close();
       setError(errorMessage(caught));
       setBusy(false);
     }

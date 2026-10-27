@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   addMonths,
   formatMoney,
@@ -13,7 +12,6 @@ import {
   monthString,
   parseMonth,
   type FinancialEntry,
-  type HouseholdMember,
 } from "@/features/transactions/lib/data";
 import { useMonthData } from "@/features/transactions/hooks/use-month-data";
 import { fetchMonthEntries } from "@/features/transactions/lib/queries";
@@ -21,7 +19,6 @@ import { queryKeys } from "@/shared/lib/query-keys";
 import { formatMonth } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
-import { cn } from "@/shared/lib/utils";
 import {
   Select,
   SelectContent,
@@ -31,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { EntryFields } from "@/features/transactions/components/entry-fields";
 import { MobileMonthView } from "@/features/transactions/components/mobile-month-view";
+import { MonthlyEntryList } from "@/features/transactions/components/monthly-entry-list";
 import { useMobileApp } from "@/shared/hooks/use-mobile-app";
 import { useAppShellHeaderContent } from "@/shared/components/app-shell-header-slot";
 import { ResponsivePageSkeleton } from "@/shared/components/responsive-page-skeleton";
@@ -117,7 +115,7 @@ export function MonthlyLedger({
   const [mutationMessage, setMutationMessage] = useState("");
   const invalidateFinance = () => {
     void queryClient.invalidateQueries({
-      queryKey: queryKeys.monthEntries(householdId, monthValue),
+      queryKey: queryKeys.householdMonthEntries(householdId),
     });
     void queryClient.invalidateQueries({
       queryKey: queryKeys.dashboard(householdId),
@@ -192,6 +190,22 @@ export function MonthlyLedger({
     entriesQuery.isPending && entriesQuery.data === undefined;
   const isLoading = entriesNeedInitialLoad && !ensureEntries.isError;
 
+  const setEntryStatus = async (
+    id: string,
+    nextStatus: "planned" | "settled",
+  ) => {
+    setMutationMessage("");
+    await setStatus.mutateAsync({ id, nextStatus });
+  };
+  const updateEntryFromForm = async (form: FormData) => {
+    setMutationMessage("");
+    await updateEntry.mutateAsync(form);
+  };
+  const cancelEntryFromForm = async (form: FormData) => {
+    setMutationMessage("");
+    await cancelEntry.mutateAsync(form);
+  };
+
   if (isMobileApp === null) {
     return (
       <ResponsivePageSkeleton>
@@ -245,6 +259,15 @@ export function MonthlyLedger({
         previousBalance={previousMonthBalance}
         isBalancePending={isLoading}
         isPreviousBalancePending={previousMonthQuery.isPending}
+        entries={entries}
+        members={members}
+        currentUserId={userId}
+        monthValue={monthValue}
+        onSetEntryStatus={setEntryStatus}
+        statusPendingId={setStatus.isPending ? setStatus.variables?.id : undefined}
+        onUpdateEntry={updateEntryFromForm}
+        onCancelEntry={cancelEntryFromForm}
+        rowMutationPending={updateEntry.isPending || cancelEntry.isPending}
         month={month}
         onMonthSelect={selectMonth}
       />
@@ -379,34 +402,18 @@ export function MonthlyLedger({
             </span>
           </div>
           {entries.length ? (
-            <div className="mt-5 divide-y divide-line">
-              {entries.map((entry) => (
-                <EntryRow
-                  key={entry.id}
-                  entry={entry}
-                  members={members}
-                  currentUserId={userId}
-                  month={monthValue}
-                  onSetStatus={(id, nextStatus) =>
-                    setStatus.mutate({ id, nextStatus })
-                  }
-                  statusPending={
-                    setStatus.isPending && setStatus.variables?.id === entry.id
-                  }
-                  onUpdate={(form) => {
-                    setMutationMessage("");
-                    updateEntry.mutate(form);
-                  }}
-                  onCancel={(form) => {
-                    setMutationMessage("");
-                    cancelEntry.mutate(form);
-                  }}
-                  rowMutationPending={
-                    updateEntry.isPending || cancelEntry.isPending
-                  }
-                />
-              ))}
-            </div>
+            <MonthlyEntryList
+              entries={entries}
+              members={members}
+              currentUserId={userId}
+              month={monthValue}
+              onSetStatus={setEntryStatus}
+              statusPendingId={setStatus.isPending ? setStatus.variables?.id : undefined}
+              onUpdate={updateEntryFromForm}
+              onCancel={cancelEntryFromForm}
+              rowMutationPending={updateEntry.isPending || cancelEntry.isPending}
+              showHeader={false}
+            />
           ) : (
             <div className="flex min-h-52 flex-col items-center justify-center px-4 text-center">
               <span
@@ -476,196 +483,6 @@ export function MonthlyLedger({
         </details>
       </div>
     </section>
-  );
-}
-
-function EntryRow({
-  entry,
-  members,
-  currentUserId,
-  month,
-  onSetStatus,
-  statusPending,
-  onUpdate,
-  onCancel,
-  rowMutationPending,
-}: {
-  entry: FinancialEntry;
-  members: HouseholdMember[];
-  currentUserId: string;
-  month: string;
-  onSetStatus: (id: string, nextStatus: "planned" | "settled") => void;
-  statusPending: boolean;
-  onUpdate: (form: FormData) => void;
-  onCancel: (form: FormData) => void;
-  rowMutationPending: boolean;
-}) {
-  const overdue =
-    entry.status === "planned" &&
-    entry.due_date &&
-    entry.due_date < localDateString();
-  const returnTo = `/mes?month=${month}`;
-  return (
-    <article className="py-4 first:pt-1 last:pb-1">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-sm font-medium text-ink">
-              {entry.title}
-            </h3>
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-medium",
-                entry.entry_type === "income"
-                  ? "bg-success-900 text-success-100"
-                  : "bg-canvas text-muted",
-              )}
-            >
-              {entry.entry_type === "income" ? "Receita" : "Despesa"}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            {entry.category ? `${entry.category} · ` : ""}
-            {entry.due_date
-              ? `Vencimento ${new Intl.DateTimeFormat("pt-BR").format(new Date(`${entry.due_date}T12:00:00`))}`
-              : "Sem vencimento"}
-            {entry.responsible_user_id
-              ? ` · ${entry.responsible_user_id === currentUserId ? "Eu" : "Outro membro"}`
-              : ""}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p
-            className={cn(
-              "text-sm font-semibold tabular-nums",
-              entry.entry_type === "income" ? "text-success-200" : "text-ink",
-            )}
-          >
-            <FinancialValue>
-              {entry.entry_type === "income" ? "+" : "−"}
-              {formatMoney(Number(entry.amount))}
-            </FinancialValue>
-          </p>
-          <p
-            className={cn(
-              "mt-1 text-[10px] font-medium",
-              overdue
-                ? "text-rose-300"
-                : entry.status === "settled"
-                  ? "text-success-200"
-                  : "text-muted",
-            )}
-          >
-            {overdue
-              ? "Vencida"
-              : entry.status === "settled"
-                ? "Realizada"
-                : "Prevista"}
-          </p>
-        </div>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <div>
-          <Button
-            disabled={statusPending}
-            onClick={() =>
-              onSetStatus(
-                entry.id,
-                entry.status === "settled" ? "planned" : "settled",
-              )
-            }
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            {entry.status === "settled"
-              ? statusPending
-                ? "Atualizando…"
-                : "Desfazer"
-              : statusPending
-                ? "Atualizando…"
-                : entry.entry_type === "income"
-                  ? "Marcar recebida"
-                  : "Marcar paga"}
-          </Button>
-        </div>
-        {entry.status === "planned" && (
-          <>
-            <details className="group">
-              <Button asChild size="sm" variant="outline">
-                <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none">
-                  Editar
-                </summary>
-              </Button>
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  onUpdate(new FormData(event.currentTarget));
-                }}
-                className="mt-3 w-full space-y-3 rounded-xl border border-line bg-canvas/60 p-3 sm:min-w-[360px]"
-              >
-                <Input type="hidden" name="id" value={entry.id} />
-                <EntryFields
-                  members={members}
-                  currentUserId={currentUserId}
-                  month={month}
-                  entry={entry}
-                />
-                {entry.source_kind === "recurrence" && (
-                  <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                    Aplicar alteração
-                    <Select name="scope" defaultValue="single">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="single">Somente este mês</SelectItem>
-                        <SelectItem value="future">
-                          Este e próximos meses
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </label>
-                )}
-                <Button
-                  className="w-full"
-                  disabled={rowMutationPending}
-                  type="submit"
-                >
-                  Salvar edição
-                </Button>
-              </form>
-            </details>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                onCancel(new FormData(event.currentTarget));
-              }}
-            >
-              <Input type="hidden" name="id" value={entry.id} />
-              <Input type="hidden" name="return_to" value={returnTo} />
-              <Button
-                className="text-muted"
-                size="sm"
-                type="submit"
-                variant="outline"
-                disabled={rowMutationPending}
-              >
-                Cancelar
-              </Button>
-            </form>
-          </>
-        )}
-        {entry.source_kind === "recurrence" && (
-          <span className="text-[10px] text-muted">Recorrente</span>
-        )}
-        {entry.source_kind === "installment" && entry.installment_number && (
-          <span className="text-[10px] text-muted">
-            Parcela {entry.installment_number}
-          </span>
-        )}
-      </div>
-    </article>
   );
 }
 

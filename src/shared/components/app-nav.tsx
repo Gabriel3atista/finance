@@ -51,10 +51,10 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
                 "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 flex items-center",
                 variant === "sidebar" && "gap-3 rounded-xl px-3 py-3 text-sm",
                 variant === "mobile" &&
-                  "size-11 shrink-0 justify-center rounded-full",
+                  "size-[48px] shrink-0 justify-center rounded-full",
                 active
                   ? variant === "mobile"
-                    ? "bg-moon-200 text-background-900"
+                    ? "border border-white/10 bg-gradient-to-b from-white/20 to-white/10 text-white shadow-[inset_0_1px_0_hsl(0_0%_100%/25%),0_2px_8px_hsl(0_0%_0%/20%)]"
                     : "bg-white font-semibold text-black"
                   : variant === "mobile"
                     ? "text-muted hover:bg-white/10 hover:text-ink"
@@ -77,7 +77,7 @@ function SmallMark() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="size-[19px]"
+      className="size-[24px]"
       fill="none"
       aria-hidden="true"
     >
@@ -110,7 +110,7 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
   };
   if (name === "dashboard")
     return (
-      <svg viewBox="0 0 24 24" className="size-[19px] shrink-0" {...common}>
+      <svg viewBox="0 0 24 24" className="size-[24px] shrink-0" {...common}>
         <rect x="3.5" y="4" width="7" height="7" rx="1.5" />
         <rect x="13.5" y="4" width="7" height="4.5" rx="1.5" />
         <rect x="13.5" y="11.5" width="7" height="8.5" rx="1.5" />
@@ -119,7 +119,7 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
     );
   if (name === "month")
     return (
-      <svg viewBox="0 0 24 24" className="size-[19px] shrink-0" {...common}>
+      <svg viewBox="0 0 24 24" className="size-[24px] shrink-0" {...common}>
         <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
         <path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17" />
         <path
@@ -131,20 +131,20 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
     );
   if (name === "forecast")
     return (
-      <svg viewBox="0 0 24 24" className="size-[19px] shrink-0" {...common}>
+      <svg viewBox="0 0 24 24" className="size-[24px] shrink-0" {...common}>
         <path d="M4 18.5h16M6.5 15V9.5M12 15V5.5M17.5 15v-3" />
         <path d="m5 7 5-3 5 2 4-3" />
       </svg>
     );
   if (name === "history")
     return (
-      <svg viewBox="0 0 24 24" className="size-[19px] shrink-0" {...common}>
+      <svg viewBox="0 0 24 24" className="size-[24px] shrink-0" {...common}>
         <path d="M3.5 12a8.5 8.5 0 1 0 2.7-6.2L3.5 8.5" />
         <path d="M3.5 4.5v4h4M12 7.5V12l3 2" />
       </svg>
     );
   return (
-    <svg viewBox="0 0 24 24" className="size-[19px] shrink-0" {...common}>
+    <svg viewBox="0 0 24 24" className="size-[24px] shrink-0" {...common}>
       <path d="M4.5 6.5h15M7 6.5v13h10v-13M9.5 6.5V4h5v2.5M10 10v6M14 10v6" />
     </svg>
   );

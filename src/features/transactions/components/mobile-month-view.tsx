@@ -8,12 +8,23 @@ import {
 import { BalanceChangeIndicator } from "@/shared/components/balance-change-indicator";
 import { AnimatedNumber } from "@/shared/components/animated-number";
 import { MonthSelector } from "@/features/transactions/components/month-selector";
+import { MonthlyEntryList } from "@/features/transactions/components/monthly-entry-list";
+import type { FinancialEntry, HouseholdMember } from "@/features/transactions/lib/data";
 
 export function MobileMonthView({
   currentBalance,
   previousBalance,
   isBalancePending,
   isPreviousBalancePending,
+  entries,
+  members,
+  currentUserId,
+  monthValue,
+  onSetEntryStatus,
+  statusPendingId,
+  onUpdateEntry,
+  onCancelEntry,
+  rowMutationPending,
   month,
   onMonthSelect,
 }: {
@@ -21,6 +32,18 @@ export function MobileMonthView({
   previousBalance?: number;
   isBalancePending: boolean;
   isPreviousBalancePending: boolean;
+  entries: FinancialEntry[];
+  members: HouseholdMember[];
+  currentUserId: string;
+  monthValue: string;
+  onSetEntryStatus: (
+    id: string,
+    nextStatus: "planned" | "settled",
+  ) => Promise<void>;
+  statusPendingId?: string;
+  onUpdateEntry: (form: FormData) => Promise<void>;
+  onCancelEntry: (form: FormData) => Promise<void>;
+  rowMutationPending: boolean;
   month: Date;
   onMonthSelect: (month: Date) => void;
 }) {
@@ -34,20 +57,24 @@ export function MobileMonthView({
   }, [currentBalance, isBalancePending]);
 
   return (
-    <section className="mx-auto max-w-xl space-y-3">
+    <section className="flex flex-col gap-3 mx-auto max-w-xl">
       <MonthSelector month={month} onMonthSelect={onMonthSelect} />
-      <article className="flex flex-col justify-between max-h-36 min-h-36 h-36 rounded-3xl border-t border-white bg-moon-200 px-6 pb-6 pt-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted">Saldo</p>
+      <article className="relative isolate flex h-36 max-h-36 min-h-36 flex-col justify-between overflow-hidden rounded-3xl bg-[url('/current-balance-card-background.png')] bg-cover bg-center px-6 pb-6 pt-3">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border-[1px] border-white/50 mix-blend-overlay"
+        />
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <p className="text-sm text-white/70">Saldo</p>
           <ValuesVisibilityToggle
             iconOnly
-            className="min-h-8 size-8 rounded-full bg-transparent p-0 text-muted hover:bg-black/5 hover:text-black"
+            className="min-h-8 size-8 rounded-full bg-transparent p-0 text-white/70 hover:bg-white/10 hover:text-white"
             loading={isBalancePending || isPreviousBalancePending}
           />
         </div>
-        <div className="flex items-end justify-between gap-3">
+        <div className="relative z-10 flex items-end justify-between gap-3">
           <p
-            className="text-3xl font-semibold tracking-tight text-black tabular-nums"
+            className="text-3xl font-semibold tracking-tight text-white tabular-nums"
             aria-busy={isBalancePending}
           >
             <FinancialValue>
@@ -69,6 +96,19 @@ export function MobileMonthView({
           ) : null}
         </div>
       </article>
+      <section className="mt-8">
+        <MonthlyEntryList
+          entries={entries}
+          members={members}
+          currentUserId={currentUserId}
+          month={monthValue}
+          onSetStatus={onSetEntryStatus}
+          statusPendingId={statusPendingId}
+          onUpdate={onUpdateEntry}
+          onCancel={onCancelEntry}
+          rowMutationPending={rowMutationPending}
+        />
+      </section>
     </section>
   );
 }

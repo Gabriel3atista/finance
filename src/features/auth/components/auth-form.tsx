@@ -172,7 +172,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           className="mb-8 inline-flex items-center gap-3"
           aria-label="Finance"
         >
-          <span className="grid size-10 place-items-center rounded-[14px] bg-moon-200 text-background-900">
+          <span className="grid size-10 place-items-center rounded-[14px] bg-moon-200 text-graphite-900">
             <BrandMark />
           </span>
           <span className="text-base font-semibold tracking-tight text-ink">

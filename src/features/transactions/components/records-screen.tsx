@@ -148,7 +148,7 @@ export function RecordsScreen({
           {[0, 1].map((item) => (
             <div
               key={item}
-              className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-56 animate-pulse"
+              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-56 animate-pulse"
             />
           ))}
         </div>
@@ -159,7 +159,7 @@ export function RecordsScreen({
     return (
       <div
         role="alert"
-        className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-6 text-sm text-rose-200"
+        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-200"
       >
         Não foi possível carregar seus cadastros. Tente novamente.
       </div>
@@ -223,7 +223,7 @@ export function RecordsScreen({
       )}
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <details className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-fit p-5 sm:p-6">
+        <details className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-fit p-5 sm:p-6">
           <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none text-[15px] font-semibold text-ink">
             Nova recorrência <span className="ml-1 text-accent">＋</span>
             <span className="mt-1 block text-sm font-normal text-muted">
@@ -270,7 +270,7 @@ export function RecordsScreen({
           </form>
         </details>
 
-        <details className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-fit p-5 sm:p-6">
+        <details className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-fit p-5 sm:p-6">
           <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none text-[15px] font-semibold text-ink">
             Novo parcelamento <span className="ml-1 text-accent">＋</span>
             <span className="mt-1 block text-sm font-normal text-muted">
@@ -432,7 +432,7 @@ function SeriesList({
   }>;
 }) {
   return (
-    <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
+    <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
         <span className="text-xs text-muted">

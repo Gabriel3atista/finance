@@ -126,11 +126,11 @@ export function MonthSelector({
         </div>
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 z-30 w-12 bg-gradient-to-r from-background-900 via-background-900/80 to-transparent"
+          className="pointer-events-none absolute inset-y-0 left-0 z-30 w-12 bg-gradient-to-r from-graphite-900 via-graphite-900/80 to-transparent"
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 z-30 w-12 bg-gradient-to-l from-background-900 via-background-900/80 to-transparent"
+          className="pointer-events-none absolute inset-y-0 right-0 z-30 w-12 bg-gradient-to-l from-graphite-900 via-graphite-900/80 to-transparent"
         />
       </div>
     </nav>

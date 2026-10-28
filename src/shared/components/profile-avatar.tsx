@@ -61,7 +61,7 @@ export function ProfileAvatar({
   ) : (
     <span
       aria-label={`Avatar de ${userName}`}
-      className={`grid ${className} shrink-0 place-items-center rounded-full bg-moon-200 text-sm font-semibold text-background-900`}
+      className={`grid ${className} shrink-0 place-items-center rounded-full bg-moon-200 text-sm font-semibold text-graphite-900`}
     >
       {initials || "U"}
     </span>

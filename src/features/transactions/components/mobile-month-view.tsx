@@ -59,7 +59,7 @@ export function MobileMonthView({
   return (
     <section className="flex flex-col gap-3 mx-auto max-w-xl">
       <MonthSelector month={month} onMonthSelect={onMonthSelect} />
-      <article className="relative isolate flex h-36 max-h-36 min-h-36 flex-col justify-between overflow-hidden rounded-3xl bg-[url('/current-balance-card-background.png')] bg-cover bg-center px-6 pb-6 pt-3">
+      <article className="relative isolate flex h-40 max-h-40 min-h-40 flex-col justify-between overflow-hidden rounded-3xl bg-[url('/current-balance-card-background.png')] bg-cover bg-center px-6 pb-6 pt-3">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border-[1px] border-white/50 mix-blend-overlay"

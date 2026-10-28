@@ -214,14 +214,14 @@ export function MonthlyLedger({
             {Array.from({ length: 7 }, (_, index) => (
               <div
                 aria-hidden="true"
-                className="w-8 size-4 animate-pulse rounded-xl bg-background-800"
+                className="w-8 size-4 animate-pulse rounded-xl bg-graphite-800"
                 key={index}
               />
             ))}
           </div>
           <div
             aria-hidden="true"
-            className="h-40 animate-pulse rounded-3xl bg-background-800"
+            className="h-40 animate-pulse rounded-3xl bg-graphite-800"
           />
         </div>
       </ResponsivePageSkeleton>
@@ -243,7 +243,7 @@ export function MonthlyLedger({
             {[0, 1, 2].map((item) => (
               <div
                 key={item}
-                className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-28 animate-pulse"
+                className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-28 animate-pulse"
               />
             ))}
           </div>
@@ -387,7 +387,7 @@ export function MonthlyLedger({
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(270px,0.8fr)]">
-        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-7">
+        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-7">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-[15px] font-semibold text-ink">
@@ -434,7 +434,7 @@ export function MonthlyLedger({
         </div>
 
         <details
-          className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-fit p-5 sm:p-6"
+          className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-fit p-5 sm:p-6"
           open={saved === "1" ? false : undefined}
         >
           <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none text-[15px] font-semibold text-ink marker:hidden">
@@ -496,7 +496,7 @@ function Summary({
   detail: ReactNode;
 }) {
   return (
-    <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-h-[112px] p-4 sm:p-5">
+    <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-h-[112px] p-4 sm:p-5">
       <p className="text-sm text-muted">{title}</p>
       <p className="mt-2 text-[21px] font-semibold tracking-tight text-ink tabular-nums">
         <FinancialValue>{value}</FinancialValue>

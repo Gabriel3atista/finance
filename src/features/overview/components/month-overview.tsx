@@ -17,7 +17,7 @@ export function MonthOverview() {
             Seu panorama financeiro, organizado em um só lugar.
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start rounded-full border border-line bg-card-900 px-3 py-1.5 text-xs font-medium text-muted sm:self-auto">
+        <div className="flex items-center gap-2 self-start rounded-full border border-line bg-graphite-900 px-3 py-1.5 text-xs font-medium text-muted sm:self-auto">
           <span
             className="size-1.5 rounded-full bg-success-400"
             aria-hidden="true"
@@ -33,7 +33,7 @@ export function MonthOverview() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.85fr)]">
-        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-h-[315px] p-5 sm:p-7">
+        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-h-[315px] p-5 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[15px] font-semibold text-ink">
@@ -48,7 +48,7 @@ export function MonthOverview() {
             </div>
           </div>
           <div className="flex min-h-[205px] flex-col items-center justify-center text-center">
-            <div className="grid size-11 place-items-center rounded-full bg-secondary-800 text-muted">
+            <div className="grid size-11 place-items-center rounded-full bg-graphite-800 text-muted">
               <FeatureIcon name="history" />
             </div>
             <h3 className="mt-4 text-sm font-semibold text-ink">
@@ -61,7 +61,7 @@ export function MonthOverview() {
           </div>
         </div>
 
-        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-h-[315px] p-5 sm:p-7">
+        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-h-[315px] p-5 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[15px] font-semibold text-ink">
@@ -95,11 +95,11 @@ export function MonthOverview() {
 
 function SummaryCard({ title, icon }: { title: string; icon: string }) {
   return (
-    <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card flex min-h-[119px] items-start justify-between p-5 sm:p-6">
+    <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card flex min-h-[119px] items-start justify-between p-5 sm:p-6">
       <div>
         <p className="text-sm text-muted">{title}</p>
         <p
-          className="mt-3 text-[22px] font-semibold tracking-tight text-foreground-500"
+          className="mt-3 text-[22px] font-semibold tracking-tight text-graphite-500"
           aria-label="Sem dados"
         >
           —

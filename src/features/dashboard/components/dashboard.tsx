@@ -58,7 +58,7 @@ export function Dashboard({
           {[0, 1, 2, 3].map((item) => (
             <div
               key={item}
-              className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-28 animate-pulse"
+              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-28 animate-pulse"
             />
           ))}
         </div>
@@ -69,7 +69,7 @@ export function Dashboard({
     return (
       <div
         role="alert"
-        className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-6 text-sm text-rose-200"
+        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-200"
       >
         Não foi possível carregar o painel financeiro. Tente novamente.
       </div>
@@ -166,7 +166,7 @@ export function Dashboard({
       </section>
 
       <section
-        className="rounded-[18px] border border-line bg-secondary-900 shadow-card mt-8 p-5 sm:p-6"
+        className="rounded-[18px] border border-line bg-graphite-900 shadow-card mt-8 p-5 sm:p-6"
         aria-labelledby="due-title"
       >
         <header className="flex flex-wrap items-end justify-between gap-3">
@@ -234,7 +234,7 @@ function SummaryCard({
   tone: "normal" | "positive" | "negative";
 }) {
   return (
-    <article className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-w-0 p-4 sm:p-5">
+    <article className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-w-0 p-4 sm:p-5">
       <h2 className="text-sm text-muted">{label}</h2>
       <p
         className={cn(

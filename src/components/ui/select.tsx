@@ -16,7 +16,7 @@ export function SelectTrigger({
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-xl border border-line bg-secondary-900 px-3 text-sm font-normal text-moon-200 outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 [@media(pointer:coarse)]:text-base focus:border-moon-600 disabled:cursor-not-allowed disabled:opacity-50",
+        "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-xl border border-line bg-graphite-900 px-3 text-sm font-normal text-moon-200 outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 [@media(pointer:coarse)]:text-base focus:border-moon-600 disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -39,7 +39,7 @@ export function SelectContent({
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "ui-select-content z-50 max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] translate-y-0 rounded-xl border border-line bg-secondary-900 p-1 text-ink opacity-100 shadow-xl transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:!transform-none motion-reduce:transition-opacity motion-reduce:duration-100",
+          "ui-select-content z-50 max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] translate-y-0 rounded-xl border border-line bg-graphite-900 p-1 text-ink opacity-100 shadow-xl transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:!transform-none motion-reduce:transition-opacity motion-reduce:duration-100",
           className,
         )}
         position={position}
@@ -73,7 +73,7 @@ export function SelectItem({
   return (
     <SelectPrimitive.Item
       className={cn(
-        "relative flex min-h-9 w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 focus:bg-secondary-800 focus:text-ink data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex min-h-9 w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 focus:bg-graphite-800 focus:text-ink data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}

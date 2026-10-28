@@ -30,7 +30,7 @@ export function HistoryList({ householdId }: { householdId: string }) {
   if (historyQuery.isPending) {
     return (
       <div
-        className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-h-64 animate-pulse p-6"
+        className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-h-64 animate-pulse p-6"
         aria-live="polite"
         aria-busy="true"
       >
@@ -41,7 +41,7 @@ export function HistoryList({ householdId }: { householdId: string }) {
   if (historyQuery.isError) {
     return (
       <div
-        className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-6 text-sm text-rose-200"
+        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-200"
         role="alert"
       >
         Não foi possível carregar o histórico financeiro. Tente novamente.
@@ -65,7 +65,7 @@ export function HistoryList({ householdId }: { householdId: string }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
+      <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <Eyebrow>Histórico preservado</Eyebrow>
@@ -99,17 +99,17 @@ export function HistoryList({ householdId }: { householdId: string }) {
       </section>
 
       {entries.length === 0 ? (
-        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card px-5 py-8 text-center text-sm text-muted">
+        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card px-5 py-8 text-center text-sm text-muted">
           Nenhum lançamento histórico foi encontrado.
         </div>
       ) : (
         <section
-          className="rounded-[18px] border border-line bg-secondary-900 shadow-card overflow-hidden"
+          className="rounded-[18px] border border-line bg-graphite-900 shadow-card overflow-hidden"
           aria-label="Lançamentos históricos"
         >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[780px] border-collapse text-left text-xs">
-              <thead className="bg-secondary-800 text-muted">
+              <thead className="bg-graphite-800 text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Competência</th>
                   <th className="px-4 py-3 font-medium">Lançamento</th>
@@ -176,7 +176,7 @@ export function HistoryList({ householdId }: { householdId: string }) {
       )}
 
       {batches.length > 0 && (
-        <details className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
+        <details className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
           <summary className="[&::-webkit-details-marker]:hidden cursor-pointer text-sm font-semibold text-ink">
             Fontes preservadas ({batches.length})
           </summary>

@@ -87,113 +87,103 @@ export function MonthlyEntryList({
       onOpenChange={closeDrawer}
       shouldScaleBackground={false}
     >
-      <section>
+      <section className="flex flex-col gap-2 bg-graphite-800 border border-graphite-700 rounded-xl overflow-hidden">
         {showHeader && (
-          <header className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-[15px] font-semibold text-ink">
-                Lançamentos
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                Toque em um lançamento para ver ou editar os detalhes.
-              </p>
-            </div>
+          <header className="flex items-center justify-between gap-3 px-3 py-2 border-b border-line bg-graphite-700">
+            <h2 className="text-[15px] font-semibold text-ink">
+              Lançamentos
+            </h2>
             <span className="rounded-full bg-canvas px-3 py-1 text-xs text-muted">
               {entries.length}
             </span>
           </header>
         )}
-
-        {entries.length ? (
-          <div className="mt-3">
-            {entries.map((entry) => (
-              <Button
-                aria-label={`${entry.title}, ${formatMoney(Number(entry.amount))}, ${statusLabel(entry, today)}. Abrir detalhes`}
-                className="h-auto w-full justify-between gap-3 rounded-xl px-2 py-4 text-left hover:bg-white/[0.04]"
-                key={entry.id}
-                onClick={() => {
-                  setActionError("");
-                  setSelectedEntryId(entry.id);
-                }}
-                type="button"
-                variant="ghost"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="flex min-w-0 flex-wrap items-center gap-2">
-                    <span className="truncate text-sm font-medium text-ink">
-                      {entry.title}
+        <div>
+          {entries.length ? (
+            <div className="divide-y divide-line">
+              {entries.map((entry) => (
+                <Button
+                  aria-label={`${entry.title}, ${formatMoney(Number(entry.amount))}, ${statusLabel(entry, today)}. Abrir detalhes`}
+                  className="flex w-full p-3"
+                  key={entry.id}
+                  onClick={() => {
+                    setActionError("");
+                    setSelectedEntryId(entry.id);
+                  }}
+                  type="button"
+                  variant="unstyled"
+                >
+                  <span className="flex flex-col gap-2 items-start min-w-0 flex-1">
+                    <span className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-medium text-ink">
+                        {entry.title}
+                      </span>
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                          entry.entry_type === "income"
+                            ? "bg-success-900 text-success-100"
+                            : "bg-canvas text-muted",
+                        )}
+                      >
+                        {entry.entry_type === "income" ? "Receita" : "Despesa"}
+                      </span>
+                    </span>
+                    <span className="block truncate text-xs text-muted">
+                      {entry.category ?? "Sem categoria"}
+                      {entry.due_date
+                        ? ` · Vence ${formatDate(entry.due_date)}`
+                        : " · Sem vencimento"}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 flex-col items-end gap-1">
+                    <span
+                      className={cn(
+                        "text-sm font-semibold tabular-nums",
+                        entry.entry_type === "income"
+                          ? "text-mint-300"
+                          : "text-ink",
+                      )}
+                    >
+                      <FinancialValue>
+                        {entry.entry_type === "income" ? "+" : "−"}
+                        {formatMoney(Number(entry.amount))}
+                      </FinancialValue>
                     </span>
                     <span
                       className={cn(
                         "rounded-full px-2 py-0.5 text-[10px] font-medium",
-                        entry.entry_type === "income"
-                          ? "bg-success-900 text-success-100"
-                          : "bg-canvas text-muted",
+                        statusClass(entry, today),
                       )}
                     >
-                      {entry.entry_type === "income" ? "Receita" : "Despesa"}
+                      {statusLabel(entry, today)}
                     </span>
                   </span>
-                  <span className="mt-1 block truncate text-xs text-muted">
-                    {entry.category ?? "Sem categoria"}
-                    {entry.due_date
-                      ? ` · Vence ${formatDate(entry.due_date)}`
-                      : " · Sem vencimento"}
-                  </span>
-                  <span className="mt-1 block truncate text-[11px] text-muted/80">
-                    {sourceLabel(entry)}
-                    {entry.responsible_user_id
-                      ? ` · ${responsibleLabel(entry.responsible_user_id, members, currentUserId)}`
-                      : " · Sem responsável"}
-                  </span>
-                </span>
-                <span className="flex shrink-0 flex-col items-end gap-1">
-                  <span
-                    className={cn(
-                      "text-sm font-semibold tabular-nums",
-                      entry.entry_type === "income"
-                        ? "text-success-200"
-                        : "text-ink",
-                    )}
-                  >
-                    <FinancialValue>
-                      {entry.entry_type === "income" ? "+" : "−"}
-                      {formatMoney(Number(entry.amount))}
-                    </FinancialValue>
-                  </span>
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-medium",
-                      statusClass(entry, today),
-                    )}
-                  >
-                    {statusLabel(entry, today)}
-                  </span>
-                </span>
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex min-h-44 flex-col items-center justify-center px-4 text-center">
-            <span
-              className="grid size-11 place-items-center rounded-full bg-accent-soft text-lg text-accent"
-              aria-hidden="true"
-            >
-              +
-            </span>
-            <h3 className="mt-4 text-sm font-semibold text-ink">
-              Nenhum lançamento neste mês
-            </h3>
-            <p className="mt-1 max-w-xs text-xs leading-5 text-muted">
-              Cadastre uma receita ou despesa. Recorrências e parcelas aparecem
-              automaticamente.
-            </p>
-          </div>
-        )}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex min-h-44 flex-col items-center justify-center px-4 text-center">
+              <span
+                className="grid size-11 place-items-center rounded-full bg-accent-soft text-lg text-accent"
+                aria-hidden="true"
+              >
+                +
+              </span>
+              <h3 className="mt-4 text-sm font-semibold text-ink">
+                Nenhum lançamento neste mês
+              </h3>
+              <p className="mt-1 max-w-xs text-xs leading-5 text-muted">
+                Cadastre uma receita ou despesa. Recorrências e parcelas aparecem
+                automaticamente.
+              </p>
+            </div>
+          )}
+        </div>
       </section>
 
       {selectedEntry && (
-        <DrawerContent className="max-h-[90dvh] overflow-hidden border-line bg-secondary-900 text-ink">
+        <DrawerContent className="max-h-[90dvh] overflow-hidden border-line bg-graphite-900 text-ink">
           <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left sm:px-6">
             <DrawerTitle className="truncate text-base">
               {selectedEntry.title}
@@ -316,10 +306,10 @@ export function MonthlyEntryList({
                 <Detail label="Responsável">
                   {selectedEntry.responsible_user_id
                     ? responsibleLabel(
-                        selectedEntry.responsible_user_id,
-                        members,
-                        currentUserId,
-                      )
+                      selectedEntry.responsible_user_id,
+                      members,
+                      currentUserId,
+                    )
                     : "Sem responsável"}
                 </Detail>
                 <Detail label="Origem">{sourceLabel(selectedEntry)}</Detail>

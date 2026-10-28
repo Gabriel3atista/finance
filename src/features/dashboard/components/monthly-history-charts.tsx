@@ -81,7 +81,7 @@ function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
   const latest = data.at(-1);
 
   return (
-    <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card min-w-0 p-5 sm:p-6">
+    <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-w-0 p-5 sm:p-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="text-[15px] font-semibold text-ink">

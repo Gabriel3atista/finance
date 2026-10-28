@@ -11,7 +11,7 @@ export default async function HouseholdPage() {
   if (!user) redirect("/login");
 
   return (
-    <main className="min-h-screen bg-background-900 px-5 py-10 sm:px-8">
+    <main className="min-h-screen bg-graphite-900 px-5 py-10 sm:px-8">
       <div className="mx-auto mb-7 flex max-w-[920px] items-center justify-between">
         <span className="text-sm font-semibold text-ink">Finance</span>
         <SignOutButton />

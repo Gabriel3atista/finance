@@ -108,8 +108,8 @@ export function HouseholdPanel({
         aria-live="polite"
         aria-busy="true"
       >
-        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-64 animate-pulse" />
-        <div className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-64 animate-pulse" />
+        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-64 animate-pulse" />
+        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-64 animate-pulse" />
       </div>
     );
   }
@@ -117,7 +117,7 @@ export function HouseholdPanel({
     return (
       <div
         role="alert"
-        className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-6 text-sm text-rose-200"
+        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-200"
       >
         NÃ£o foi possÃ­vel carregar as informaÃ§Ãµes do nÃºcleo familiar. Tente
         novamente.
@@ -147,7 +147,7 @@ export function HouseholdPanel({
   if (!household) {
     return (
       <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-        <section className="rounded-2xl border border-line bg-card-900 p-5 sm:p-7">
+        <section className="rounded-2xl border border-line bg-graphite-900 p-5 sm:p-7">
           <Eyebrow tone="accent">Comece por aqui</Eyebrow>
           <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
             Crie o núcleo da família
@@ -192,7 +192,7 @@ export function HouseholdPanel({
           </form>
         </section>
 
-        <section className="rounded-2xl border border-line bg-card-900 p-5 sm:p-7">
+        <section className="rounded-2xl border border-line bg-graphite-900 p-5 sm:p-7">
           <Eyebrow tone="accent">Convites recebidos</Eyebrow>
           <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
             Acesse um núcleo existente
@@ -250,7 +250,7 @@ export function HouseholdPanel({
   }
 
   return (
-    <div className="mx-auto max-w-[640px] rounded-2xl border border-line bg-card-900 p-5 sm:p-8">
+    <div className="mx-auto max-w-[640px] rounded-2xl border border-line bg-graphite-900 p-5 sm:p-8">
       <Eyebrow tone="accent">Núcleo familiar</Eyebrow>
       <h2 className="mt-3 text-2xl font-semibold tracking-tight text-ink">
         {household.name}

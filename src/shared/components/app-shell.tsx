@@ -30,7 +30,7 @@ export function AppShell({
     <AppShellHeaderSlotProvider>
       <ValuesVisibilityProvider>
         <div className="app-shell-root min-h-[100dvh] lg:grid lg:h-[100dvh] lg:grid-cols-[244px_minmax(0,1fr)] lg:overflow-hidden standalone-wide:!flex standalone-wide:h-[100dvh] standalone-wide:min-h-0 standalone-wide:flex-col">
-          <aside className="app-shell-sidebar hidden border-r border-line bg-secondary-900 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col lg:overflow-y-auto standalone-wide:!hidden">
+          <aside className="app-shell-sidebar hidden border-r border-line bg-graphite-900 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col lg:overflow-y-auto standalone-wide:!hidden">
             <AppNav variant="sidebar" />
             <ProfileFooter
               userId={userId}
@@ -101,7 +101,7 @@ export function AppShell({
             </main>
           </div>
           <nav
-            className="app-shell-mobile-nav fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-secondary-900/60 p-1 shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-xl lg:hidden standalone-wide:!block"
+            className="app-shell-mobile-nav fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-graphite-900/60 p-1 shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-xl lg:hidden standalone-wide:!block"
             aria-label="Navegação principal"
           >
             <AppNav variant="mobile" />

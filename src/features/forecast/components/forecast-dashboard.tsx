@@ -72,7 +72,7 @@ export function ForecastDashboard({
           {[0, 1, 2, 3].map((item) => (
             <div
               key={item}
-              className="rounded-[18px] border border-line bg-secondary-900 shadow-card h-52 animate-pulse"
+              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-52 animate-pulse"
             />
           ))}
         </div>
@@ -238,7 +238,7 @@ export function ForecastDashboard({
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(290px,0.65fr)]">
-        <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
+        <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
           <header className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-[15px] font-semibold text-ink">
@@ -290,7 +290,7 @@ export function ForecastDashboard({
           )}
         </section>
 
-        <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
+        <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
           <Eyebrow>Saldo de partida</Eyebrow>
           <h2 className="mt-2 text-[15px] font-semibold text-ink">
             Saldo inicial da família
@@ -433,7 +433,7 @@ function MonthForecastCard({
   return (
     <article
       className={cn(
-        "rounded-[18px] border border-line bg-secondary-900 shadow-card overflow-hidden p-4 sm:p-5",
+        "rounded-[18px] border border-line bg-graphite-900 shadow-card overflow-hidden p-4 sm:p-5",
         balance < 0 && "border-rose-800",
       )}
     >
@@ -472,7 +472,7 @@ function MonthForecastCard({
       <div
         className={cn(
           "mt-3 flex items-center justify-between rounded-lg px-3 py-2",
-          highCommitment ? "bg-warning-900" : "bg-secondary-800",
+          highCommitment ? "bg-warning-900" : "bg-graphite-800",
         )}
       >
         <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
@@ -835,7 +835,7 @@ function MoneyBarChart({
   const maxValue = Math.max(...data.map((item) => item.income), 0);
   const hasData = maxValue > 0;
   return (
-    <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
+    <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
       <h3 className="text-sm font-semibold text-ink">{title}</h3>
       <p className="mt-1 text-xs text-muted">Renda recebida por competência</p>
       {hasData ? (
@@ -920,7 +920,7 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
     .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
     .join(" ");
   return (
-    <section className="rounded-[18px] border border-line bg-secondary-900 shadow-card p-5 sm:p-6">
+    <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
       <h3 className="text-sm font-semibold text-ink">
         Despesas e comprometimento
       </h3>

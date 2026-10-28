@@ -45,11 +45,11 @@ export default function RootLayout({
       className={cn(
         inter.variable,
         kantumruyPro.variable,
-        "min-h-full overscroll-none bg-background-900 [color-scheme:dark] [-webkit-text-size-adjust:100%]",
+        "min-h-full overscroll-none bg-graphite-900 [color-scheme:dark] [-webkit-text-size-adjust:100%]",
       )}
       lang="pt-BR"
     >
-      <body className="min-h-[100dvh] bg-background-900 font-sans text-foreground-400 antialiased [font-optical-sizing:auto] selection:bg-moon-800 selection:text-moon-50">
+      <body className="min-h-[100dvh] bg-graphite-900 font-sans text-graphite-400 antialiased [font-optical-sizing:auto] selection:bg-moon-800 selection:text-moon-50">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

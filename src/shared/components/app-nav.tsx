@@ -27,7 +27,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
           className="focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mb-10 flex h-[68px] items-center gap-3 border-b border-line px-6"
           aria-label="Finance, página inicial"
         >
-          <span className="grid size-9 place-items-center rounded-xl bg-moon-200 text-background-900">
+          <span className="grid size-9 place-items-center rounded-xl bg-moon-200 text-graphite-900">
             <SmallMark />
           </span>
           <span className="text-[15px] font-semibold tracking-tight text-ink">

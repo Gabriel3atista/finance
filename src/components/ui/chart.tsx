@@ -54,7 +54,7 @@ export function ChartTooltipContent({
   }
 
   return (
-    <div className="rounded-xl border border-line bg-secondary-900 px-3 py-2.5 shadow-xl">
+    <div className="rounded-xl border border-line bg-graphite-900 px-3 py-2.5 shadow-xl">
       <p className="text-xs font-medium text-muted">
         {points[0].payload?.fullMonth}
       </p>

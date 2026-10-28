@@ -51,7 +51,7 @@ export function ProfileMenuDrawer({
         </Button>
       </DrawerTrigger>
 
-      <DrawerContent className="max-h-[88dvh] overflow-hidden border-line bg-card-900 text-ink">
+      <DrawerContent className="max-h-[88dvh] overflow-hidden border-line bg-graphite-900 text-ink">
         <div className="overflow-y-auto overscroll-contain pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <DrawerHeader className="grid-cols-[1fr_auto] items-start gap-4 px-5 pb-0 pt-3 sm:px-6">
             <div className="flex min-w-0 items-center gap-3">

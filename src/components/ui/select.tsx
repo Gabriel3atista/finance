@@ -1,10 +1,101 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import type { ComponentProps } from "react";
+import {
+  Children,
+  createContext,
+  isValidElement,
+  useContext,
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
+import { buttonTempVariants } from "@/components/ui/button-temp";
 import { cn } from "@/shared/lib/utils";
 
-export const Select = SelectPrimitive.Root;
+type ButtonVariant =
+  NonNullable<Parameters<typeof buttonTempVariants>[0]>["variant"] | "unstyled";
+type SelectSize = "sm" | "default" | "lg";
+
+type SelectVisuals = {
+  variant: ButtonVariant;
+  size: SelectSize;
+  loading: boolean;
+};
+
+const SelectVisualContext = createContext<SelectVisuals>({
+  variant: "default",
+  size: "default",
+  loading: false,
+});
+
+type SelectProps = ComponentProps<typeof SelectPrimitive.Root> & {
+  loading?: boolean;
+  size?: SelectSize;
+  variant?: ButtonVariant;
+};
+
+export function Select({
+  children,
+  defaultValue,
+  disabled = false,
+  loading = false,
+  name,
+  onValueChange,
+  required = false,
+  size = "default",
+  value,
+  variant = "default",
+  ...rootProps
+}: SelectProps) {
+  const isCoarsePointer = useCoarsePointer();
+  const [uncontrolledValue, setUncontrolledValue] = useState(
+    value ?? defaultValue ?? "",
+  );
+  const selectedValue = value ?? uncontrolledValue;
+  const { options, placeholder, triggerProps } = readSelectChildren(children);
+
+  function changeValue(nextValue: string) {
+    if (value === undefined) setUncontrolledValue(nextValue);
+    onValueChange?.(nextValue);
+  }
+
+  const visuals = { variant, size, loading };
+
+  return (
+    <SelectVisualContext.Provider value={visuals}>
+      <SelectPrimitive.Root
+        {...rootProps}
+        defaultValue={undefined}
+        disabled={disabled || loading || isCoarsePointer}
+        name={isCoarsePointer ? undefined : name}
+        onValueChange={changeValue}
+        required={isCoarsePointer ? false : required}
+        value={selectedValue}
+      >
+        <div className="relative w-full">
+          <div className="[@media(pointer:coarse)]:hidden">{children}</div>
+          <NativeSelect
+            autoComplete={rootProps.autoComplete}
+            disabled={disabled || loading || !isCoarsePointer}
+            name={isCoarsePointer ? name : undefined}
+            onChange={(event) => changeValue(event.currentTarget.value)}
+            options={options}
+            placeholder={placeholder}
+            required={isCoarsePointer && required}
+            selectedValue={selectedValue}
+            size={size}
+            triggerProps={triggerProps}
+            variant={variant}
+            loading={loading}
+          />
+        </div>
+      </SelectPrimitive.Root>
+    </SelectVisualContext.Provider>
+  );
+}
+
 export const SelectGroup = SelectPrimitive.Group;
 export const SelectValue = SelectPrimitive.Value;
 
@@ -13,17 +104,26 @@ export function SelectTrigger({
   children,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Trigger>) {
+  const { loading, size, variant } = useContext(SelectVisualContext);
+  const variantClasses =
+    variant === "unstyled" ? "" : buttonTempVariants({ variant, size });
+
   return (
     <SelectPrimitive.Trigger
+      aria-busy={loading || undefined}
       className={cn(
-        "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-xl border border-line bg-graphite-900 px-3 text-sm font-normal text-moon-200 outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 [@media(pointer:coarse)]:text-base focus:border-moon-600 disabled:cursor-not-allowed disabled:opacity-50",
+        variantClasses,
+        "relative w-full cursor-pointer justify-between border border-line px-3 pr-10 text-left font-medium outline-none [@media(pointer:coarse)]:text-base",
         className,
       )}
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon aria-hidden="true" className="text-muted">
-        <ChevronDown />
+      <SelectPrimitive.Icon
+        aria-hidden="true"
+        className="pointer-events-none absolute right-3 text-muted"
+      >
+        {loading ? <Spinner /> : <ChevronDown />}
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -65,11 +165,13 @@ export function SelectLabel({
   );
 }
 
+type SelectItemProps = ComponentProps<typeof SelectPrimitive.Item>;
+
 export function SelectItem({
   children,
   className = "",
   ...props
-}: ComponentProps<typeof SelectPrimitive.Item>) {
+}: SelectItemProps) {
   return (
     <SelectPrimitive.Item
       className={cn(
@@ -86,6 +188,158 @@ export function SelectItem({
   );
 }
 
+type NativeOption = { value: string; label: string; disabled?: boolean };
+type NativeTriggerProps = {
+  id?: string;
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+};
+
+function NativeSelect({
+  autoComplete,
+  disabled,
+  loading,
+  name,
+  onChange,
+  options,
+  placeholder,
+  required,
+  selectedValue,
+  size,
+  triggerProps,
+  variant,
+}: {
+  autoComplete?: string;
+  disabled: boolean;
+  loading: boolean;
+  name?: string;
+  onChange: React.ChangeEventHandler<HTMLSelectElement>;
+  options: NativeOption[];
+  placeholder?: string;
+  required: boolean;
+  selectedValue: string;
+  size: SelectSize;
+  triggerProps: NativeTriggerProps;
+  variant: ButtonVariant;
+}) {
+  const variantClasses =
+    variant === "unstyled" ? "" : buttonTempVariants({ variant, size });
+
+  return (
+    <div className="relative hidden w-full [@media(pointer:coarse)]:block">
+      <select
+        {...triggerProps}
+        aria-busy={loading || undefined}
+        autoComplete={autoComplete}
+        className={cn(
+          variantClasses,
+          "w-full cursor-pointer appearance-none border border-line px-3 pr-10 text-left font-medium [@media(pointer:coarse)]:text-base",
+          disabled && "cursor-not-allowed opacity-50",
+        )}
+        disabled={disabled}
+        name={name}
+        onChange={onChange}
+        required={required}
+        value={selectedValue}
+      >
+        {placeholder && (
+          <option disabled={required} value="">
+            {placeholder}
+          </option>
+        )}
+        {options.map((option) => (
+          <option
+            disabled={option.disabled}
+            key={option.value}
+            value={option.value}
+          >
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+      >
+        {loading ? <Spinner /> : <ChevronDown />}
+      </span>
+    </div>
+  );
+}
+
+function useCoarsePointer() {
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(pointer: coarse)");
+    const updatePointer = () => setIsCoarsePointer(mediaQuery.matches);
+
+    updatePointer();
+    mediaQuery.addEventListener("change", updatePointer);
+    return () => mediaQuery.removeEventListener("change", updatePointer);
+  }, []);
+
+  return isCoarsePointer;
+}
+
+function readSelectChildren(children: ReactNode) {
+  const options: NativeOption[] = [];
+  let placeholder: string | undefined;
+  let triggerProps: NativeTriggerProps = {};
+
+  function visit(node: ReactNode) {
+    Children.forEach(node, (child) => {
+      if (!isValidElement(child)) return;
+
+      if (child.type === SelectItem) {
+        const itemProps = child.props as SelectItemProps;
+        options.push({
+          value: itemProps.value,
+          label: textContent(itemProps.children),
+          disabled: itemProps.disabled,
+        });
+        return;
+      }
+
+      if (child.type === SelectValue) {
+        const valueProps = child.props as { placeholder?: string };
+        placeholder = valueProps.placeholder;
+      }
+
+      if (child.type === SelectTrigger) {
+        const props = child.props as NativeTriggerProps;
+        triggerProps = {
+          id: props.id,
+          "aria-label": props["aria-label"],
+          "aria-labelledby": props["aria-labelledby"],
+          "aria-describedby": props["aria-describedby"],
+        };
+      }
+
+      const nestedChildren = (child.props as { children?: ReactNode }).children;
+      if (nestedChildren) visit(nestedChildren);
+    });
+  }
+
+  visit(children);
+  return { options, placeholder, triggerProps };
+}
+
+function textContent(children: ReactNode): string {
+  return Children.toArray(children)
+    .map((child) => {
+      if (typeof child === "string" || typeof child === "number") {
+        return String(child);
+      }
+      if (isValidElement<{ children?: ReactNode }>(child)) {
+        return textContent(child.props.children);
+      }
+      return "";
+    })
+    .join("");
+}
+
 function ChevronDown() {
   return (
     <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
@@ -95,6 +349,33 @@ function ChevronDown() {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-4 animate-spin motion-reduce:animate-none"
+      fill="none"
+      viewBox="0 0 16 16"
+    >
+      <circle
+        className="opacity-25"
+        cx="8"
+        cy="8"
+        r="6"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        className="opacity-90"
+        d="M14 8a6 6 0 0 0-6-6"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="2"
       />
     </svg>
   );

@@ -15,6 +15,7 @@ export const buttonTempVariants = cva(
   {
     variants: {
       variant: {
+        primary: "bg-yellow-500 text-graphite-900 hover:bg-yellow-500/90",
         default: "bg-moon-200 text-graphite-900 hover:bg-moon-100",
         secondary: "bg-graphite-700 text-ink hover:bg-graphite-700",
         outline:

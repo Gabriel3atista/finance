@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ButtonTemp } from "@/components/ui/button-temp";
 
 const variants = [
+  { name: "Primary", value: "primary" },
   { name: "Default", value: "default" },
   { name: "Secondary", value: "secondary" },
   { name: "Outline", value: "outline" },
@@ -74,7 +75,7 @@ export default function ButtonDesignSystemPage() {
           title="Variantes"
           description="A hierarquia visual disponível para diferentes níveis de ação."
         >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {variants.map(({ name, value }) => (
               <div
                 className="flex min-h-28 flex-col items-start justify-between gap-5 rounded-xl border border-line/70 bg-graphite-900/60 p-4"
@@ -177,20 +178,20 @@ export default function ButtonDesignSystemPage() {
           description="Comparação direta de cada variante no mesmo contexto."
         >
           <div className="overflow-x-auto">
-            <div className="min-w-[560px]">
-              <div className="grid grid-cols-5 gap-3 border-b border-line px-3 pb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted">
+            <div className="min-w-[680px]">
+              <div className="grid grid-cols-6 gap-3 border-b border-line px-3 pb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted">
                 {variants.map(({ name, value }) => (
                   <span key={value}>{name}</span>
                 ))}
               </div>
-              <div className="grid grid-cols-5 items-center gap-3 px-3 py-4">
+              <div className="grid grid-cols-6 items-center gap-3 px-3 py-4">
                 {variants.map(({ value }) => (
                   <ButtonTemp key={value} variant={value}>
                     Salvar alterações
                   </ButtonTemp>
                 ))}
               </div>
-              <div className="grid grid-cols-5 items-center gap-3 rounded-lg bg-graphite-900/60 px-3 py-4">
+              <div className="grid grid-cols-6 items-center gap-3 rounded-lg bg-graphite-900/60 px-3 py-4">
                 {variants.map(({ value }) => (
                   <ButtonTemp disabled key={value} variant={value}>
                     Salvar alterações

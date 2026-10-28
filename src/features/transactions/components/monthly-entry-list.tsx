@@ -39,6 +39,7 @@ export function MonthlyEntryList({
   statusPendingId,
   onUpdate,
   onCancel,
+  onCreateEntry,
   rowMutationPending,
   showHeader = true,
 }: {
@@ -50,6 +51,7 @@ export function MonthlyEntryList({
   statusPendingId?: string;
   onUpdate: (form: FormData) => Promise<void>;
   onCancel: (form: FormData) => Promise<void>;
+  onCreateEntry: () => void;
   rowMutationPending: boolean;
   showHeader?: boolean;
 }) {
@@ -99,10 +101,7 @@ export function MonthlyEntryList({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Select
-                name="filter_type"
-                defaultValue="expense"
-              >
+              <Select name="filter_type" defaultValue="expense">
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -111,7 +110,12 @@ export function MonthlyEntryList({
                   <SelectItem value="income">Receita</SelectItem>
                 </SelectContent>
               </Select>
-              <Button size="sm" variant="secondary">
+              <Button
+                onClick={onCreateEntry}
+                size="sm"
+                type="button"
+                variant="primary"
+              >
                 Novo
               </Button>
             </div>
@@ -194,8 +198,8 @@ export function MonthlyEntryList({
                 Nenhum lançamento neste mês
               </h3>
               <p className="mt-1 max-w-xs text-xs leading-5 text-muted">
-                Cadastre uma receita ou despesa. Recorrências e parcelas aparecem
-                automaticamente.
+                Cadastre uma receita ou despesa. Recorrências e parcelas
+                aparecem automaticamente.
               </p>
             </div>
           )}
@@ -273,12 +277,18 @@ export function MonthlyEntryList({
                 )}
               </div>
               <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
-                <Button className="w-full" disabled={rowMutationPending} type="submit">
+                <Button
+                  className="w-full"
+                  disabled={rowMutationPending}
+                  type="submit"
+                >
                   {rowMutationPending ? "Salvando…" : "Salvar alterações"}
                 </Button>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
-                    disabled={rowMutationPending || statusPendingId === selectedEntry.id}
+                    disabled={
+                      rowMutationPending || statusPendingId === selectedEntry.id
+                    }
                     onClick={() =>
                       void runAction(() =>
                         onSetStatus(selectedEntry.id, "settled"),
@@ -326,10 +336,10 @@ export function MonthlyEntryList({
                 <Detail label="Responsável">
                   {selectedEntry.responsible_user_id
                     ? responsibleLabel(
-                      selectedEntry.responsible_user_id,
-                      members,
-                      currentUserId,
-                    )
+                        selectedEntry.responsible_user_id,
+                        members,
+                        currentUserId,
+                      )
                     : "Sem responsável"}
                 </Detail>
                 <Detail label="Origem">{sourceLabel(selectedEntry)}</Detail>
@@ -368,13 +378,7 @@ export function MonthlyEntryList({
   );
 }
 
-function Detail({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-line py-2">
       <span className="text-muted">{label}</span>
@@ -384,9 +388,7 @@ function Detail({
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR").format(
-    new Date(`${value}T12:00:00`),
-  );
+  return new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T12:00:00`));
 }
 
 function PaymentStatusIcon({ paid }: { paid: boolean }) {
@@ -450,5 +452,7 @@ function responsibleLabel(
   if (userId === currentUserId) return "Você";
   const member = members.find((item) => item.user_id === userId);
   if (!member) return "Outro membro";
-  return member.member_role === "owner" ? "Responsável do núcleo" : "Outro membro";
+  return member.member_role === "owner"
+    ? "Responsável do núcleo"
+    : "Outro membro";
 }

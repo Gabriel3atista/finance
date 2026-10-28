@@ -6,12 +6,21 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
   addMonths,
   formatMoney,
   localDateString,
   monthString,
   parseMonth,
   type FinancialEntry,
+  type HouseholdMember,
 } from "@/features/transactions/lib/data";
 import { useMonthData } from "@/features/transactions/hooks/use-month-data";
 import { fetchMonthEntries } from "@/features/transactions/lib/queries";
@@ -90,9 +99,7 @@ export function MonthlyLedger({
     setMonth(nextMonth);
   };
 
-  useAppShellHeaderContent(
-    String((previewMonth ?? month).getFullYear()),
-  );
+  useAppShellHeaderContent(String((previewMonth ?? month).getFullYear()));
   const isMobileApp = useMobileApp();
   const monthValue = monthString(month);
   const previousMonth = addMonths(month, -1);
@@ -116,6 +123,7 @@ export function MonthlyLedger({
   });
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const invalidateFinance = () => {
     void queryClient.invalidateQueries({
       queryKey: queryKeys.householdMonthEntries(householdId),
@@ -133,6 +141,7 @@ export function MonthlyLedger({
       if (result.error) throw new Error(result.error);
     },
     onSuccess: () => {
+      setCreateDrawerOpen(false);
       setMutationMessage("saved");
       invalidateFinance();
     },
@@ -208,6 +217,32 @@ export function MonthlyLedger({
     setMutationMessage("");
     await cancelEntry.mutateAsync(form);
   };
+  const openCreateDrawer = () => {
+    setMutationMessage("");
+    createEntry.reset();
+    setCreateDrawerOpen(true);
+  };
+  const newEntryDrawer = (
+    <NewEntryDrawer
+      open={createDrawerOpen}
+      onOpenChange={setCreateDrawerOpen}
+      members={members}
+      currentUserId={userId}
+      month={monthValue}
+      pending={createEntry.isPending}
+      error={
+        createEntry.isError
+          ? createEntry.error instanceof Error
+            ? createEntry.error.message
+            : "save-entry"
+          : ""
+      }
+      onSubmit={(form) => {
+        setMutationMessage("");
+        createEntry.mutate(form);
+      }}
+    />
+  );
 
   if (isMobileApp === null) {
     return (
@@ -257,236 +292,309 @@ export function MonthlyLedger({
 
   if (isMobileApp) {
     return (
-      <MobileMonthView
-        currentBalance={settledIncome - settledExpenses}
-        previousBalance={previousMonthBalance}
-        isBalancePending={isLoading}
-        isPreviousBalancePending={previousMonthQuery.isPending}
-        entries={entries}
-        members={members}
-        currentUserId={userId}
-        monthValue={monthValue}
-        onSetEntryStatus={setEntryStatus}
-        statusPendingId={setStatus.isPending ? setStatus.variables?.id : undefined}
-        onUpdateEntry={updateEntryFromForm}
-        onCancelEntry={cancelEntryFromForm}
-        rowMutationPending={updateEntry.isPending || cancelEntry.isPending}
-        month={month}
-        onMonthPreview={setPreviewMonth}
-        onMonthSelect={selectMonth}
-      />
+      <>
+        <MobileMonthView
+          currentBalance={settledIncome - settledExpenses}
+          previousBalance={previousMonthBalance}
+          isBalancePending={isLoading}
+          isPreviousBalancePending={previousMonthQuery.isPending}
+          entries={entries}
+          members={members}
+          currentUserId={userId}
+          monthValue={monthValue}
+          onSetEntryStatus={setEntryStatus}
+          statusPendingId={
+            setStatus.isPending ? setStatus.variables?.id : undefined
+          }
+          onUpdateEntry={updateEntryFromForm}
+          onCancelEntry={cancelEntryFromForm}
+          onCreateEntry={openCreateDrawer}
+          rowMutationPending={updateEntry.isPending || cancelEntry.isPending}
+          month={month}
+          onMonthPreview={setPreviewMonth}
+          onMonthSelect={selectMonth}
+        />
+        {newEntryDrawer}
+      </>
     );
   }
 
   return (
-    <section className="mx-auto max-w-5xl">
-      <header className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div>
-          <Eyebrow>Operação mensal</Eyebrow>
-          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
-            {formatMonth(month)}
-          </h1>
-          <p className="mt-2 text-sm text-muted">
-            {pendingCount} pendente{pendingCount === 1 ? "" : "s"}
-            {overdueCount > 0
-              ? ` · ${overdueCount} vencida${overdueCount === 1 ? "" : "s"}`
-              : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <MonthLink
-            month={addMonths(month, -1)}
-            label="Mês anterior"
-            symbol="←"
-          />
-          <Button asChild variant="outline">
-            <Link href="/mes">Hoje</Link>
-          </Button>
-          <MonthLink
-            month={addMonths(month, 1)}
-            label="Próximo mês"
-            symbol="→"
-          />
-        </div>
-      </header>
-
-      {error && (
-        <p
-          className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
-          role="alert"
-        >
-          {errorMessages[error] ?? "Não foi possível concluir a ação."}
-        </p>
-      )}
-      {saved && (
-        <p
-          className="mb-5 rounded-xl border border-success-800 bg-success-900 px-4 py-3 text-sm text-success-100"
-          role="status"
-        >
-          Alterações salvas.
-        </p>
-      )}
-      {setStatus.isError && (
-        <p
-          className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
-          role="alert"
-        >
-          NÃ£o foi possÃ­vel atualizar o lanÃ§amento. Tente novamente.
-        </p>
-      )}
-      {mutationMessage && (
-        <p
-          className={`mb-5 rounded-xl px-4 py-3 text-sm ${mutationMessage === "saved" ? "border border-success-800 bg-success-900 text-success-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
-          role={mutationMessage === "saved" ? "status" : "alert"}
-        >
-          {mutationMessage === "saved"
-            ? "Alterações salvas."
-            : (errorMessages[mutationMessage] ??
-              "Não foi possível salvar. Tente novamente.")}
-        </p>
-      )}
-      {loadFailed && (
-        <p
-          className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
-          role="alert"
-        >
-          Não foi possível carregar os lançamentos. Confira a conexão e se as
-          migrations do Supabase foram aplicadas.
-        </p>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Summary
-          title="Receitas previstas"
-          value={formatMoney(income)}
-          detail={
-            <>
-              <FinancialValue>{formatMoney(settledIncome)}</FinancialValue>{" "}
-              recebidas
-            </>
-          }
-        />
-        <Summary
-          title="Despesas previstas"
-          value={formatMoney(expenses)}
-          detail={
-            <>
-              <FinancialValue>{formatMoney(settledExpenses)}</FinancialValue>{" "}
-              pagas
-            </>
-          }
-        />
-        <Summary
-          title="Saldo previsto"
-          value={formatMoney(income - expenses)}
-          detail={
-            <>
-              <FinancialValue>
-                {formatMoney(settledIncome - settledExpenses)}
-              </FinancialValue>{" "}
-              realizado
-            </>
-          }
-        />
-      </div>
-
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(270px,0.8fr)]">
-        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-7">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-[15px] font-semibold text-ink">
-                Lançamentos
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                Valores previstos e realizados deste mês.
-              </p>
-            </div>
-            <span className="rounded-full bg-canvas px-3 py-1 text-xs text-muted">
-              {entries.length}
-            </span>
+    <>
+      <section className="mx-auto max-w-5xl">
+        <header className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <Eyebrow>Operação mensal</Eyebrow>
+            <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
+              {formatMonth(month)}
+            </h1>
+            <p className="mt-2 text-sm text-muted">
+              {pendingCount} pendente{pendingCount === 1 ? "" : "s"}
+              {overdueCount > 0
+                ? ` · ${overdueCount} vencida${overdueCount === 1 ? "" : "s"}`
+                : ""}
+            </p>
           </div>
-          {entries.length ? (
-            <MonthlyEntryList
-              entries={entries}
-              members={members}
-              currentUserId={userId}
-              month={monthValue}
-              onSetStatus={setEntryStatus}
-              statusPendingId={setStatus.isPending ? setStatus.variables?.id : undefined}
-              onUpdate={updateEntryFromForm}
-              onCancel={cancelEntryFromForm}
-              rowMutationPending={updateEntry.isPending || cancelEntry.isPending}
-              showHeader={false}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <MonthLink
+              month={addMonths(month, -1)}
+              label="Mês anterior"
+              symbol="←"
             />
-          ) : (
-            <div className="flex min-h-52 flex-col items-center justify-center px-4 text-center">
-              <span
-                className="grid size-11 place-items-center rounded-full bg-accent-soft text-lg text-accent"
-                aria-hidden="true"
-              >
-                ＋
-              </span>
-              <h3 className="mt-4 text-sm font-semibold text-ink">
-                Nenhum lançamento neste mês
-              </h3>
-              <p className="mt-1 max-w-xs text-xs leading-5 text-muted">
-                Cadastre uma receita ou despesa. Recorrências e parcelas
-                aparecem automaticamente.
-              </p>
-            </div>
-          )}
+            <Button asChild variant="outline">
+              <Link href="/mes">Hoje</Link>
+            </Button>
+            <MonthLink
+              month={addMonths(month, 1)}
+              label="Próximo mês"
+              symbol="→"
+            />
+          </div>
+        </header>
+
+        {error && (
+          <p
+            className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
+            role="alert"
+          >
+            {errorMessages[error] ?? "Não foi possível concluir a ação."}
+          </p>
+        )}
+        {saved && (
+          <p
+            className="mb-5 rounded-xl border border-success-800 bg-success-900 px-4 py-3 text-sm text-success-100"
+            role="status"
+          >
+            Alterações salvas.
+          </p>
+        )}
+        {setStatus.isError && (
+          <p
+            className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
+            role="alert"
+          >
+            NÃ£o foi possÃ­vel atualizar o lanÃ§amento. Tente novamente.
+          </p>
+        )}
+        {mutationMessage && (
+          <p
+            className={`mb-5 rounded-xl px-4 py-3 text-sm ${mutationMessage === "saved" ? "border border-success-800 bg-success-900 text-success-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
+            role={mutationMessage === "saved" ? "status" : "alert"}
+          >
+            {mutationMessage === "saved"
+              ? "Alterações salvas."
+              : (errorMessages[mutationMessage] ??
+                "Não foi possível salvar. Tente novamente.")}
+          </p>
+        )}
+        {loadFailed && (
+          <p
+            className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
+            role="alert"
+          >
+            Não foi possível carregar os lançamentos. Confira a conexão e se as
+            migrations do Supabase foram aplicadas.
+          </p>
+        )}
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Summary
+            title="Receitas previstas"
+            value={formatMoney(income)}
+            detail={
+              <>
+                <FinancialValue>{formatMoney(settledIncome)}</FinancialValue>{" "}
+                recebidas
+              </>
+            }
+          />
+          <Summary
+            title="Despesas previstas"
+            value={formatMoney(expenses)}
+            detail={
+              <>
+                <FinancialValue>{formatMoney(settledExpenses)}</FinancialValue>{" "}
+                pagas
+              </>
+            }
+          />
+          <Summary
+            title="Saldo previsto"
+            value={formatMoney(income - expenses)}
+            detail={
+              <>
+                <FinancialValue>
+                  {formatMoney(settledIncome - settledExpenses)}
+                </FinancialValue>{" "}
+                realizado
+              </>
+            }
+          />
         </div>
 
-        <details
-          className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-fit p-5 sm:p-6"
-          open={saved === "1" ? false : undefined}
-        >
-          <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none text-[15px] font-semibold text-ink marker:hidden">
-            Novo lançamento <span className="ml-1 text-accent">＋</span>
-            <span className="mt-1 block text-sm font-normal text-muted">
-              Receita ou despesa avulsa
-            </span>
-          </summary>
+        <div className="mt-5">
+          <div className="rounded-[18px] border border-line bg-graphite-900 p-5 shadow-card sm:p-7">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-[15px] font-semibold text-ink">
+                  Lançamentos
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  Valores previstos e realizados deste mês.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="rounded-full bg-canvas px-3 py-1 text-xs text-muted">
+                  {entries.length}
+                </span>
+                <Button
+                  onClick={openCreateDrawer}
+                  size="sm"
+                  type="button"
+                  variant="primary"
+                >
+                  Novo
+                </Button>
+              </div>
+            </div>
+            {entries.length ? (
+              <MonthlyEntryList
+                entries={entries}
+                members={members}
+                currentUserId={userId}
+                month={monthValue}
+                onCreateEntry={openCreateDrawer}
+                onSetStatus={setEntryStatus}
+                statusPendingId={
+                  setStatus.isPending ? setStatus.variables?.id : undefined
+                }
+                onUpdate={updateEntryFromForm}
+                onCancel={cancelEntryFromForm}
+                rowMutationPending={
+                  updateEntry.isPending || cancelEntry.isPending
+                }
+                showHeader={false}
+              />
+            ) : (
+              <div className="flex min-h-52 flex-col items-center justify-center px-4 text-center">
+                <span
+                  className="grid size-11 place-items-center rounded-full bg-accent-soft text-lg text-accent"
+                  aria-hidden="true"
+                >
+                  ＋
+                </span>
+                <h3 className="mt-4 text-sm font-semibold text-ink">
+                  Nenhum lançamento neste mês
+                </h3>
+                <p className="mt-1 max-w-xs text-xs leading-5 text-muted">
+                  Cadastre uma receita ou despesa. Recorrências e parcelas
+                  aparecem automaticamente.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+      {newEntryDrawer}
+    </>
+  );
+}
+
+function NewEntryDrawer({
+  open,
+  onOpenChange,
+  members,
+  currentUserId,
+  month,
+  pending,
+  error,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  members: HouseholdMember[];
+  currentUserId: string;
+  month: string;
+  pending: boolean;
+  error: string;
+  onSubmit: (form: FormData) => void;
+}) {
+  return (
+    <Drawer
+      open={open}
+      onOpenChange={onOpenChange}
+      shouldScaleBackground={false}
+    >
+      {open && (
+        <DrawerContent className="max-h-[90dvh] overflow-hidden border-line bg-graphite-900 text-ink">
+          <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left sm:px-6">
+            <DrawerTitle className="text-base">Novo lançamento</DrawerTitle>
+            <DrawerDescription className="text-muted">
+              Cadastre uma receita ou despesa avulsa para este mês.
+            </DrawerDescription>
+          </DrawerHeader>
           <form
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
             onSubmit={(event) => {
               event.preventDefault();
-              setMutationMessage("");
-              createEntry.mutate(new FormData(event.currentTarget));
+              onSubmit(new FormData(event.currentTarget));
             }}
-            className="mt-5 space-y-4"
           >
-            <p className="text-xs leading-5 text-muted">
-              Para cartão, registre a fatura como uma única despesa. Não some as
-              compras individuais junto com o pagamento da fatura.
-            </p>
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-              Tipo
-              <Select name="entry_type" defaultValue="expense">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="expense">Despesa</SelectItem>
-                  <SelectItem value="income">Receita</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
-            <EntryFields
-              members={members}
-              currentUserId={userId}
-              month={monthValue}
-            />
-            <Button
-              className="w-full"
-              disabled={createEntry.isPending}
-              type="submit"
-            >
-              Salvar lançamento
-            </Button>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 sm:px-6">
+              {error && (
+                <p
+                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                  role="alert"
+                >
+                  {errorMessages[error] ??
+                    "Não foi possível salvar o lançamento. Tente novamente."}
+                </p>
+              )}
+              <p className="text-xs leading-5 text-muted">
+                Para cartão, registre a fatura como uma única despesa. Não some
+                as compras individuais junto com o pagamento da fatura.
+              </p>
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
+                Tipo
+                <Select name="entry_type" defaultValue="expense">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="expense">Despesa</SelectItem>
+                    <SelectItem value="income">Receita</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+              <EntryFields
+                members={members}
+                currentUserId={currentUserId}
+                month={month}
+              />
+            </div>
+            <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
+              <Button
+                className="w-full"
+                disabled={pending}
+                type="submit"
+                variant="primary"
+              >
+                {pending ? "Salvando…" : "Salvar lançamento"}
+              </Button>
+              <Button
+                className="w-full"
+                disabled={pending}
+                onClick={() => onOpenChange(false)}
+                type="button"
+                variant="outline"
+              >
+                Cancelar
+              </Button>
+            </DrawerFooter>
           </form>
-        </details>
-      </div>
-    </section>
+        </DrawerContent>
+      )}
+    </Drawer>
   );
 }
 

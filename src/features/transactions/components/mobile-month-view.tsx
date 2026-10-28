@@ -9,7 +9,10 @@ import { BalanceChangeIndicator } from "@/shared/components/balance-change-indic
 import { AnimatedNumber } from "@/shared/components/animated-number";
 import { MonthSelector } from "@/features/transactions/components/month-selector";
 import { MonthlyEntryList } from "@/features/transactions/components/monthly-entry-list";
-import type { FinancialEntry, HouseholdMember } from "@/features/transactions/lib/data";
+import type {
+  FinancialEntry,
+  HouseholdMember,
+} from "@/features/transactions/lib/data";
 
 export function MobileMonthView({
   currentBalance,
@@ -24,6 +27,7 @@ export function MobileMonthView({
   statusPendingId,
   onUpdateEntry,
   onCancelEntry,
+  onCreateEntry,
   rowMutationPending,
   month,
   onMonthSelect,
@@ -44,6 +48,7 @@ export function MobileMonthView({
   statusPendingId?: string;
   onUpdateEntry: (form: FormData) => Promise<void>;
   onCancelEntry: (form: FormData) => Promise<void>;
+  onCreateEntry: () => void;
   rowMutationPending: boolean;
   month: Date;
   onMonthSelect: (month: Date) => void;
@@ -112,6 +117,7 @@ export function MobileMonthView({
           statusPendingId={statusPendingId}
           onUpdate={onUpdateEntry}
           onCancel={onCancelEntry}
+          onCreateEntry={onCreateEntry}
           rowMutationPending={rowMutationPending}
         />
       </section>

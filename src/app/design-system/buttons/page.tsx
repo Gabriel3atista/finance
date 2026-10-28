@@ -113,12 +113,34 @@ export default function ButtonDesignSystemPage() {
                 <span className="text-[10px] text-muted">default</span>
               </div>
               <div className="flex flex-col items-center gap-3">
+                <ButtonTemp size="lg">Grande</ButtonTemp>
+                <span className="text-[10px] text-muted">lg</span>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
+              <div className="flex flex-col items-center gap-3">
                 <ButtonTemp
                   aria-label="Adicionar item"
-                  leftIcon={<PlusIcon />}
+                  icon={<PlusIcon />}
+                  size="icon-sm"
+                />
+                <span className="text-[10px] text-muted">icon-sm</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <ButtonTemp
+                  aria-label="Adicionar item"
+                  icon={<PlusIcon />}
                   size="icon"
                 />
                 <span className="text-[10px] text-muted">icon</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <ButtonTemp
+                  aria-label="Adicionar item"
+                  icon={<PlusIcon />}
+                  size="icon-lg"
+                />
+                <span className="text-[10px] text-muted">icon-lg</span>
               </div>
             </div>
           </SpecimenCard>
@@ -128,13 +150,21 @@ export default function ButtonDesignSystemPage() {
             description="Ações com ícones, foco por teclado e estado indisponível."
           >
             <div className="flex min-h-36 flex-wrap items-center gap-3 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
-              <ButtonTemp leftIcon={<PlusIcon />}>Nova transação</ButtonTemp>
-              <ButtonTemp rightIcon={<ArrowIcon />} variant="outline">
+              <ButtonTemp leadingIcon={<PlusIcon />}>Nova transação</ButtonTemp>
+              <ButtonTemp trailingIcon={<ArrowIcon />} variant="outline">
                 Ver detalhes
               </ButtonTemp>
               <ButtonTemp disabled variant="secondary">
                 Indisponível
               </ButtonTemp>
+              <ButtonTemp loading>Salvando</ButtonTemp>
+              <ButtonTemp
+                aria-label="Salvando alterações"
+                icon={<PlusIcon />}
+                loading
+                size="icon"
+                variant="ghost"
+              />
             </div>
             <p className="mt-3 text-[11px] leading-5 text-muted">
               Use Tab para conferir o contorno de foco.

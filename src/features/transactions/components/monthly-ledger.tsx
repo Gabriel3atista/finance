@@ -62,6 +62,7 @@ export function MonthlyLedger({
   saved?: string;
 }) {
   const [month, setMonth] = useState(initialMonth);
+  const [previewMonth, setPreviewMonth] = useState<Date | null>(null);
   const initialMonthValue = monthString(initialMonth);
 
   useEffect(() => {
@@ -89,7 +90,9 @@ export function MonthlyLedger({
     setMonth(nextMonth);
   };
 
-  useAppShellHeaderContent(String(month.getFullYear()));
+  useAppShellHeaderContent(
+    String((previewMonth ?? month).getFullYear()),
+  );
   const isMobileApp = useMobileApp();
   const monthValue = monthString(month);
   const previousMonth = addMonths(month, -1);
@@ -269,6 +272,7 @@ export function MonthlyLedger({
         onCancelEntry={cancelEntryFromForm}
         rowMutationPending={updateEntry.isPending || cancelEntry.isPending}
         month={month}
+        onMonthPreview={setPreviewMonth}
         onMonthSelect={selectMonth}
       />
     );

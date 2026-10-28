@@ -9,9 +9,9 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-moon-200 text-graphite-900 hover:bg-moon-100",
-        secondary: "bg-graphite-800 text-ink hover:bg-graphite-700",
+        secondary: "bg-graphite-700 text-ink hover:bg-graphite-700",
         outline:
-          "border border-line bg-graphite-900 text-graphite-400 hover:bg-graphite-800 hover:text-moon-200",
+          "border border-line bg-graphite-900 text-muted hover:bg-graphite-800 hover:text-moon-200",
         ghost: "text-muted hover:bg-graphite-800 hover:text-ink",
       },
       size: {

@@ -87,24 +87,43 @@ export function MonthlyEntryList({
       onOpenChange={closeDrawer}
       shouldScaleBackground={false}
     >
-      <section className="flex flex-col gap-2 bg-graphite-800 border border-graphite-700 rounded-xl overflow-hidden">
+      <section className="flex flex-col">
         {showHeader && (
-          <header className="flex items-center justify-between gap-3 px-3 py-2 border-b border-line bg-graphite-700">
-            <h2 className="text-[15px] font-semibold text-ink">
-              Lançamentos
-            </h2>
-            <span className="rounded-full bg-canvas px-3 py-1 text-xs text-muted">
-              {entries.length}
-            </span>
+          <header className="flex items-center justify-between gap-3 pl-3 py-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[15px] font-semibold text-moon-100">
+                Lançamentos
+              </h2>
+              <span className="rounded-full bg-graphite-600 p-1 px-2 text-xs text-moon-100">
+                {entries.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select
+                name="filter_type"
+                defaultValue="expense"
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="expense">Despesa</SelectItem>
+                  <SelectItem value="income">Receita</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="secondary">
+                Novo
+              </Button>
+            </div>
           </header>
         )}
         <div>
           {entries.length ? (
-            <div className="divide-y divide-line">
+            <div className="flex flex-col gap-3">
               {entries.map((entry) => (
                 <Button
                   aria-label={`${entry.title}, ${formatMoney(Number(entry.amount))}, ${statusLabel(entry, today)}. Abrir detalhes`}
-                  className="flex w-full p-3"
+                  className="flex w-full p-3 bg-graphite-800 rounded-xl border border-graphite-700"
                   key={entry.id}
                   onClick={() => {
                     setActionError("");
@@ -115,6 +134,7 @@ export function MonthlyEntryList({
                 >
                   <span className="flex flex-col gap-2 items-start min-w-0 flex-1">
                     <span className="flex min-w-0 flex-wrap items-center gap-2">
+                      <PaymentStatusIcon paid={entry.status === "settled"} />
                       <span className="truncate text-sm font-medium text-ink">
                         {entry.title}
                       </span>
@@ -366,6 +386,36 @@ function Detail({
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR").format(
     new Date(`${value}T12:00:00`),
+  );
+}
+
+function PaymentStatusIcon({ paid }: { paid: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={cn(
+        "size-4 shrink-0",
+        paid ? "text-success-100" : "text-muted",
+      )}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      {paid ? (
+        <>
+          <circle cx="12" cy="12" r="9" />
+          <path d="m8 12 2.5 2.5L16.5 9" />
+        </>
+      ) : (
+        <>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </>
+      )}
+    </svg>
   );
 }
 

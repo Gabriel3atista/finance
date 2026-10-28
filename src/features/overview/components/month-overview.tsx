@@ -99,7 +99,7 @@ function SummaryCard({ title, icon }: { title: string; icon: string }) {
       <div>
         <p className="text-sm text-muted">{title}</p>
         <p
-          className="mt-3 text-[22px] font-semibold tracking-tight text-graphite-500"
+          className="mt-3 text-[22px] font-semibold tracking-tight text-muted"
           aria-label="Sem dados"
         >
           —

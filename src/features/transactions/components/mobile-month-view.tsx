@@ -27,6 +27,7 @@ export function MobileMonthView({
   rowMutationPending,
   month,
   onMonthSelect,
+  onMonthPreview,
 }: {
   currentBalance: number;
   previousBalance?: number;
@@ -46,6 +47,7 @@ export function MobileMonthView({
   rowMutationPending: boolean;
   month: Date;
   onMonthSelect: (month: Date) => void;
+  onMonthPreview: (month: Date | null) => void;
 }) {
   const lastAvailableBalance = useRef(currentBalance);
   const displayedBalance = isBalancePending
@@ -58,7 +60,11 @@ export function MobileMonthView({
 
   return (
     <section className="flex flex-col gap-3 mx-auto max-w-xl">
-      <MonthSelector month={month} onMonthSelect={onMonthSelect} />
+      <MonthSelector
+        month={month}
+        onMonthPreview={onMonthPreview}
+        onMonthSelect={onMonthSelect}
+      />
       <article className="relative isolate flex h-40 max-h-40 min-h-40 flex-col justify-between overflow-hidden rounded-3xl bg-[url('/current-balance-card-background.png')] bg-cover bg-center px-6 pb-6 pt-3">
         <div
           aria-hidden="true"
@@ -96,7 +102,7 @@ export function MobileMonthView({
           ) : null}
         </div>
       </article>
-      <section className="mt-8">
+      <section>
         <MonthlyEntryList
           entries={entries}
           members={members}

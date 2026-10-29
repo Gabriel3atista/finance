@@ -9,7 +9,10 @@ import { BalanceChangeIndicator } from "@/shared/components/balance-change-indic
 import { AnimatedNumber } from "@/shared/components/animated-number";
 import { MonthSelector } from "@/features/transactions/components/month-selector";
 import { MonthlyEntryList } from "@/features/transactions/components/monthly-entry-list";
-import type { FinancialEntry } from "@/features/transactions/lib/data";
+import {
+  formatMoney,
+  type FinancialEntry,
+} from "@/features/transactions/lib/data";
 
 export function MobileMonthView({
   currentBalance,
@@ -58,6 +61,24 @@ export function MobileMonthView({
     if (!isBalancePending) lastAvailableBalance.current = currentBalance;
   }, [currentBalance, isBalancePending]);
 
+  const activeEntries = entries.filter((entry) => entry.status !== "cancelled");
+  const income = activeEntries
+    .filter((entry) => entry.entry_type === "income")
+    .reduce((total, entry) => total + entry.amount, 0);
+  const expenses = activeEntries
+    .filter((entry) => entry.entry_type === "expense")
+    .reduce((total, entry) => total + entry.amount, 0);
+  const settledIncome = activeEntries
+    .filter(
+      (entry) => entry.entry_type === "income" && entry.status === "settled",
+    )
+    .reduce((total, entry) => total + entry.amount, 0);
+  const settledExpenses = activeEntries
+    .filter(
+      (entry) => entry.entry_type === "expense" && entry.status === "settled",
+    )
+    .reduce((total, entry) => total + entry.amount, 0);
+
   return (
     <section className="flex flex-col gap-3 mx-auto max-w-xl">
       <MonthSelector
@@ -102,6 +123,20 @@ export function MobileMonthView({
           ) : null}
         </div>
       </article>
+      <div className="grid grid-cols-2 gap-3" aria-busy={isBalancePending}>
+        <SummaryCard
+          title="Receitas"
+          value={formatMoney(income)}
+          detail={`${formatMoney(settledIncome)} recebidas`}
+          tone="positive"
+        />
+        <SummaryCard
+          title="Despesas"
+          value={formatMoney(expenses)}
+          detail={`${formatMoney(settledExpenses)} pagas`}
+          tone="negative"
+        />
+      </div>
       <section>
         <MonthlyEntryList
           entries={entries}
@@ -117,5 +152,31 @@ export function MobileMonthView({
         />
       </section>
     </section>
+  );
+}
+
+function SummaryCard({
+  title,
+  value,
+  detail,
+  tone,
+}: {
+  title: string;
+  value: string;
+  detail: string;
+  tone: "positive" | "negative";
+}) {
+  return (
+    <article className="min-w-0 rounded-2xl border border-line bg-graphite-900 p-4 shadow-card">
+      <p className="text-xs text-muted">{title}</p>
+      <p
+        className={`mt-2 truncate text-lg font-semibold tracking-tight tabular-nums ${tone === "positive" ? "text-success-300" : "text-rose-300"}`}
+      >
+        <FinancialValue>{value}</FinancialValue>
+      </p>
+      <p className="mt-1 truncate text-[11px] text-muted">
+        <FinancialValue>{detail}</FinancialValue>
+      </p>
+    </article>
   );
 }

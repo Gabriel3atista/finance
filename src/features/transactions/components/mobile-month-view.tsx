@@ -9,19 +9,15 @@ import { BalanceChangeIndicator } from "@/shared/components/balance-change-indic
 import { AnimatedNumber } from "@/shared/components/animated-number";
 import { MonthSelector } from "@/features/transactions/components/month-selector";
 import { MonthlyEntryList } from "@/features/transactions/components/monthly-entry-list";
-import type {
-  FinancialEntry,
-  HouseholdMember,
-} from "@/features/transactions/lib/data";
+import type { FinancialEntry } from "@/features/transactions/lib/data";
 
 export function MobileMonthView({
   currentBalance,
   previousBalance,
   isBalancePending,
+  isEntriesError,
   isPreviousBalancePending,
   entries,
-  members,
-  currentUserId,
   monthValue,
   onSetEntryStatus,
   statusPendingId,
@@ -36,10 +32,9 @@ export function MobileMonthView({
   currentBalance: number;
   previousBalance?: number;
   isBalancePending: boolean;
+  isEntriesError: boolean;
   isPreviousBalancePending: boolean;
   entries: FinancialEntry[];
-  members: HouseholdMember[];
-  currentUserId: string;
   monthValue: string;
   onSetEntryStatus: (
     id: string,
@@ -110,8 +105,6 @@ export function MobileMonthView({
       <section>
         <MonthlyEntryList
           entries={entries}
-          members={members}
-          currentUserId={currentUserId}
           month={monthValue}
           onSetStatus={onSetEntryStatus}
           statusPendingId={statusPendingId}
@@ -119,6 +112,8 @@ export function MobileMonthView({
           onCancel={onCancelEntry}
           onCreateEntry={onCreateEntry}
           rowMutationPending={rowMutationPending}
+          isLoading={isBalancePending}
+          loadError={isEntriesError}
         />
       </section>
     </section>

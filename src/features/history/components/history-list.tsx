@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FinancialValue } from "@/shared/components/financial-values";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { normalizeFinancialCategory } from "@/features/transactions/lib/categories";
 import { Eyebrow } from "@/shared/components/eyebrow";
 import {
   Select,
@@ -29,13 +32,13 @@ export function HistoryList({ householdId }: { householdId: string }) {
   const entries = historyQuery.data?.entries ?? [];
   if (historyQuery.isPending) {
     return (
-      <div
-        className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-h-64 animate-pulse p-6"
+      <Skeleton
+        className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-h-64 p-6"
         aria-live="polite"
         aria-busy="true"
       >
         Carregando histórico…
-      </div>
+      </Skeleton>
     );
   }
   if (historyQuery.isError) {
@@ -129,11 +132,16 @@ export function HistoryList({ householdId }: { householdId: string }) {
                       <span className="block font-medium text-ink">
                         {entry.title}
                       </span>
-                      {entry.category && (
-                        <span className="mt-0.5 block text-[10px] text-muted">
-                          {entry.category}
-                        </span>
-                      )}
+                      <Badge
+                        className="mt-1 w-fit"
+                        size="sm"
+                        variant="secondary"
+                      >
+                        {normalizeFinancialCategory(
+                          entry.category,
+                          entry.entry_type,
+                        )}
+                      </Badge>
                     </td>
                     <td className="px-4 py-3 text-muted">
                       {entry.entry_type === "income" ? "Receita" : "Despesa"}

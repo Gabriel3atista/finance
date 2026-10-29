@@ -2,7 +2,6 @@ export const queryKeys = {
   profile: (userId: string) => ["profile", userId] as const,
   household: (userId: string) => ["household", userId] as const,
   invitations: (email: string) => ["invitations", email.toLowerCase()] as const,
-  members: (householdId: string) => ["household-members", householdId] as const,
   monthEntries: (householdId: string, month: string) =>
     ["month-entries", householdId, month] as const,
   householdMonthEntries: (householdId: string) =>

@@ -1,4 +1,3 @@
-import type { HouseholdMember } from "@/features/transactions/lib/data";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -7,22 +6,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  FINANCIAL_CATEGORIES,
+  normalizeFinancialCategory,
+} from "@/features/transactions/lib/categories";
 
 export function EntryFields({
-  members,
-  currentUserId,
   month,
   entry,
 }: {
-  members: HouseholdMember[];
-  currentUserId: string;
   month: string;
   entry?: {
     title: string;
     amount: number;
     category: string | null;
+    entry_type?: "income" | "expense";
+    source_kind?: string;
     due_date: string | null;
-    responsible_user_id: string | null;
   };
 }) {
   return (
@@ -51,11 +51,16 @@ export function EntryFields({
       </label>
       <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Categoria
-        <Input
-          name="category"
-          maxLength={80}
-          defaultValue={entry?.category ?? ""}
-          placeholder="Opcional"
+        <CategorySelect
+          defaultValue={
+            entry
+              ? normalizeFinancialCategory(
+                  entry.category,
+                  entry.entry_type ?? "expense",
+                  entry.source_kind,
+                )
+              : undefined
+          }
         />
       </label>
       <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
@@ -66,41 +71,14 @@ export function EntryFields({
           defaultValue={entry?.due_date ?? ""}
         />
       </label>
-      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-        Responsável
-        <Select
-          name="responsible_user_id"
-          defaultValue={entry?.responsible_user_id ?? "__none"}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none">Sem responsável</SelectItem>
-            {members.map((member) => (
-              <SelectItem key={member.user_id} value={member.user_id}>
-                {member.user_id === currentUserId
-                  ? "Eu"
-                  : member.member_role === "owner"
-                    ? "Responsável do núcleo"
-                    : "Outro membro"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </label>
       <Input type="hidden" name="competence_month" value={month} />
     </div>
   );
 }
 
 export function SeriesFields({
-  members,
-  currentUserId,
   month,
 }: {
-  members: HouseholdMember[];
-  currentUserId: string;
   month: string;
 }) {
   return (
@@ -115,7 +93,7 @@ export function SeriesFields({
       </label>
       <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Categoria
-        <Input name="category" maxLength={80} placeholder="Opcional" />
+        <CategorySelect />
       </label>
       <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
         Dia de vencimento
@@ -127,27 +105,24 @@ export function SeriesFields({
           placeholder="Opcional"
         />
       </label>
-      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-        Responsável
-        <Select name="responsible_user_id" defaultValue="__none">
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none">Sem responsável</SelectItem>
-            {members.map((member) => (
-              <SelectItem key={member.user_id} value={member.user_id}>
-                {member.user_id === currentUserId
-                  ? "Eu"
-                  : member.member_role === "owner"
-                    ? "Responsável do núcleo"
-                    : "Outro membro"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </label>
       <Input type="hidden" name="starts_on" value={month} />
     </div>
+  );
+}
+
+export function CategorySelect({ defaultValue }: { defaultValue?: string }) {
+  return (
+    <Select name="category" defaultValue={defaultValue} variant="secondary" required>
+      <SelectTrigger>
+        <SelectValue placeholder="Selecione uma categoria" />
+      </SelectTrigger>
+      <SelectContent>
+        {FINANCIAL_CATEGORIES.map((category) => (
+          <SelectItem key={category} value={category}>
+            {category}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

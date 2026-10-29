@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/features/auth/lib/supabase/client";
@@ -173,7 +174,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           aria-label="Finance"
         >
           <span className="grid size-10 place-items-center rounded-[14px] bg-moon-200 text-graphite-900">
-            <BrandMark />
+            <NextIcon name="BrandMark" size={20} />
           </span>
           <span className="text-base font-semibold tracking-tight text-ink">
             Finance
@@ -264,11 +265,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           <Button
             className="w-full min-h-11"
             disabled={busy}
+            leadingIcon="Google"
             onClick={signInWithGoogle}
             type="button"
             variant="secondary"
           >
-            <GoogleMark />
             Continuar com Google
           </Button>
         </>
@@ -312,49 +313,5 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         )}
       </div>
     </div>
-  );
-}
-
-function BrandMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5" fill="none" aria-hidden="true">
-      <path
-        d="m5 17.5 5-5.5 3.2 3.1L19 8"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M14.5 8H19v4.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function GoogleMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-[18px]" aria-hidden="true">
-      <path
-        fill="hsl(217.42 89% 60.78%)"
-        d="M21.35 12.23c0-.71-.06-1.4-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.94 2.94v2.4h3.14c1.84-1.7 2.91-4.2 2.91-7.17Z"
-      />
-      <path
-        fill="hsl(136.03 52.73% 43.14%)"
-        d="M12 21.6c2.63 0 4.84-.87 6.45-2.35l-3.14-2.4c-.87.58-1.98.93-3.31.93-2.54 0-4.7-1.72-5.47-4.04H3.28v2.47A9.73 9.73 0 0 0 12 21.6Z"
-      />
-      <path
-        fill="hsl(44.63 96.85% 50.2%)"
-        d="M6.53 13.74a5.85 5.85 0 0 1 0-3.48V7.8H3.28a9.73 9.73 0 0 0 0 8.4l3.25-2.46Z"
-      />
-      <path
-        fill="hsl(4.64 81.17% 56.27%)"
-        d="M12 6.22c1.43 0 2.72.5 3.73 1.48l2.8-2.8A9.37 9.37 0 0 0 12 2.4a9.73 9.73 0 0 0-8.72 5.4l3.25 2.46C7.3 7.94 9.46 6.22 12 6.22Z"
-      />
-    </svg>
   );
 }

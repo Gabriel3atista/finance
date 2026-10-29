@@ -1,7 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   createInstallmentPlan,
   createRecurringItem,
@@ -28,7 +30,6 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { queryKeys } from "@/shared/lib/query-keys";
 import {
-  fetchHouseholdMembers,
   fetchInstallmentPlans,
   fetchRecurringItems,
 } from "@/features/transactions/lib/queries";
@@ -43,10 +44,8 @@ const errors: Record<string, string> = {
 
 export function RecordsScreen({
   householdId,
-  userId,
 }: {
   householdId: string;
-  userId: string;
 }) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
@@ -60,13 +59,8 @@ export function RecordsScreen({
     queryKey: queryKeys.installmentPlans(householdId),
     queryFn: () => fetchInstallmentPlans(householdId),
   });
-  const membersQuery = useQuery({
-    queryKey: queryKeys.members(householdId),
-    queryFn: () => fetchHouseholdMembers(householdId),
-  });
   const recurring = recurringQuery.data ?? [];
   const plans = plansQuery.data ?? [];
-  const members = membersQuery.data ?? [];
   const currentMonth = monthString(new Date());
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
@@ -130,11 +124,7 @@ export function RecordsScreen({
     onError: () => setMutationMessage("deactivate-series"),
   });
 
-  if (
-    recurringQuery.isPending ||
-    plansQuery.isPending ||
-    membersQuery.isPending
-  ) {
+  if (recurringQuery.isPending || plansQuery.isPending) {
     return (
       <section
         className="mx-auto max-w-5xl"
@@ -146,16 +136,16 @@ export function RecordsScreen({
         <p className="mt-2 text-sm text-muted">Carregando seus cadastros…</p>
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
           {[0, 1].map((item) => (
-            <div
+            <Skeleton
               key={item}
-              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-56 animate-pulse"
+              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-56"
             />
           ))}
         </div>
       </section>
     );
   }
-  if (recurringQuery.isError || plansQuery.isError || membersQuery.isError) {
+  if (recurringQuery.isError || plansQuery.isError) {
     return (
       <div
         role="alert"
@@ -251,8 +241,6 @@ export function RecordsScreen({
               </Select>
             </label>
             <SeriesFields
-              members={members}
-              currentUserId={userId}
               month={currentMonth}
             />
             <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
@@ -336,23 +324,14 @@ export function RecordsScreen({
               </label>
               <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
                 Categoria
-                <Input name="category" maxLength={80} placeholder="Opcional" />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                Responsável
-                <Select name="responsible_user_id" defaultValue="__none">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none">Sem responsável</SelectItem>
-                    {members.map((member) => (
-                      <SelectItem key={member.user_id} value={member.user_id}>
-                        {member.user_id === userId ? "Eu" : "Outro membro"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="hidden"
+                  name="category"
+                  value="Dívidas e parcelas"
+                />
+                <Badge className="w-fit" size="sm" variant="secondary">
+                  Dívidas e parcelas
+                </Badge>
               </label>
             </div>
             <p className="text-xs leading-5 text-muted">

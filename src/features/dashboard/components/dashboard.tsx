@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   addMonths,
   formatMoney,
@@ -56,9 +57,9 @@ export function Dashboard({
         </header>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[0, 1, 2, 3].map((item) => (
-            <div
+            <Skeleton
               key={item}
-              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-28 animate-pulse"
+              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-28"
             />
           ))}
         </div>
@@ -267,7 +268,7 @@ function DueRow({ entry }: { entry: DashboardDueEntry }) {
 
   return (
     <Link
-      className="flex items-center justify-between gap-3 py-3 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600"
+      className="flex items-center justify-between gap-3 py-3 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none"
       href={href}
     >
       <span className="min-w-0">

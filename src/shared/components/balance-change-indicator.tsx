@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { NextIcon } from "@/components/atoms/next-icon";
 import { compareBalances } from "@/shared/lib/balance-comparison";
 import { AnimatedNumber } from "@/shared/components/animated-number";
 
@@ -40,22 +41,11 @@ export function BalanceChangeIndicator({
       aria-label={description}
       title={description}
     >
-      <svg
-        viewBox="0 0 20 20"
-        className={`size-4 transition-opacity duration-300 ${loading ? "opacity-0" : "opacity-100"}`}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        {comparison.direction === "up" ? (
-          <path d="M4 13.5 8 9.5l2.5 2.5L16 6.5m-4 0h4v4" />
-        ) : (
-          <path d="m4 6.5 4 4 2.5-2.5 5.5 5.5m-4 0h4v-4" />
-        )}
-      </svg>
+      <NextIcon
+        className={`transition-opacity duration-300 ${loading ? "opacity-0" : "opacity-100"}`}
+        name={comparison.direction === "up" ? "ArrowUpTrend" : "ArrowDownTrend"}
+        size={16}
+      />
       {percentageChange === null ? (
         <span aria-hidden="true">{percentageLabel}</span>
       ) : (

@@ -11,28 +11,33 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import { buttonTempVariants } from "@/components/ui/button-temp";
+import { NextIcon } from "@/components/atoms/next-icon";
+import {
+  buttonVariants,
+  type ButtonRounded,
+  type ButtonTextSize,
+  type ButtonVariant,
+} from "@/components/ui/button";
 import { cn } from "@/shared/lib/utils";
-
-type ButtonVariant =
-  NonNullable<Parameters<typeof buttonTempVariants>[0]>["variant"] | "unstyled";
-type SelectSize = "sm" | "default" | "lg";
 
 type SelectVisuals = {
   variant: ButtonVariant;
-  size: SelectSize;
+  size: ButtonTextSize;
+  rounded: ButtonRounded;
   loading: boolean;
 };
 
 const SelectVisualContext = createContext<SelectVisuals>({
   variant: "default",
   size: "default",
+  rounded: "default",
   loading: false,
 });
 
 type SelectProps = ComponentProps<typeof SelectPrimitive.Root> & {
   loading?: boolean;
-  size?: SelectSize;
+  rounded?: ButtonRounded;
+  size?: ButtonTextSize;
   variant?: ButtonVariant;
 };
 
@@ -44,6 +49,7 @@ export function Select({
   name,
   onValueChange,
   required = false,
+  rounded = "default",
   size = "default",
   value,
   variant = "default",
@@ -61,7 +67,7 @@ export function Select({
     onValueChange?.(nextValue);
   }
 
-  const visuals = { variant, size, loading };
+  const visuals = { variant, size, rounded, loading };
 
   return (
     <SelectVisualContext.Provider value={visuals}>
@@ -85,6 +91,7 @@ export function Select({
             placeholder={placeholder}
             required={isCoarsePointer && required}
             selectedValue={selectedValue}
+            rounded={rounded}
             size={size}
             triggerProps={triggerProps}
             variant={variant}
@@ -97,23 +104,37 @@ export function Select({
 }
 
 export const SelectGroup = SelectPrimitive.Group;
-export const SelectValue = SelectPrimitive.Value;
+
+export function SelectValue({
+  className = "",
+  ...props
+}: ComponentProps<typeof SelectPrimitive.Value>) {
+  return (
+    <SelectPrimitive.Value
+      className={cn(
+        "min-w-0 flex-1 truncate text-inherit data-[placeholder]:text-muted",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 export function SelectTrigger({
   className = "",
   children,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Trigger>) {
-  const { loading, size, variant } = useContext(SelectVisualContext);
+  const { loading, rounded, size, variant } = useContext(SelectVisualContext);
   const variantClasses =
-    variant === "unstyled" ? "" : buttonTempVariants({ variant, size });
+    variant === "unstyled" ? "" : buttonVariants({ variant, size, rounded });
 
   return (
     <SelectPrimitive.Trigger
       aria-busy={loading || undefined}
       className={cn(
         variantClasses,
-        "relative w-full cursor-pointer justify-between border border-line px-3 pr-10 text-left font-medium outline-none [@media(pointer:coarse)]:text-base",
+        "relative w-full cursor-pointer justify-between pr-10 text-left outline-none",
         className,
       )}
       {...props}
@@ -123,7 +144,15 @@ export function SelectTrigger({
         aria-hidden="true"
         className="pointer-events-none absolute right-3 text-muted"
       >
-        {loading ? <Spinner /> : <ChevronDown />}
+        {loading ? (
+          <NextIcon
+            className="animate-spin motion-reduce:animate-none"
+            name="Loading"
+            size={16}
+          />
+        ) : (
+          <NextIcon name="ChevronDown" size={16} />
+        )}
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -133,16 +162,18 @@ export function SelectContent({
   children,
   className = "",
   position = "popper",
+  style,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Content>) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "ui-select-content z-50 max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] translate-y-0 rounded-xl border border-line bg-graphite-900 p-1 text-ink opacity-100 shadow-xl transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:!transform-none motion-reduce:transition-opacity motion-reduce:duration-100",
+          "ui-select-content z-[100] max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] translate-y-0 rounded-xl border border-line bg-graphite-900 p-1 text-ink opacity-100 shadow-xl transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:!transform-none motion-reduce:transition-opacity motion-reduce:duration-100",
           className,
         )}
         position={position}
+        style={{ zIndex: 100, ...style }}
         {...props}
       >
         <SelectPrimitive.Viewport className="p-0.5">
@@ -175,14 +206,14 @@ export function SelectItem({
   return (
     <SelectPrimitive.Item
       className={cn(
-        "relative flex min-h-9 w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 focus:bg-graphite-800 focus:text-ink data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex min-h-9 w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm text-ink outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 focus:bg-graphite-800 focus:text-ink mobile-app:focus:!bg-transparent mobile-app:focus:!text-inherit data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}
     >
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator className="absolute right-2 inline-flex items-center">
-        <Check />
+        <NextIcon name="Check" size={16} />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   );
@@ -206,6 +237,7 @@ function NativeSelect({
   placeholder,
   required,
   selectedValue,
+  rounded,
   size,
   triggerProps,
   variant,
@@ -219,12 +251,13 @@ function NativeSelect({
   placeholder?: string;
   required: boolean;
   selectedValue: string;
-  size: SelectSize;
+  rounded: ButtonRounded;
+  size: ButtonTextSize;
   triggerProps: NativeTriggerProps;
   variant: ButtonVariant;
 }) {
   const variantClasses =
-    variant === "unstyled" ? "" : buttonTempVariants({ variant, size });
+    variant === "unstyled" ? "" : buttonVariants({ variant, size, rounded });
 
   return (
     <div className="relative hidden w-full [@media(pointer:coarse)]:block">
@@ -234,7 +267,7 @@ function NativeSelect({
         autoComplete={autoComplete}
         className={cn(
           variantClasses,
-          "w-full cursor-pointer appearance-none border border-line px-3 pr-10 text-left font-medium [@media(pointer:coarse)]:text-base",
+          "w-full cursor-pointer appearance-none pr-10 text-left mobile-app:focus:!outline-none truncate",
           disabled && "cursor-not-allowed opacity-50",
         )}
         disabled={disabled}
@@ -262,7 +295,15 @@ function NativeSelect({
         aria-hidden="true"
         className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
       >
-        {loading ? <Spinner /> : <ChevronDown />}
+        {loading ? (
+          <NextIcon
+            className="animate-spin motion-reduce:animate-none"
+            name="Loading"
+            size={16}
+          />
+        ) : (
+          <NextIcon name="ChevronDown" size={16} />
+        )}
       </span>
     </div>
   );
@@ -338,59 +379,4 @@ function textContent(children: ReactNode): string {
       return "";
     })
     .join("");
-}
-
-function ChevronDown() {
-  return (
-    <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-      <path
-        d="m7 10 5 5 5-5"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function Spinner() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-4 animate-spin motion-reduce:animate-none"
-      fill="none"
-      viewBox="0 0 16 16"
-    >
-      <circle
-        className="opacity-25"
-        cx="8"
-        cy="8"
-        r="6"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        className="opacity-90"
-        d="M14 8a6 6 0 0 0-6-6"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
-function Check() {
-  return (
-    <svg aria-hidden="true" className="size-4" fill="none" viewBox="0 0 24 24">
-      <path
-        d="m5 12 4 4L19 6"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
 }

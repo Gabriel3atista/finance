@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ButtonTemp } from "@/components/ui/button-temp";
+import { Button } from "@/components/ui/button";
 
 const variants = [
   { name: "Primary", value: "primary" },
@@ -9,29 +9,6 @@ const variants = [
   { name: "Ghost", value: "ghost" },
   { name: "Unstyled", value: "unstyled" },
 ] as const;
-
-const ArrowIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path
-      d="M3.25 8h9.5m0 0-3.75-3.75M12.75 8 9 11.75"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const PlusIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path
-      d="M8 3.25v9.5M3.25 8h9.5"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </svg>
-);
 
 function SpecimenCard({
   title,
@@ -84,7 +61,7 @@ export default function ButtonDesignSystemPage() {
                 <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">
                   {name}
                 </span>
-                <ButtonTemp
+                <Button
                   className={
                     value === "unstyled"
                       ? "rounded-xl border border-dashed border-line px-4 py-2 text-sm text-muted hover:text-ink"
@@ -93,9 +70,39 @@ export default function ButtonDesignSystemPage() {
                   variant={value}
                 >
                   Continuar
-                </ButtonTemp>
+                </Button>
               </div>
             ))}
+          </div>
+        </SpecimenCard>
+
+        <SpecimenCard
+          title="Arredondamento"
+          description="Ajuste o formato do botão para encaixar na composição."
+        >
+          <div className="flex flex-wrap items-end gap-4 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
+            <div className="flex flex-col items-center gap-3">
+              <Button rounded="full" size="sm">
+                Pequeno
+              </Button>
+              <span className="text-[10px] text-muted">sm + full</span>
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <Button rounded="full" leadingIcon="Plus">
+                Nova transação
+              </Button>
+              <span className="text-[10px] text-muted">default + full</span>
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <Button
+                aria-label="Adicionar item"
+                icon="Plus"
+                rounded="full"
+                size="icon"
+                variant="secondary"
+              />
+              <span className="text-[10px] text-muted">ícone + full</span>
+            </div>
           </div>
         </SpecimenCard>
 
@@ -106,39 +113,59 @@ export default function ButtonDesignSystemPage() {
           >
             <div className="flex min-h-36 flex-wrap items-end gap-3 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
               <div className="flex flex-col items-center gap-3">
-                <ButtonTemp size="sm">Pequeno</ButtonTemp>
+                <Button size="sm">Pequeno</Button>
                 <span className="text-[10px] text-muted">sm</span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <ButtonTemp size="default">Padrão</ButtonTemp>
+                <Button size="default">Padrão</Button>
                 <span className="text-[10px] text-muted">default</span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <ButtonTemp size="lg">Grande</ButtonTemp>
+                <Button size="lg">Grande</Button>
                 <span className="text-[10px] text-muted">lg</span>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
               <div className="flex flex-col items-center gap-3">
-                <ButtonTemp
+                <Button leadingIcon="Plus" trailingIcon="ArrowRight" size="sm">
+                  Pequeno
+                </Button>
+                <span className="text-[10px] text-muted">sm + ícone</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <Button
+                  leadingIcon="Plus"
+                  trailingIcon="ArrowRight"
+                  size="default"
+                >
+                  Padrão
+                </Button>
+                <span className="text-[10px] text-muted">default + ícone</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <Button leadingIcon="Plus" size="lg" trailingIcon="ArrowRight">
+                  Grande
+                </Button>
+                <span className="text-[10px] text-muted">lg + dois ícones</span>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
+              <div className="flex flex-col items-center gap-3">
+                <Button
                   aria-label="Adicionar item"
-                  icon={<PlusIcon />}
+                  icon="Plus"
                   size="icon-sm"
                 />
                 <span className="text-[10px] text-muted">icon-sm</span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <ButtonTemp
-                  aria-label="Adicionar item"
-                  icon={<PlusIcon />}
-                  size="icon"
-                />
+                <Button aria-label="Adicionar item" icon="Plus" size="icon" />
                 <span className="text-[10px] text-muted">icon</span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <ButtonTemp
+                <Button
                   aria-label="Adicionar item"
-                  icon={<PlusIcon />}
+                  icon="Plus"
                   size="icon-lg"
                 />
                 <span className="text-[10px] text-muted">icon-lg</span>
@@ -151,17 +178,17 @@ export default function ButtonDesignSystemPage() {
             description="Ações com ícones, foco por teclado e estado indisponível."
           >
             <div className="flex min-h-36 flex-wrap items-center gap-3 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
-              <ButtonTemp leadingIcon={<PlusIcon />}>Nova transação</ButtonTemp>
-              <ButtonTemp trailingIcon={<ArrowIcon />} variant="outline">
+              <Button leadingIcon="Plus">Nova transação</Button>
+              <Button trailingIcon="ArrowRight" variant="outline">
                 Ver detalhes
-              </ButtonTemp>
-              <ButtonTemp disabled variant="secondary">
+              </Button>
+              <Button disabled variant="secondary">
                 Indisponível
-              </ButtonTemp>
-              <ButtonTemp loading>Salvando</ButtonTemp>
-              <ButtonTemp
+              </Button>
+              <Button loading>Salvando</Button>
+              <Button
                 aria-label="Salvando alterações"
-                icon={<PlusIcon />}
+                icon="Plus"
                 loading
                 size="icon"
                 variant="ghost"
@@ -186,16 +213,16 @@ export default function ButtonDesignSystemPage() {
               </div>
               <div className="grid grid-cols-6 items-center gap-3 px-3 py-4">
                 {variants.map(({ value }) => (
-                  <ButtonTemp key={value} variant={value}>
+                  <Button key={value} variant={value}>
                     Salvar alterações
-                  </ButtonTemp>
+                  </Button>
                 ))}
               </div>
               <div className="grid grid-cols-6 items-center gap-3 rounded-lg bg-graphite-900/60 px-3 py-4">
                 {variants.map(({ value }) => (
-                  <ButtonTemp disabled key={value} variant={value}>
+                  <Button disabled key={value} variant={value}>
                     Salvar alterações
-                  </ButtonTemp>
+                  </Button>
                 ))}
               </div>
             </div>

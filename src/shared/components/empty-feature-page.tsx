@@ -1,4 +1,5 @@
-import { FeatureIcon } from "@/shared/components/feature-icon";
+import { NextIcon } from "@/components/atoms/next-icon";
+import type { Icons } from "@/components/icons";
 import { Eyebrow } from "@/shared/components/eyebrow";
 
 export function EmptyFeaturePage({
@@ -10,7 +11,7 @@ export function EmptyFeaturePage({
   eyebrow: string;
   title: string;
   description: string;
-  icon: string;
+  icon: Icons;
 }) {
   return (
     <section className="mx-auto max-w-5xl">
@@ -25,7 +26,7 @@ export function EmptyFeaturePage({
       </div>
       <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card flex min-h-[310px] flex-col items-center justify-center px-6 py-12 text-center sm:min-h-[370px]">
         <div className="grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent">
-          <FeatureIcon name={icon} />
+          <NextIcon name={icon} size={24} />
         </div>
         <h2 className="mt-5 text-base font-semibold text-ink">
           Este espaço está pronto para seus dados

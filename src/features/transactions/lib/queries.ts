@@ -7,26 +7,16 @@ import {
   installmentAmount,
   monthDate,
   type FinancialEntry,
-  type HouseholdMember,
   type InstallmentPlan,
   type RecurringItem,
 } from "@/features/transactions/lib/data";
 
 const entryColumns =
-  "id, household_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number, responsible_user_id";
+  "id, household_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number";
 const recurringColumns =
-  "id, household_id, title, entry_type, planned_amount, category, due_day, starts_on, ends_on, is_active, responsible_user_id";
+  "id, household_id, title, entry_type, planned_amount, category, due_day, starts_on, ends_on, is_active";
 const installmentColumns =
-  "id, household_id, title, total_amount, installment_count, first_month, due_day, category, is_active, responsible_user_id";
-
-export async function fetchHouseholdMembers(householdId: string) {
-  const { data, error } = await createClient()
-    .from("household_members")
-    .select("user_id, member_role")
-    .eq("household_id", householdId);
-  if (error) throw error;
-  return (data ?? []) as HouseholdMember[];
-}
+  "id, household_id, title, total_amount, installment_count, first_month, due_day, category, is_active";
 
 export async function fetchRecurringItems(householdId: string) {
   const { data, error } = await createClient()
@@ -107,7 +97,6 @@ export async function ensureMonthEntries(
       status: "planned",
       source_kind: "recurrence",
       recurring_item_id: item.id,
-      responsible_user_id: item.responsible_user_id,
       created_by: userId,
     });
   }
@@ -140,7 +129,6 @@ export async function ensureMonthEntries(
       source_kind: "installment",
       installment_plan_id: plan.id,
       installment_number: number,
-      responsible_user_id: plan.responsible_user_id,
       created_by: userId,
     });
   }

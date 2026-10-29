@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { NextIcon } from "@/components/atoms/next-icon";
 import { Eyebrow } from "@/shared/components/eyebrow";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -11,20 +12,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </Eyebrow>
           <div className="max-w-[330px] pb-2">
             <div className="mb-7 grid size-[52px] place-items-center rounded-2xl bg-moon-200 text-graphite-900 shadow-sm">
-              <svg
-                viewBox="0 0 24 24"
-                className="size-6"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4 18.5h16M6.5 15V9.5M12 15V5.5M17.5 15v-3M5 7l5-3 5 2 4-3"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <NextIcon name="Forecast" size={24} />
             </div>
             <p className="text-[32px] font-semibold leading-[1.12] tracking-[-0.045em] text-ink">
               Mais clareza para decidir juntos.

@@ -1,4 +1,5 @@
-import { FeatureIcon } from "@/shared/components/feature-icon";
+import { NextIcon } from "@/components/atoms/next-icon";
+import type { Icons } from "@/components/icons";
 import { Eyebrow } from "@/shared/components/eyebrow";
 import { formatMonth } from "@/shared/lib/date";
 
@@ -27,9 +28,9 @@ export function MonthOverview() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <SummaryCard title="Receitas" icon="↗" />
-        <SummaryCard title="Despesas" icon="↘" />
-        <SummaryCard title="Saldo do mês" icon="＝" />
+        <SummaryCard title="Receitas" icon="ArrowUpRight" />
+        <SummaryCard title="Despesas" icon="ArrowDownRight" />
+        <SummaryCard title="Saldo do mês" icon="Equals" />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.85fr)]">
@@ -44,12 +45,12 @@ export function MonthOverview() {
               </p>
             </div>
             <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-canvas text-muted">
-              <FeatureIcon name="records" />
+              <NextIcon name="Records" size={24} />
             </div>
           </div>
           <div className="flex min-h-[205px] flex-col items-center justify-center text-center">
             <div className="grid size-11 place-items-center rounded-full bg-graphite-800 text-muted">
-              <FeatureIcon name="history" />
+              <NextIcon name="History" size={24} />
             </div>
             <h3 className="mt-4 text-sm font-semibold text-ink">
               Nenhuma movimentação ainda
@@ -70,7 +71,7 @@ export function MonthOverview() {
               <p className="mt-1 text-sm text-muted">Planejamento à frente</p>
             </div>
             <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-              <FeatureIcon name="forecast" />
+              <NextIcon name="Forecast" size={24} />
             </div>
           </div>
           <div className="mt-5 divide-y divide-line">
@@ -93,7 +94,7 @@ export function MonthOverview() {
   );
 }
 
-function SummaryCard({ title, icon }: { title: string; icon: string }) {
+function SummaryCard({ title, icon }: { title: string; icon: Icons }) {
   return (
     <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card flex min-h-[119px] items-start justify-between p-5 sm:p-6">
       <div>
@@ -109,7 +110,7 @@ function SummaryCard({ title, icon }: { title: string; icon: string }) {
         className="grid size-9 place-items-center rounded-xl bg-canvas text-sm font-semibold text-muted"
         aria-hidden="true"
       >
-        {icon}
+        <NextIcon name={icon} size={16} />
       </span>
     </div>
   );

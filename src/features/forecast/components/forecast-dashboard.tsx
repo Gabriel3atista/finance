@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   FinancialValue,
   useValuesVisibility,
@@ -70,9 +71,9 @@ export function ForecastDashboard({
         <p className="mt-2 text-sm text-muted">Carregando sua projeção…</p>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {[0, 1, 2, 3].map((item) => (
-            <div
+            <Skeleton
               key={item}
-              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-52 animate-pulse"
+              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-52"
             />
           ))}
         </div>

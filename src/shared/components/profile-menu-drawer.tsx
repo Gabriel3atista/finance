@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -38,7 +39,6 @@ export function ProfileMenuDrawer({
         <Button
           type="button"
           variant="ghost"
-          size="icon"
           className="size-11 rounded-full p-0"
           aria-label={`Abrir menu de ${userName}`}
         >
@@ -79,21 +79,14 @@ export function ProfileMenuDrawer({
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className="focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 flex min-h-12 items-center rounded-xl px-4 text-sm font-medium text-ink hover:bg-canvas"
+                className="focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none flex min-h-12 items-center rounded-xl px-4 text-sm font-medium text-ink hover:bg-canvas"
               >
                 {link.label}
-                <svg
-                  viewBox="0 0 24 24"
-                  className="ml-auto size-4 text-muted"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
+                <NextIcon
+                  className="ml-auto text-muted"
+                  name="ChevronRight"
+                  size={16}
+                />
               </Link>
             ))}
           </nav>

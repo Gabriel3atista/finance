@@ -6,6 +6,6 @@ export default async function RecordsPage() {
   const context = await getSignedInContext();
   if (!context) redirect("/household");
   return (
-    <RecordsScreen householdId={context.householdId} userId={context.user.id} />
+    <RecordsScreen householdId={context.householdId} />
   );
 }

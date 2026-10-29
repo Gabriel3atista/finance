@@ -56,7 +56,7 @@ Para despesas variáveis ainda não conhecidas, use um valor-base explícito (po
 
 ### 3. Cadastros essenciais
 
-- **Receitas:** recorrentes ou eventuais, pessoa responsável, valor previsto e recebido, competência e data de recebimento; bruto e líquido quando aplicável.
+- **Receitas:** recorrentes ou eventuais, valor previsto e recebido, competência e data de recebimento; bruto e líquido quando aplicável.
 - **Despesas:** recorrentes ou avulsas, categoria, valor previsto, vencimento, competência e situação de pagamento.
 - **Parcelamentos:** valor total, número de parcelas, início, vencimentos, saldo restante, parcelas pagas e quitação. Aparecem automaticamente nos meses futuros.
 - **Cartão de crédito:** representar faturas e compras de forma coerente, evitando contar compra e pagamento da fatura duas vezes. Priorize o modelo mais simples compatível com nossas planilhas.
@@ -186,7 +186,7 @@ Modele valores monetários com precisão apropriada, competência e datas de ven
 
 ### Fase 5 — Receitas, despesas e operação mensal
 
-1. Implementar cadastros e edição de receitas/despesas, pessoa responsável, competência, vencimento e estado previsto/realizado.
+1. Implementar cadastros e edição de receitas/despesas, competência, vencimento e estado previsto/realizado.
 2. Implementar recorrências e parcelamentos com geração por competência, preservação do histórico e escolha explícita entre editar somente um mês ou meses futuros.
 3. Implementar visão mensal, ações rápidas para pago/recebido, pendências/vencidas e resumo consistente, evitando duplicidade entre compras e pagamento de fatura.
 

@@ -1,8 +1,3 @@
-export type HouseholdMember = {
-  user_id: string;
-  member_role: "owner" | "member";
-};
-
 export type FinancialEntry = {
   id: string;
   household_id: string;
@@ -23,7 +18,6 @@ export type FinancialEntry = {
   recurring_item_id: string | null;
   installment_plan_id: string | null;
   installment_number: number | null;
-  responsible_user_id: string | null;
 };
 
 export type RecurringItem = {
@@ -37,7 +31,6 @@ export type RecurringItem = {
   starts_on: string;
   ends_on: string | null;
   is_active: boolean;
-  responsible_user_id: string | null;
 };
 
 export type InstallmentPlan = {
@@ -50,7 +43,6 @@ export type InstallmentPlan = {
   due_day: number | null;
   category: string | null;
   is_active: boolean;
-  responsible_user_id: string | null;
 };
 
 export function parseMonth(value: string | undefined) {

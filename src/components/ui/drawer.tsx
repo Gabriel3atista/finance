@@ -7,10 +7,12 @@ import { cn } from "@/shared/lib/utils";
 
 const Drawer = ({
   shouldScaleBackground = true,
+  repositionInputs = false,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root
     shouldScaleBackground={shouldScaleBackground}
+    repositionInputs={repositionInputs}
     {...props}
   />
 );
@@ -37,11 +39,35 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, onPointerDown, ...props }, ref) => (
   <DrawerPortal>
     <DrawerOverlay />
     <DrawerPrimitive.Content
       ref={ref}
+      onPointerDown={(event) => {
+        onPointerDown?.(event);
+        if (event.defaultPrevented || !(event.target instanceof Element))
+          return;
+
+        const fieldSelector =
+          "input, textarea, select, [contenteditable='true']";
+        const target = event.target;
+        const label = target.closest("label");
+        if (
+          target.closest(fieldSelector) ||
+          label?.querySelector(fieldSelector)
+        ) {
+          return;
+        }
+
+        const activeElement = document.activeElement;
+        if (
+          activeElement instanceof HTMLElement &&
+          activeElement.matches(fieldSelector)
+        ) {
+          activeElement.blur();
+        }
+      }}
       className={cn(
         "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border border-line bg-graphite-900",
         className,

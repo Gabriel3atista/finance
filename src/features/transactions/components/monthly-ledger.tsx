@@ -5,10 +5,10 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Drawer,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -20,7 +20,6 @@ import {
   monthString,
   parseMonth,
   type FinancialEntry,
-  type HouseholdMember,
 } from "@/features/transactions/lib/data";
 import { useMonthData } from "@/features/transactions/hooks/use-month-data";
 import { fetchMonthEntries } from "@/features/transactions/lib/queries";
@@ -113,7 +112,6 @@ export function MonthlyLedger({
   });
   const {
     entries: entriesQuery,
-    members: membersQuery,
     setStatus,
     ensureEntries,
   } = useMonthData({
@@ -179,9 +177,8 @@ export function MonthlyLedger({
       ),
   });
   const entries = entriesQuery.data ?? [];
-  const members = membersQuery.data ?? [];
-  const loadFailed =
-    entriesQuery.isError || membersQuery.isError || ensureEntries.isError;
+  const entryLoadFailed = entriesQuery.isError || ensureEntries.isError;
+  const loadFailed = entryLoadFailed;
   const income = sum(entries, "income");
   const expenses = sum(entries, "expense");
   const settledIncome = sum(entries, "income", "settled");
@@ -226,8 +223,6 @@ export function MonthlyLedger({
     <NewEntryDrawer
       open={createDrawerOpen}
       onOpenChange={setCreateDrawerOpen}
-      members={members}
-      currentUserId={userId}
       month={monthValue}
       pending={createEntry.isPending}
       error={
@@ -250,23 +245,20 @@ export function MonthlyLedger({
         <div className="mx-auto max-w-xl space-y-3">
           <div className="flex h-10 items-center justify-between gap-2 px-3">
             {Array.from({ length: 7 }, (_, index) => (
-              <div
+              <Skeleton
                 aria-hidden="true"
-                className="w-8 size-4 animate-pulse rounded-xl bg-graphite-800"
+                className="w-8 size-4 rounded-xl"
                 key={index}
               />
             ))}
           </div>
-          <div
-            aria-hidden="true"
-            className="h-40 animate-pulse rounded-3xl bg-graphite-800"
-          />
+          <Skeleton aria-hidden="true" className="h-40 rounded-3xl" />
         </div>
       </ResponsivePageSkeleton>
     );
   }
 
-  if (!isMobileApp && (isLoading || membersQuery.isPending)) {
+  if (!isMobileApp && isLoading) {
     return (
       <div aria-live="polite" aria-busy="true">
         <section className="mx-auto max-w-5xl">
@@ -279,11 +271,28 @@ export function MonthlyLedger({
           </header>
           <div className="grid gap-3 sm:grid-cols-3">
             {[0, 1, 2].map((item) => (
-              <div
+              <Skeleton
                 key={item}
-                className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-28 animate-pulse"
+                className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-28"
               />
             ))}
+          </div>
+          <div className="mt-5 rounded-[18px] border border-line bg-graphite-900 p-5 shadow-card sm:p-7">
+            <div
+              aria-label="Carregando lançamentos"
+              aria-live="polite"
+              aria-busy="true"
+              role="status"
+            >
+              <div aria-hidden="true" className="flex flex-col gap-3">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <Skeleton
+                    className="h-[72px] w-full rounded-xl border border-graphite-600 bg-graphite-700"
+                    key={index}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -297,10 +306,9 @@ export function MonthlyLedger({
           currentBalance={settledIncome - settledExpenses}
           previousBalance={previousMonthBalance}
           isBalancePending={isLoading}
+          isEntriesError={entryLoadFailed}
           isPreviousBalancePending={previousMonthQuery.isPending}
           entries={entries}
-          members={members}
-          currentUserId={userId}
           monthValue={monthValue}
           onSetEntryStatus={setEntryStatus}
           statusPendingId={
@@ -457,41 +465,23 @@ export function MonthlyLedger({
                 </Button>
               </div>
             </div>
-            {entries.length ? (
-              <MonthlyEntryList
-                entries={entries}
-                members={members}
-                currentUserId={userId}
-                month={monthValue}
-                onCreateEntry={openCreateDrawer}
-                onSetStatus={setEntryStatus}
-                statusPendingId={
-                  setStatus.isPending ? setStatus.variables?.id : undefined
-                }
-                onUpdate={updateEntryFromForm}
-                onCancel={cancelEntryFromForm}
-                rowMutationPending={
-                  updateEntry.isPending || cancelEntry.isPending
-                }
-                showHeader={false}
-              />
-            ) : (
-              <div className="flex min-h-52 flex-col items-center justify-center px-4 text-center">
-                <span
-                  className="grid size-11 place-items-center rounded-full bg-accent-soft text-lg text-accent"
-                  aria-hidden="true"
-                >
-                  ＋
-                </span>
-                <h3 className="mt-4 text-sm font-semibold text-ink">
-                  Nenhum lançamento neste mês
-                </h3>
-                <p className="mt-1 max-w-xs text-xs leading-5 text-muted">
-                  Cadastre uma receita ou despesa. Recorrências e parcelas
-                  aparecem automaticamente.
-                </p>
-              </div>
-            )}
+            <MonthlyEntryList
+              entries={entries}
+              month={monthValue}
+              onCreateEntry={openCreateDrawer}
+              onSetStatus={setEntryStatus}
+              statusPendingId={
+                setStatus.isPending ? setStatus.variables?.id : undefined
+              }
+              onUpdate={updateEntryFromForm}
+              onCancel={cancelEntryFromForm}
+              rowMutationPending={
+                updateEntry.isPending || cancelEntry.isPending
+              }
+              showHeader={false}
+              isLoading={isLoading}
+              loadError={entryLoadFailed}
+            />
           </div>
         </div>
       </section>
@@ -503,8 +493,6 @@ export function MonthlyLedger({
 function NewEntryDrawer({
   open,
   onOpenChange,
-  members,
-  currentUserId,
   month,
   pending,
   error,
@@ -512,8 +500,6 @@ function NewEntryDrawer({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  members: HouseholdMember[];
-  currentUserId: string;
   month: string;
   pending: boolean;
   error: string;
@@ -529,9 +515,6 @@ function NewEntryDrawer({
         <DrawerContent className="max-h-[90dvh] overflow-hidden border-line bg-graphite-900 text-ink">
           <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left sm:px-6">
             <DrawerTitle className="text-base">Novo lançamento</DrawerTitle>
-            <DrawerDescription className="text-muted">
-              Cadastre uma receita ou despesa avulsa para este mês.
-            </DrawerDescription>
           </DrawerHeader>
           <form
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
@@ -550,13 +533,9 @@ function NewEntryDrawer({
                     "Não foi possível salvar o lançamento. Tente novamente."}
                 </p>
               )}
-              <p className="text-xs leading-5 text-muted">
-                Para cartão, registre a fatura como uma única despesa. Não some
-                as compras individuais junto com o pagamento da fatura.
-              </p>
               <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
                 Tipo
-                <Select name="entry_type" defaultValue="expense">
+                <Select name="entry_type" defaultValue="expense" variant="secondary">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -566,11 +545,7 @@ function NewEntryDrawer({
                   </SelectContent>
                 </Select>
               </label>
-              <EntryFields
-                members={members}
-                currentUserId={currentUserId}
-                month={month}
-              />
+              <EntryFields month={month} />
             </div>
             <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
               <Button
@@ -578,6 +553,8 @@ function NewEntryDrawer({
                 disabled={pending}
                 type="submit"
                 variant="primary"
+                loading={pending}
+                rounded="full"
               >
                 {pending ? "Salvando…" : "Salvar lançamento"}
               </Button>
@@ -586,7 +563,8 @@ function NewEntryDrawer({
                 disabled={pending}
                 onClick={() => onOpenChange(false)}
                 type="button"
-                variant="outline"
+                variant="secondary"
+                rounded="full"
               >
                 Cancelar
               </Button>
@@ -628,7 +606,7 @@ function MonthLink({
   symbol: string;
 }) {
   return (
-    <Button asChild size="icon" variant="outline">
+    <Button asChild className="size-9 min-h-9 p-0" size="sm" variant="outline">
       <Link href={`/mes?month=${monthString(month)}`} aria-label={label}>
         {symbol}
       </Link>

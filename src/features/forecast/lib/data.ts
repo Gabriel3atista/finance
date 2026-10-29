@@ -105,7 +105,7 @@ export async function getForecastData(householdId: string) {
     supabase
       .from("financial_entries")
       .select(
-        "id, household_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number, responsible_user_id",
+        "id, household_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number",
       )
       .eq("household_id", householdId)
       .eq("status", "planned")

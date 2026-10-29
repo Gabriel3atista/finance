@@ -3,10 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { queryKeys } from "@/shared/lib/query-keys";
-import {
-  fetchHouseholdMembers,
-  fetchMonthEntries,
-} from "@/features/transactions/lib/queries";
+import { fetchMonthEntries } from "@/features/transactions/lib/queries";
 import { useEnsurePeriodEntries } from "@/features/transactions/hooks/use-ensure-period-entries";
 import type { FinancialEntry } from "@/features/transactions/lib/data";
 
@@ -30,12 +27,6 @@ export function useMonthData({
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   });
-  const members = useQuery({
-    queryKey: queryKeys.members(householdId),
-    queryFn: () => fetchHouseholdMembers(householdId),
-    enabled: Boolean(householdId),
-  });
-
   const setStatus = useMutation({
     mutationFn: async ({
       id,
@@ -89,5 +80,5 @@ export function useMonthData({
     },
   });
 
-  return { entries, members, setStatus, ensureEntries };
+  return { entries, setStatus, ensureEntries };
 }

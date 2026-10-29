@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { Eyebrow } from "@/shared/components/eyebrow";
 import { fetchHouseholdPage } from "@/features/household/lib/queries";
@@ -108,8 +109,8 @@ export function HouseholdPanel({
         aria-live="polite"
         aria-busy="true"
       >
-        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-64 animate-pulse" />
-        <div className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-64 animate-pulse" />
+        <Skeleton className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-64" />
+        <Skeleton className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-64" />
       </div>
     );
   }
@@ -174,7 +175,7 @@ export function HouseholdPanel({
             <label className="block text-sm font-medium text-ink">
               Nome do núcleo
               <Input
-                className="mt-2 min-h-11 px-3.5 focus:border-accent"
+                className="mt-2 min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
                 name="name"
                 maxLength={100}
                 placeholder="Ex.: Família Silva"
@@ -264,7 +265,7 @@ export function HouseholdPanel({
           <label className="block text-sm font-medium text-ink">
             E-mail da pessoa convidada
             <Input
-              className="mt-2 min-h-11 px-3.5 focus:border-accent"
+              className="mt-2 min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
               autoComplete="email"
               type="email"
               required

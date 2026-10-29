@@ -8,6 +8,7 @@ import {
   parseMonth,
   parseMonthInput,
 } from "@/features/transactions/lib/data";
+import { isFinancialCategory } from "@/features/transactions/lib/categories";
 import { getSignedInContext } from "@/features/transactions/lib/server-context";
 
 function textValue(formData: FormData, key: string, maxLength: number) {
@@ -15,9 +16,9 @@ function textValue(formData: FormData, key: string, maxLength: number) {
   return value.length <= maxLength ? value : null;
 }
 
-function responsibleValue(formData: FormData) {
-  const value = String(formData.get("responsible_user_id") ?? "").trim();
-  return value && value !== "__none" ? value : null;
+function categoryValue(formData: FormData) {
+  const value = String(formData.get("category") ?? "").trim();
+  return isFinancialCategory(value) ? value : null;
 }
 
 function validDueDate(value: FormDataEntryValue | null) {
@@ -43,7 +44,7 @@ export async function createFinancialEntry(
   formData: FormData,
 ): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
-  const category = textValue(formData, "category", 80);
+  const category = categoryValue(formData);
   const amount = moneyInputToNumber(formData.get("amount"));
   const competenceMonth = parseMonthInput(formData.get("competence_month"));
   const dueDate = validDueDate(formData.get("due_date"));
@@ -62,18 +63,16 @@ export async function createFinancialEntry(
     return { error: "invalid-entry" };
 
   const context = await getUserContext();
-  const responsibleUserId = responsibleValue(formData);
   const { error } = await context.supabase.from("financial_entries").insert({
     household_id: context.householdId,
     title,
     entry_type: entryType,
     amount,
-    category: category || null,
+    category,
     competence_month: competenceMonth,
     due_date: dueDate,
     status: "planned",
     source_kind: "manual",
-    responsible_user_id: responsibleUserId,
     created_by: context.user.id,
   });
   if (error) return { error: "save-entry" };
@@ -84,7 +83,7 @@ export async function createRecurringItem(
   formData: FormData,
 ): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
-  const category = textValue(formData, "category", 80);
+  const category = categoryValue(formData);
   const amount = moneyInputToNumber(formData.get("amount"));
   const startsOn = parseMonthInput(formData.get("starts_on"));
   const endsOnValue = String(formData.get("ends_on") ?? "");
@@ -114,11 +113,10 @@ export async function createRecurringItem(
     title,
     entry_type: entryType,
     planned_amount: amount,
-    category: category || null,
+    category,
     due_day: dueDay,
     starts_on: startsOn,
     ends_on: endsOn,
-    responsible_user_id: responsibleValue(formData),
     created_by: context.user.id,
   });
   if (error) return { error: "save-recurrence" };
@@ -129,7 +127,7 @@ export async function createInstallmentPlan(
   formData: FormData,
 ): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
-  const category = textValue(formData, "category", 80);
+  const category = "Dívidas e parcelas";
   const totalAmount = moneyInputToNumber(formData.get("total_amount"));
   const installmentCount = Number(formData.get("installment_count"));
   const firstMonth = parseMonthInput(formData.get("first_month"));
@@ -138,7 +136,6 @@ export async function createInstallmentPlan(
   if (
     !title ||
     title.length < 1 ||
-    category === null ||
     !Number.isFinite(totalAmount) ||
     totalAmount <= 0 ||
     totalAmount > 999999999999.99 ||
@@ -159,8 +156,7 @@ export async function createInstallmentPlan(
     installment_count: installmentCount,
     first_month: firstMonth,
     due_day: dueDay,
-    category: category || null,
-    responsible_user_id: responsibleValue(formData),
+    category,
     created_by: context.user.id,
   });
   if (error) return { error: "save-installment" };
@@ -172,7 +168,7 @@ export async function updateFinancialEntry(
 ): Promise<MutationResult> {
   const id = String(formData.get("id") ?? "");
   const title = textValue(formData, "title", 160);
-  const category = textValue(formData, "category", 80);
+  const category = categoryValue(formData);
   const amount = moneyInputToNumber(formData.get("amount"));
   const dueDate = validDueDate(formData.get("due_date"));
   const entryType = String(formData.get("entry_type"));
@@ -204,9 +200,8 @@ export async function updateFinancialEntry(
     title,
     entry_type: entryType,
     amount,
-    category: category || null,
+    category,
     due_date: dueDate,
-    responsible_user_id: responsibleValue(formData),
   };
   if (
     scope === "future" &&
@@ -248,9 +243,8 @@ export async function updateFinancialEntry(
         title,
         entry_type: entryType,
         planned_amount: amount,
-        category: category || null,
+        category,
         due_day: dueDate ? Number(dueDate.slice(-2)) : null,
-        responsible_user_id: values.responsible_user_id,
       })
       .eq("id", entry.recurring_item_id)
       .eq("household_id", context.householdId);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { NextIcon } from "@/components/atoms/next-icon";
 import {
   FinancialValue,
   ValuesVisibilityToggle,
@@ -25,7 +26,10 @@ export function MobileMonthView({
   onSetEntryStatus,
   statusPendingId,
   onUpdateEntry,
-  onCancelEntry,
+  onDeleteEntry,
+  onCopyPreviousMonth,
+  onDeleteMonth,
+  monthActionsPending,
   onCreateEntry,
   rowMutationPending,
   month,
@@ -45,7 +49,10 @@ export function MobileMonthView({
   ) => Promise<void>;
   statusPendingId?: string;
   onUpdateEntry: (form: FormData) => Promise<void>;
-  onCancelEntry: (form: FormData) => Promise<void>;
+  onDeleteEntry: (form: FormData) => Promise<void>;
+  onCopyPreviousMonth: () => Promise<void>;
+  onDeleteMonth: () => Promise<void>;
+  monthActionsPending: boolean;
   onCreateEntry: () => void;
   rowMutationPending: boolean;
   month: Date;
@@ -65,20 +72,19 @@ export function MobileMonthView({
   const income = activeEntries
     .filter((entry) => entry.entry_type === "income")
     .reduce((total, entry) => total + entry.amount, 0);
-  const expenses = activeEntries
-    .filter((entry) => entry.entry_type === "expense")
-    .reduce((total, entry) => total + entry.amount, 0);
   const settledIncome = activeEntries
     .filter(
       (entry) => entry.entry_type === "income" && entry.status === "settled",
     )
+    .reduce((total, entry) => total + entry.amount, 0);
+  const expenses = activeEntries
+    .filter((entry) => entry.entry_type === "expense")
     .reduce((total, entry) => total + entry.amount, 0);
   const settledExpenses = activeEntries
     .filter(
       (entry) => entry.entry_type === "expense" && entry.status === "settled",
     )
     .reduce((total, entry) => total + entry.amount, 0);
-
   return (
     <section className="flex flex-col gap-3 mx-auto max-w-xl">
       <MonthSelector
@@ -92,7 +98,7 @@ export function MobileMonthView({
           className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border-[1px] border-white/50 mix-blend-overlay"
         />
         <div className="relative z-10 flex items-center justify-between gap-3">
-          <p className="text-sm text-white/70">Saldo</p>
+          <p className="text-sm text-white/70">Saldo previsto</p>
           <ValuesVisibilityToggle
             iconOnly
             className="min-h-8 size-8 rounded-full bg-transparent p-0 text-white/70 hover:bg-white/10 hover:text-white"
@@ -123,28 +129,61 @@ export function MobileMonthView({
           ) : null}
         </div>
       </article>
-      <div className="grid grid-cols-2 gap-3" aria-busy={isBalancePending}>
-        <SummaryCard
-          title="Receitas"
-          value={formatMoney(income)}
-          detail={`${formatMoney(settledIncome)} recebidas`}
-          tone="positive"
-        />
-        <SummaryCard
-          title="Despesas"
-          value={formatMoney(expenses)}
-          detail={`${formatMoney(settledExpenses)} pagas`}
-          tone="negative"
-        />
-      </div>
-      <section>
+      <article className="rounded-2xl border border-graphite-600 bg-graphite-700 p-4 shadow-card">
+        <dl aria-busy={isBalancePending} className="divide-y divide-line">
+          <div className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+            <dt className="flex items-center gap-2 text-sm text-muted">
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-full bg-mint-300"
+              />
+              <span className="text-moon-100">Receitas</span>
+            </dt>
+            <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold tabular-nums text-ink">
+              <span className="min-w-0 truncate">
+                <FinancialValue size="sm">{formatMoney(income)}</FinancialValue>
+              </span>
+              <CircularProgress
+                label="das receitas recebidas"
+                total={income}
+                value={settledIncome}
+              />
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+            <dt className="flex items-center gap-2 text-sm text-muted">
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-full bg-rose-500"
+              />
+              <span className="text-moon-100">Despesas</span>
+            </dt>
+            <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold tabular-nums text-ink">
+              <span className="min-w-0 truncate">
+                <FinancialValue size="sm">
+                  {formatMoney(expenses)}
+                </FinancialValue>
+              </span>
+              <CircularProgress
+                label="das despesas pagas"
+                total={expenses}
+                value={settledExpenses}
+              />
+            </dd>
+          </div>
+        </dl>
+      </article>
+      <section className="mt-6">
         <MonthlyEntryList
           entries={entries}
           month={monthValue}
           onSetStatus={onSetEntryStatus}
           statusPendingId={statusPendingId}
           onUpdate={onUpdateEntry}
-          onCancel={onCancelEntry}
+          onDelete={onDeleteEntry}
+          onCopyPreviousMonth={onCopyPreviousMonth}
+          onDeleteMonth={onDeleteMonth}
+          monthActionsPending={monthActionsPending}
           onCreateEntry={onCreateEntry}
           rowMutationPending={rowMutationPending}
           isLoading={isBalancePending}
@@ -155,28 +194,64 @@ export function MobileMonthView({
   );
 }
 
-function SummaryCard({
-  title,
+function CircularProgress({
+  label,
+  total,
   value,
-  detail,
-  tone,
 }: {
-  title: string;
-  value: string;
-  detail: string;
-  tone: "positive" | "negative";
+  label: string;
+  total: number;
+  value: number;
 }) {
+  const progressPercent = Math.round(
+    Math.min(100, Math.max(0, total > 0 ? (value / total) * 100 : 0)),
+  );
+
   return (
-    <article className="min-w-0 rounded-2xl border border-line bg-graphite-900 p-4 shadow-card">
-      <p className="text-xs text-muted">{title}</p>
-      <p
-        className={`mt-2 truncate text-lg font-semibold tracking-tight tabular-nums ${tone === "positive" ? "text-success-300" : "text-rose-300"}`}
-      >
-        <FinancialValue>{value}</FinancialValue>
-      </p>
-      <p className="mt-1 truncate text-[11px] text-muted">
-        <FinancialValue>{detail}</FinancialValue>
-      </p>
-    </article>
+    <span
+      aria-label={`${progressPercent}% ${label}`}
+      aria-valuemax={100}
+      aria-valuemin={0}
+      aria-valuenow={progressPercent}
+      className="size-5 shrink-0"
+      role="progressbar"
+    >
+      {progressPercent === 100 ? (
+        <NextIcon
+          aria-hidden="true"
+          className="text-mint-300"
+          name="CheckRoundedFilled"
+          size={20}
+        />
+      ) : (
+        <svg
+          aria-hidden="true"
+          className="size-full -rotate-90"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="text-graphite-500"
+            cx="12"
+            cy="12"
+            fill="none"
+            r="9"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          />
+          <circle
+            className="text-blue-500"
+            cx="12"
+            cy="12"
+            fill="none"
+            r="9"
+            stroke="currentColor"
+            strokeDasharray={2 * Math.PI * 9}
+            strokeDashoffset={2 * Math.PI * 9 * (1 - progressPercent / 100)}
+            strokeLinecap="round"
+            strokeWidth="2.5"
+          />
+        </svg>
+      )}
+    </span>
   );
 }

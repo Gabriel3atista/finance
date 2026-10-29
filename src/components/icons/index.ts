@@ -20,12 +20,14 @@ import Equals from "./finance/equals";
 import BrandMark from "./layout/brand-mark";
 import Calendar from "./layout/calendar";
 import Dashboard from "./layout/dashboard";
+import HorizontalDots from "./layout/horizontal-dots";
 import Plus from "./layout/plus";
 import Records from "./layout/records";
+import VerticalDots from "./layout/vertical-dots";
 // Notifications
 import Bell from "./notifications/bell";
 // Actions
-import Trash from "./actions/trash";
+import TrashOutline from "./actions/trash-outline";
 // Status
 import Check from "./status/check";
 import CheckCircle from "./status/check-circle";
@@ -59,10 +61,12 @@ export const iconsMap = {
   Forecast,
   Google,
   History,
+  HorizontalDots,
   Loading,
   Plus,
   Records,
-  Trash,
+  TrashOutline,
+  VerticalDots,
 } as const;
 
 export type Icons = keyof typeof iconsMap;

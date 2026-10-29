@@ -33,6 +33,7 @@ import {
   fetchInstallmentPlans,
   fetchRecurringItems,
 } from "@/features/transactions/lib/queries";
+import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
 
 const errors: Record<string, string> = {
   "invalid-recurrence": "Confira os dados da recorrência.",
@@ -42,11 +43,7 @@ const errors: Record<string, string> = {
   "deactivate-series": "Não foi possível encerrar este cadastro.",
 };
 
-export function RecordsScreen({
-  householdId,
-}: {
-  householdId: string;
-}) {
+export function RecordsScreen({ householdId }: { householdId: string }) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const saved = searchParams.get("saved");
@@ -64,34 +61,27 @@ export function RecordsScreen({
   const currentMonth = monthString(new Date());
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
-  const invalidateRecords = () => {
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.recurringItems(householdId),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.installmentPlans(householdId),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.ensurePeriodEntriesForHousehold(householdId),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: ["month-entries", householdId],
-    });
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.dashboard(householdId),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.forecast(householdId),
-    });
+  const invalidateRecords = async () => {
+    await Promise.all([
+      invalidateFinanceQueries(queryClient, householdId, {
+        revalidateOccurrences: true,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.recurringItems(householdId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.installmentPlans(householdId),
+      }),
+    ]);
   };
   const createRecurring = useMutation({
     mutationFn: async (form: FormData) => {
       const result = await createRecurringItem(form);
       if (result.error) throw new Error(result.error);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setMutationMessage("saved");
-      invalidateRecords();
+      await invalidateRecords();
     },
     onError: (caught) =>
       setMutationMessage(
@@ -103,9 +93,9 @@ export function RecordsScreen({
       const result = await createInstallmentPlan(form);
       if (result.error) throw new Error(result.error);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setMutationMessage("saved");
-      invalidateRecords();
+      await invalidateRecords();
     },
     onError: (caught) =>
       setMutationMessage(
@@ -117,9 +107,9 @@ export function RecordsScreen({
       const result = await deactivateSeries(form);
       if (result.error) throw new Error(result.error);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setMutationMessage("deactivated");
-      invalidateRecords();
+      await invalidateRecords();
     },
     onError: () => setMutationMessage("deactivate-series"),
   });
@@ -240,9 +230,7 @@ export function RecordsScreen({
                 </SelectContent>
               </Select>
             </label>
-            <SeriesFields
-              month={currentMonth}
-            />
+            <SeriesFields month={currentMonth} />
             <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
               Última competência{" "}
               <span className="font-normal text-muted">(opcional)</span>

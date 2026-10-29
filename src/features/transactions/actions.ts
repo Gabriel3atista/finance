@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import {
-  monthDate,
   dateForDay,
   moneyInputToNumber,
   parseMonth,
@@ -189,12 +188,13 @@ export async function updateFinancialEntry(
   const context = await getUserContext();
   const { data: entry } = await context.supabase
     .from("financial_entries")
-    .select("id, status, source_kind, recurring_item_id, competence_month")
+    .select(
+      "id, source_kind, recurring_item_id, installment_plan_id, installment_number, competence_month",
+    )
     .eq("id", id)
     .eq("household_id", context.householdId)
     .maybeSingle();
-  if (!entry || entry.status !== "planned")
-    return { error: "entry-unavailable" };
+  if (!entry) return { error: "entry-unavailable" };
 
   const values = {
     title,
@@ -213,8 +213,7 @@ export async function updateFinancialEntry(
       .select("id, competence_month")
       .eq("household_id", context.householdId)
       .eq("recurring_item_id", entry.recurring_item_id)
-      .gte("competence_month", entry.competence_month)
-      .eq("status", "planned");
+      .gte("competence_month", entry.competence_month);
     if (fetchError) return { error: "update-series" };
 
     const dueDay = dueDate ? Number(dueDate.slice(-2)) : null;
@@ -230,8 +229,7 @@ export async function updateFinancialEntry(
             ),
           })
           .eq("id", futureEntry.id)
-          .eq("household_id", context.householdId)
-          .eq("status", "planned"),
+          .eq("household_id", context.householdId),
       ),
     );
     if (updateResults.some((result) => result.error))
@@ -254,26 +252,55 @@ export async function updateFinancialEntry(
       .from("financial_entries")
       .update(values)
       .eq("id", id)
-      .eq("household_id", context.householdId)
-      .eq("status", "planned");
+      .eq("household_id", context.householdId);
     if (error) return { error: "update-entry" };
   }
   return { success: entry.competence_month.slice(0, 7) };
 }
 
-export async function cancelFinancialEntry(
+export async function deleteFinancialEntry(
   formData: FormData,
 ): Promise<MutationResult> {
   const id = String(formData.get("id") ?? "");
+  if (!id) return { error: "invalid-entry" };
   const context = await getUserContext();
-  const { error } = await context.supabase
-    .from("financial_entries")
-    .update({ status: "cancelled", settled_at: null })
-    .eq("id", id)
-    .eq("household_id", context.householdId)
-    .eq("status", "planned");
-  if (error) return { error: "cancel-entry" };
-  return { success: "cancelled" };
+  const { data, error } = await context.supabase.rpc("delete_financial_entry", {
+    p_entry_id: id,
+  });
+  if (error || !data) return { error: "delete-entry" };
+  return { success: "deleted" };
+}
+
+export async function copyPreviousMonthEntries(targetMonthValue: string) {
+  const targetMonth = parseMonthInput(targetMonthValue);
+  if (!targetMonth) return { error: "invalid-month" };
+
+  const context = await getUserContext();
+  const { data, error } = await context.supabase.rpc(
+    "copy_financial_entries_to_month",
+    {
+      p_household_id: context.householdId,
+      p_target_month: targetMonth,
+    },
+  );
+  if (error) return { error: "copy-month" };
+  return { success: "month-copied", count: Number(data ?? 0) };
+}
+
+export async function deleteMonthEntries(monthValue: string) {
+  const month = parseMonthInput(monthValue);
+  if (!month) return { error: "invalid-month" };
+
+  const context = await getUserContext();
+  const { data, error } = await context.supabase.rpc(
+    "delete_financial_entries_for_month",
+    {
+      p_household_id: context.householdId,
+      p_month: month,
+    },
+  );
+  if (error) return { error: "delete-month" };
+  return { success: "month-deleted", count: Number(data ?? 0) };
 }
 
 export async function deactivateSeries(
@@ -292,16 +319,5 @@ export async function deactivateSeries(
     .eq("id", id)
     .eq("household_id", context.householdId);
   if (error) return { error: "deactivate-series" };
-  const currentMonth = monthDate(new Date());
-  const entryColumn =
-    kind === "recurrence" ? "recurring_item_id" : "installment_plan_id";
-  const { error: cancelError } = await context.supabase
-    .from("financial_entries")
-    .update({ status: "cancelled", settled_at: null })
-    .eq("household_id", context.householdId)
-    .eq(entryColumn, id)
-    .gte("competence_month", currentMonth)
-    .eq("status", "planned");
-  if (cancelError) return { error: "deactivate-series" };
   return { success: "deactivated" };
 }

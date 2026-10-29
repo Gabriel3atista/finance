@@ -111,13 +111,13 @@ export function HistoryList({ householdId }: { householdId: string }) {
           aria-label="Lançamentos históricos"
         >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[780px] border-collapse text-left text-xs">
+            <table className="w-full min-w-[720px] border-collapse text-left text-xs">
               <thead className="bg-graphite-800 text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Competência</th>
                   <th className="px-4 py-3 font-medium">Lançamento</th>
                   <th className="px-4 py-3 font-medium">Tipo</th>
-                  <th className="px-4 py-3 font-medium">Estado</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Valor</th>
                   <th className="px-4 py-3 font-medium">Origem</th>
                 </tr>

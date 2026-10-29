@@ -9,6 +9,7 @@ import {
 } from "react";
 import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/shared/lib/utils";
 
 const STORAGE_KEY = "finance-values-hidden";
 
@@ -41,11 +42,30 @@ export function ValuesVisibilityProvider({
   );
 }
 
-export function FinancialValue({ children }: { children: ReactNode }) {
+export type FinancialValueSize = "xs" | "sm" | "md" | "lg" | "xl";
+
+const financialValueSizes: Record<FinancialValueSize, string> = {
+  xs: "text-xs",
+  sm: "text-sm",
+  md: "text-base",
+  lg: "text-lg",
+  xl: "text-xl",
+};
+
+export function FinancialValue({
+  children,
+  size,
+}: {
+  children: ReactNode;
+  size?: FinancialValueSize;
+}) {
   const { hidden } = useValuesVisibility();
 
   return (
-    <span aria-label={hidden ? "Valor oculto" : undefined}>
+    <span
+      aria-label={hidden ? "Valor oculto" : undefined}
+      className={cn(size && financialValueSizes[size])}
+    >
       {hidden ? "•••••••" : children}
     </span>
   );

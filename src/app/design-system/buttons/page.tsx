@@ -82,13 +82,13 @@ export default function ButtonDesignSystemPage() {
         >
           <div className="flex flex-wrap items-end gap-4 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
             <div className="flex flex-col items-center gap-3">
-              <Button rounded="full" size="sm">
+              <Button rounded size="sm">
                 Pequeno
               </Button>
               <span className="text-[10px] text-muted">sm + full</span>
             </div>
             <div className="flex flex-col items-center gap-3">
-              <Button rounded="full" leadingIcon="Plus">
+              <Button rounded leadingIcon="Plus">
                 Nova transação
               </Button>
               <span className="text-[10px] text-muted">default + full</span>
@@ -97,8 +97,8 @@ export default function ButtonDesignSystemPage() {
               <Button
                 aria-label="Adicionar item"
                 icon="Plus"
-                rounded="full"
-                size="icon"
+                rounded
+                size="icon-sm"
                 variant="secondary"
               />
               <span className="text-[10px] text-muted">ícone + full</span>

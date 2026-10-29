@@ -103,7 +103,7 @@ export function Dashboard({
             Dashboard
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-[15px]">
-            Receitas e despesas realizadas ao longo do tempo, com um resumo de{" "}
+            Receitas e despesas cadastradas ao longo do tempo, com um resumo de{" "}
             {monthTitle}.
           </p>
         </div>

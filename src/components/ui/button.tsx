@@ -13,7 +13,7 @@ import type { Icons } from "@/components/icons";
 import { cn } from "@/shared/lib/utils";
 
 export const buttonVariants = cva(
-  "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-200 mobile-app:focus:!outline-none inline-flex items-center justify-center font-medium transition-colors duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-150 disabled:pointer-events-none disabled:opacity-50",
+  "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-200 mobile-app:focus:!outline-none inline-flex shrink-0 items-center justify-center font-medium transition-colors duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-150 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -21,6 +21,10 @@ export const buttonVariants = cva(
           "bg-yellow-500 text-graphite-900 hover:bg-yellow-500/90 active:bg-yellow-500/80",
         default:
           "bg-moon-200 text-graphite-900 hover:bg-moon-200/90 active:bg-moon-200/80",
+        destructive:
+          "bg-rose-500 text-moon-100 hover:bg-rose-500/90 active:bg-rose-500/80",
+        "destructive-subtle":
+          "bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 active:bg-rose-500/30",
         secondary:
           "bg-graphite-700 text-ink hover:bg-graphite-600  active:bg-graphite-600/90",
         outline:
@@ -38,10 +42,6 @@ export const buttonVariants = cva(
         "icon-lg":
           "size-12 rounded-xl p-0 text-base [&_[data-button-icon]]:size-5",
       },
-      rounded: {
-        default: null,
-        full: "rounded-full",
-      },
     },
     defaultVariants: {
       variant: "default",
@@ -53,9 +53,7 @@ export const buttonVariants = cva(
 export type ButtonVariant =
   NonNullable<VariantProps<typeof buttonVariants>["variant"]> | "unstyled";
 export type ButtonTextSize = "sm" | "default" | "lg";
-export type ButtonRounded = NonNullable<
-  VariantProps<typeof buttonVariants>["rounded"]
->;
+export type ButtonRounded = boolean;
 type IconSize = "icon-sm" | "icon" | "icon-lg";
 export type ButtonIcon = Icons;
 
@@ -156,12 +154,14 @@ export function Button({
         !loading && Boolean(trailingIcon),
       );
   const classNames = unstyled
-    ? className
+    ? cn(className, rounded && "rounded-full", "shrink-0")
     : cn(
-        buttonVariants({ variant, size, rounded }),
+        buttonVariants({ variant, size }),
         contentPadding,
         asChild && unavailable && "pointer-events-none opacity-50",
         className,
+        rounded && "rounded-full",
+        "shrink-0",
       );
 
   const handleClick: MouseEventHandler<HTMLButtonElement> = (

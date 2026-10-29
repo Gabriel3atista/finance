@@ -17,6 +17,13 @@ import {
 import { NextIcon } from "@/components/atoms/next-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -28,10 +35,12 @@ import {
 } from "@/components/ui/select";
 import {
   Drawer,
+  DrawerBody,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
+  DrawerNested,
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { EntryFields } from "@/features/transactions/components/entry-fields";
@@ -48,8 +57,9 @@ import {
 import { FinancialValue } from "@/shared/components/financial-values";
 import { cn } from "@/shared/lib/utils";
 
-type EntryStatus = "planned" | "settled";
 type CategoryFilterValue = "all" | FinancialCategory;
+type EntryStatus = "planned" | "settled";
+type MonthAction = "copy" | "delete";
 
 export function MonthlyEntryList({
   entries,
@@ -57,9 +67,13 @@ export function MonthlyEntryList({
   onSetStatus,
   statusPendingId,
   onUpdate,
-  onCancel,
+  onDelete,
+  onCopyPreviousMonth,
+  onDeleteMonth,
+  monthActionsPending,
   onCreateEntry,
   rowMutationPending,
+  headerContent,
   showHeader = true,
   isLoading = false,
   loadError = false,
@@ -69,18 +83,29 @@ export function MonthlyEntryList({
   onSetStatus: (id: string, nextStatus: EntryStatus) => Promise<void>;
   statusPendingId?: string;
   onUpdate: (form: FormData) => Promise<void>;
-  onCancel: (form: FormData) => Promise<void>;
+  onDelete: (form: FormData) => Promise<void>;
+  onCopyPreviousMonth: () => Promise<void>;
+  onDeleteMonth: () => Promise<void>;
+  monthActionsPending: boolean;
   onCreateEntry: () => void;
   rowMutationPending: boolean;
+  headerContent?: ReactNode;
   showHeader?: boolean;
   isLoading?: boolean;
   loadError?: boolean;
 }) {
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [entryToDelete, setEntryToDelete] = useState<FinancialEntry | null>(
+    null,
+  );
+  const [deleteError, setDeleteError] = useState("");
+  const [monthAction, setMonthAction] = useState<MonthAction | null>(null);
+  const [monthActionError, setMonthActionError] = useState("");
   const [actionError, setActionError] = useState("");
   const [categoryFilter, setCategoryFilter] =
     useState<CategoryFilterValue>("all");
   const reducedMotion = useReducedMotion() === true;
+  const today = localDateString();
   const selectedEntry = entries.find((entry) => entry.id === selectedEntryId);
   const filteredEntries = entries.filter(
     (entry) =>
@@ -91,7 +116,6 @@ export function MonthlyEntryList({
         entry.source_kind,
       ) === categoryFilter,
   );
-  const today = localDateString();
 
   function handleCategoryChange(value: string) {
     if (value === "all" || isFinancialCategory(value)) {
@@ -101,7 +125,11 @@ export function MonthlyEntryList({
 
   useEffect(() => {
     setSelectedEntryId(null);
+    setEntryToDelete(null);
     setActionError("");
+    setDeleteError("");
+    setMonthAction(null);
+    setMonthActionError("");
   }, [month]);
 
   async function runAction(action: () => Promise<void>) {
@@ -120,7 +148,37 @@ export function MonthlyEntryList({
     setActionError("");
   }
 
-  const returnTo = `/mes?month=${month}`;
+  async function confirmDelete() {
+    if (!entryToDelete) return;
+
+    setDeleteError("");
+    const form = new FormData();
+    form.set("id", entryToDelete.id);
+
+    try {
+      await onDelete(form);
+      setEntryToDelete(null);
+      setSelectedEntryId(null);
+    } catch {
+      setDeleteError("Falha ao excluir. Tente novamente.");
+    }
+  }
+
+  async function confirmMonthAction() {
+    if (!monthAction) return;
+    setMonthActionError("");
+    try {
+      if (monthAction === "copy") await onCopyPreviousMonth();
+      else await onDeleteMonth();
+      setMonthAction(null);
+    } catch {
+      setMonthActionError(
+        monthAction === "copy"
+          ? "Não foi possível copiar os dados do mês anterior."
+          : "Não foi possível apagar os dados deste mês.",
+      );
+    }
+  }
 
   return (
     <Drawer
@@ -140,26 +198,38 @@ export function MonthlyEntryList({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <CategoryFilter
-                value={categoryFilter}
-                onValueChange={handleCategoryChange}
-              />
               <Button
                 aria-label="Novo lançamento"
-                icon="Plus"
+                leadingIcon="Plus"
                 onClick={onCreateEntry}
-                size="icon-sm"
                 type="button"
                 variant="primary"
+              >
+                Novo
+              </Button>
+              <EntryOptionsMenu
+                category={categoryFilter}
+                onCategoryChange={handleCategoryChange}
+                onActionSelect={(action) => {
+                  setMonthAction(action);
+                  setMonthActionError("");
+                }}
+                actionsPending={monthActionsPending}
               />
             </div>
           </header>
         )}
+        {headerContent}
         {!showHeader && (
           <div className="mb-3 flex justify-end">
-            <CategoryFilter
-              value={categoryFilter}
-              onValueChange={handleCategoryChange}
+            <EntryOptionsMenu
+              category={categoryFilter}
+              onCategoryChange={handleCategoryChange}
+              onActionSelect={(action) => {
+                setMonthAction(action);
+                setMonthActionError("");
+              }}
+              actionsPending={monthActionsPending}
             />
           </div>
         )}
@@ -231,8 +301,18 @@ export function MonthlyEntryList({
                     </span>
                     <span className="flex flex-wrap items-center gap-2">
                       {entry.due_date ? (
-                        <Badge size="sm" variant="secondary">
-                          Vence {formatDate(entry.due_date)}
+                        <Badge
+                          size="sm"
+                          variant={
+                            entry.status === "planned" && entry.due_date < today
+                              ? "destructive"
+                              : "secondary"
+                          }
+                        >
+                          {entry.status === "planned" && entry.due_date < today
+                            ? "Vencido"
+                            : "Vence"}{" "}
+                          {formatDate(entry.due_date)}
                         </Badge>
                       ) : (
                         <Badge size="sm" variant="secondary">
@@ -299,151 +379,229 @@ export function MonthlyEntryList({
       </section>
 
       {selectedEntry && (
-        <DrawerContent className="max-h-[90dvh] overflow-hidden border-line bg-graphite-900 text-ink">
+        <DrawerContent>
           <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left sm:px-6">
             <div className="flex min-w-0 items-center justify-between gap-3">
-              <DrawerTitle className="truncate text-base">
+              <DrawerTitle className="truncate text-base text-moon-100">
                 {selectedEntry.title}
               </DrawerTitle>
-              {selectedEntry.status === "planned" && (
-                <Button
-                  aria-label="Cancelar lançamento"
-                  className="shrink-0 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
-                  disabled={rowMutationPending}
-                  icon="Trash"
-                  onClick={() => {
-                    const form = new FormData();
-                    form.set("id", selectedEntry.id);
-                    form.set("return_to", returnTo);
-                    void runAction(() => onCancel(form));
-                  }}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                />
-              )}
+              <Button
+                aria-label="Excluir lançamento"
+                disabled={rowMutationPending}
+                icon="TrashOutline"
+                onClick={() => {
+                  setDeleteError("");
+                  setEntryToDelete(selectedEntry);
+                }}
+                size="icon"
+                type="button"
+                variant="destructive-subtle"
+                rounded
+              />
             </div>
-            <DrawerDescription className="text-muted">
-              {selectedEntry.entry_type === "income" ? "Receita" : "Despesa"}
-              {` · ${normalizeFinancialCategory(selectedEntry.category, selectedEntry.entry_type, selectedEntry.source_kind)}`}
-              {` · ${statusLabel(selectedEntry, today)}`}
-            </DrawerDescription>
           </DrawerHeader>
 
-          {selectedEntry.status === "planned" ? (
-            <form
-              className="flex min-h-0 flex-1 flex-col overflow-hidden"
-              onSubmit={(event) => {
-                event.preventDefault();
-                const form = new FormData(event.currentTarget);
-                void runAction(() => onUpdate(form));
-              }}
-            >
-              <Input name="id" type="hidden" value={selectedEntry.id} />
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 sm:px-6">
-                {actionError && (
-                  <p
-                    className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
-                    role="alert"
-                  >
-                    {actionError}
-                  </p>
-                )}
+          <form
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              void runAction(() => onUpdate(form));
+            }}
+          >
+            <Input name="id" type="hidden" value={selectedEntry.id} />
+            <DrawerBody className="space-y-4 px-5 pb-5 sm:px-6">
+              {actionError && (
+                <p
+                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                  role="alert"
+                >
+                  {actionError}
+                </p>
+              )}
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
+                Tipo
+                <Select
+                  name="entry_type"
+                  defaultValue={selectedEntry.entry_type}
+                  variant="secondary"
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="expense">Despesa</SelectItem>
+                    <SelectItem value="income">Receita</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+              <EntryFields month={month} entry={selectedEntry} />
+              {selectedEntry.source_kind === "recurrence" && (
                 <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                  Tipo
-                  <Select
-                    name="entry_type"
-                    defaultValue={selectedEntry.entry_type}
-                    variant="secondary"
-                    size="sm"
-                  >
+                  Aplicar alteração
+                  <Select name="scope" defaultValue="single">
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="expense">Despesa</SelectItem>
-                      <SelectItem value="income">Receita</SelectItem>
+                      <SelectItem value="single">Somente este mês</SelectItem>
+                      <SelectItem value="future">
+                        Este e próximos meses
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </label>
-                <EntryFields month={month} entry={selectedEntry} />
-                {selectedEntry.source_kind === "recurrence" && (
-                  <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                    Aplicar alteração
-                    <Select name="scope" defaultValue="single">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="single">Somente este mês</SelectItem>
-                        <SelectItem value="future">
-                          Este e próximos meses
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </label>
-                )}
-              </div>
-              <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
-                <div className="grid grid-cols-1 gap-3">
-                  <Button
-                    className="w-full"
-                    disabled={rowMutationPending}
-                    type="submit"
-                    variant="primary"
-                    rounded="full"
-                  >
-                    {rowMutationPending ? "Salvando…" : "Salvar"}
-                  </Button>
-                  <Button
-                    className="w-full"
-                    disabled={rowMutationPending}
-                    onClick={() => closeDrawer(false)}
-                    type="button"
-                    variant="secondary"
-                    rounded="full"
-                  >
-                    Fechar
-                  </Button>
-                </div>
-              </DrawerFooter>
-            </form>
-          ) : (
-            <>
-              <div className="space-y-3 overflow-y-auto px-5 pb-5 text-sm sm:px-6">
-                <Detail label="Valor">
-                  <FinancialValue>
-                    {formatMoney(Number(selectedEntry.amount))}
-                  </FinancialValue>
-                </Detail>
-                <Detail label="Vencimento">
-                  {selectedEntry.due_date
-                    ? formatDate(selectedEntry.due_date)
-                    : "Sem vencimento"}
-                </Detail>
-                <Detail label="Origem">{sourceLabel(selectedEntry)}</Detail>
-                <p className="rounded-xl bg-canvas p-3 text-xs leading-5 text-muted">
-                  Para alterar este lançamento, desfaça a baixa primeiro.
-                </p>
-              </div>
-              <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
-                {actionError && (
-                  <p className="text-sm text-rose-200" role="alert">
-                    {actionError}
-                  </p>
-                )}
+              )}
+            </DrawerBody>
+            <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
+              <div className="grid grid-cols-1 gap-3">
                 <Button
+                  className="w-full"
+                  disabled={rowMutationPending}
+                  type="submit"
+                  variant="primary"
+                  rounded
+                >
+                  {rowMutationPending ? "Salvando…" : "Salvar"}
+                </Button>
+                <Button
+                  className="w-full"
+                  disabled={rowMutationPending}
                   onClick={() => closeDrawer(false)}
                   type="button"
-                  variant="outline"
+                  variant="secondary"
+                  rounded
                 >
                   Fechar
                 </Button>
-              </DrawerFooter>
-            </>
-          )}
+              </div>
+            </DrawerFooter>
+          </form>
         </DrawerContent>
       )}
+      <DrawerNested
+        open={Boolean(entryToDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEntryToDelete(null);
+            setDeleteError("");
+          }
+        }}
+        shouldScaleBackground={false}
+      >
+        {entryToDelete && (
+          <DrawerContent className="border-line bg-graphite-900 text-ink">
+            <DrawerHeader className="px-5 pb-3 pt-4 text-left sm:px-6">
+              <DrawerTitle className="text-base">
+                Excluir lançamento?
+              </DrawerTitle>
+              <DrawerDescription className="text-muted">
+                Este lançamento será removido permanentemente.
+              </DrawerDescription>
+            </DrawerHeader>
+            <DrawerBody className="px-5 pb-5 sm:px-6">
+              {deleteError && (
+                <p
+                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                  role="alert"
+                >
+                  {deleteError}
+                </p>
+              )}
+            </DrawerBody>
+            <DrawerFooter className="border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  disabled={rowMutationPending}
+                  onClick={() => setEntryToDelete(null)}
+                  type="button"
+                  variant="secondary"
+                  rounded
+                >
+                  Voltar
+                </Button>
+                <Button
+                  className="bg-rose-500 text-white hover:bg-rose-600 active:bg-rose-700"
+                  disabled={rowMutationPending}
+                  leadingIcon="TrashOutline"
+                  loading={rowMutationPending}
+                  onClick={() => void confirmDelete()}
+                  type="button"
+                  variant="primary"
+                  rounded
+                >
+                  Excluir
+                </Button>
+              </div>
+            </DrawerFooter>
+          </DrawerContent>
+        )}
+      </DrawerNested>
+      <DrawerNested
+        open={Boolean(monthAction)}
+        onOpenChange={(open) => {
+          if (!open && !monthActionsPending) {
+            setMonthAction(null);
+            setMonthActionError("");
+          }
+        }}
+        shouldScaleBackground={false}
+      >
+        {monthAction && (
+          <DrawerContent className="border-line bg-graphite-900 text-ink">
+            <DrawerHeader className="px-5 pb-3 pt-4 text-left sm:px-6">
+              <DrawerTitle className="text-base">
+                {monthAction === "copy"
+                  ? "Copiar dados do mês anterior?"
+                  : "Apagar todos os dados do mês?"}
+              </DrawerTitle>
+              <DrawerDescription className="text-muted">
+                {monthAction === "copy"
+                  ? "Todos os lançamentos ativos do mês anterior serão copiados como pendentes."
+                  : "Todos os lançamentos desta competência serão removidos, inclusive os realizados e importados. Esta ação não pode ser desfeita."}
+              </DrawerDescription>
+            </DrawerHeader>
+            <DrawerBody className="px-5 pb-5 sm:px-6">
+              {monthActionError && (
+                <p
+                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                  role="alert"
+                >
+                  {monthActionError}
+                </p>
+              )}
+            </DrawerBody>
+            <DrawerFooter className="border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  disabled={monthActionsPending}
+                  onClick={() => setMonthAction(null)}
+                  rounded
+                  type="button"
+                  variant="secondary"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className={
+                    monthAction === "delete"
+                      ? "bg-rose-500 text-white hover:bg-rose-600 active:bg-rose-700"
+                      : ""
+                  }
+                  disabled={monthActionsPending}
+                  loading={monthActionsPending}
+                  onClick={() => void confirmMonthAction()}
+                  rounded
+                  type="button"
+                  variant="primary"
+                >
+                  {monthAction === "copy" ? "Copiar" : "Apagar mês"}
+                </Button>
+              </div>
+            </DrawerFooter>
+          </DrawerContent>
+        )}
+      </DrawerNested>
     </Drawer>
   );
 }
@@ -498,9 +656,8 @@ function SwipeableEntry({
       statusPending ||
       gesture.current ||
       (event.pointerType === "mouse" && event.button !== 0)
-    ) {
+    )
       return;
-    }
 
     returnAnimation.current?.stop();
     const now = performance.now();
@@ -565,8 +722,8 @@ function SwipeableEntry({
     if (!cancelled) {
       const deltaX = event.clientX - activeGesture.startX;
       const distanceThreshold = Math.min(
-        88,
-        Math.max(64, activeGesture.width * 0.22),
+        64,
+        Math.max(48, activeGesture.width * 0.16),
       );
       const quickFlick = Math.abs(activeGesture.velocity) >= 0.55;
       if (
@@ -602,7 +759,7 @@ function SwipeableEntry({
           {entry.entry_type === "income" ? "Receber" : "Pagar"}
         </span>
         <span className="flex items-center justify-end bg-amber-900/30 pr-5 text-sm font-semibold text-amber-500">
-          Desfazer
+          Reabrir
         </span>
       </div>
       <motion.div className="relative z-10 w-full" style={{ transform }}>
@@ -627,15 +784,76 @@ function SwipeableEntry({
   );
 }
 
+function statusLabel(entry: FinancialEntry, today: string) {
+  if (entry.status === "settled")
+    return entry.entry_type === "income" ? "Recebida" : "Paga";
+  if (entry.due_date && entry.due_date < today) return "Vencida";
+  return "Prevista";
+}
+
+function EntryOptionsMenu({
+  category,
+  onCategoryChange,
+  onActionSelect,
+  actionsPending,
+}: {
+  category: CategoryFilterValue;
+  onCategoryChange: (value: string) => void;
+  onActionSelect: (action: MonthAction) => void;
+  actionsPending: boolean;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          aria-label="Opções dos lançamentos"
+          icon="VerticalDots"
+          size="icon"
+          type="button"
+          variant="secondary"
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-medium text-muted">Filtrar categoria</p>
+          <CategoryFilter
+            className="w-full"
+            value={category}
+            onValueChange={onCategoryChange}
+          />
+        </div>
+        <DropdownMenuSeparator className="my-3" />
+        <div className="flex flex-col gap-1">
+          <DropdownMenuItem
+            disabled={actionsPending}
+            onSelect={() => onActionSelect("copy")}
+          >
+            Copiar os dados do mês anterior
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-rose-300 focus:bg-rose-500/10 focus:text-rose-200"
+            disabled={actionsPending}
+            onSelect={() => onActionSelect("delete")}
+          >
+            Apagar todos os dados do mês
+          </DropdownMenuItem>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function CategoryFilter({
   value,
   onValueChange,
+  className,
 }: {
   value: CategoryFilterValue;
   onValueChange: (value: string) => void;
+  className?: string;
 }) {
   return (
-    <div className="w-[124px] shrink-0 sm:w-[160px]">
+    <div className={cn("w-[124px] shrink-0 sm:w-[160px]", className)}>
       <Select
         name="filter_category"
         onValueChange={onValueChange}
@@ -644,11 +862,11 @@ function CategoryFilter({
         size="sm"
       >
         <SelectTrigger className="min-w-0 truncate">
-          <SelectValue className="max-w-[84px] truncate sm:max-w-[120px]" />
+          <SelectValue className="max-w-[150px] truncate" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todas as categorias</SelectItem>
-          <SelectItem value="Despesas">Despesas</SelectItem>
+          <SelectItem value="Fixos">Fixos</SelectItem>
           <SelectItem value="Dívidas e parcelas">Dívidas e parcelas</SelectItem>
           <SelectItem value="Outras entradas">Outras entradas</SelectItem>
           <SelectItem value="Salário">Salário</SelectItem>
@@ -658,31 +876,6 @@ function CategoryFilter({
   );
 }
 
-function Detail({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-line py-2">
-      <span className="text-muted">{label}</span>
-      <span className="text-right font-medium text-ink">{children}</span>
-    </div>
-  );
-}
-
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T12:00:00`));
-}
-
-function statusLabel(entry: FinancialEntry, today: string) {
-  if (entry.status === "settled")
-    return entry.entry_type === "income" ? "Recebida" : "Paga";
-  if (entry.due_date && entry.due_date < today) return "Vencida";
-  return "Prevista";
-}
-
-function sourceLabel(entry: FinancialEntry) {
-  if (entry.source_kind === "recurrence") return "Recorrente";
-  if (entry.source_kind === "installment" && entry.installment_number)
-    return `Parcela ${entry.installment_number}`;
-  if (entry.source_kind === "card_statement") return "Fatura do cartão";
-  if (entry.source_kind === "historical_import") return "Importado";
-  return "Avulso";
 }

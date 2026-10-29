@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Drawer,
+  DrawerBody,
   DrawerContent,
   DrawerFooter,
   DrawerHeader,
@@ -23,6 +24,7 @@ import {
 } from "@/features/transactions/lib/data";
 import { useMonthData } from "@/features/transactions/hooks/use-month-data";
 import { fetchMonthEntries } from "@/features/transactions/lib/queries";
+import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { formatMonth } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
@@ -41,7 +43,9 @@ import { useMobileApp } from "@/shared/hooks/use-mobile-app";
 import { useAppShellHeaderContent } from "@/shared/components/app-shell-header-slot";
 import { ResponsivePageSkeleton } from "@/shared/components/responsive-page-skeleton";
 import {
-  cancelFinancialEntry,
+  copyPreviousMonthEntries,
+  deleteFinancialEntry,
+  deleteMonthEntries as deleteMonthEntriesAction,
   createFinancialEntry,
   updateFinancialEntry,
 } from "@/features/transactions/actions";
@@ -53,8 +57,20 @@ const errorMessages: Record<string, string> = {
   "entry-unavailable": "Esse lançamento não está mais disponível para edição.",
   "update-series": "Não foi possível atualizar os próximos meses.",
   "update-entry": "Não foi possível atualizar o lançamento.",
-  "cancel-entry": "Não foi possível cancelar o lançamento.",
+  "delete-entry": "Falha ao excluir o lançamento.",
+  "copy-month": "Não foi possível copiar os dados do mês anterior.",
+  "delete-month": "Não foi possível apagar os dados deste mês.",
 };
+
+const successMessages: Record<string, string> = {
+  "month-copied": "Dados do mês anterior copiados.",
+  "month-copy-empty": "Não havia novos lançamentos para copiar.",
+  "month-deleted": "Todos os lançamentos deste mês foram apagados.",
+};
+
+function isSuccessMutationMessage(message: string) {
+  return message === "saved" || message in successMessages;
+}
 
 export function MonthlyLedger({
   month: initialMonth,
@@ -122,26 +138,19 @@ export function MonthlyLedger({
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
-  const invalidateFinance = () => {
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.householdMonthEntries(householdId),
+  const invalidateFinance = () =>
+    invalidateFinanceQueries(queryClient, householdId, {
+      revalidateOccurrences: true,
     });
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.dashboard(householdId),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.forecast(householdId),
-    });
-  };
   const createEntry = useMutation({
     mutationFn: async (form: FormData) => {
       const result = await createFinancialEntry(form);
       if (result.error) throw new Error(result.error);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setCreateDrawerOpen(false);
       setMutationMessage("saved");
-      invalidateFinance();
+      await invalidateFinance();
     },
     onError: (caught) =>
       setMutationMessage(
@@ -153,27 +162,60 @@ export function MonthlyLedger({
       const result = await updateFinancialEntry(form);
       if (result.error) throw new Error(result.error);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setMutationMessage("saved");
-      invalidateFinance();
+      await invalidateFinance();
     },
     onError: (caught) =>
       setMutationMessage(
         caught instanceof Error ? caught.message : "update-entry",
       ),
   });
-  const cancelEntry = useMutation({
+  const deleteEntry = useMutation({
     mutationFn: async (form: FormData) => {
-      const result = await cancelFinancialEntry(form);
+      const result = await deleteFinancialEntry(form);
       if (result.error) throw new Error(result.error);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setMutationMessage("saved");
-      invalidateFinance();
+      await invalidateFinance();
     },
     onError: (caught) =>
       setMutationMessage(
-        caught instanceof Error ? caught.message : "cancel-entry",
+        caught instanceof Error ? caught.message : "delete-entry",
+      ),
+  });
+  const copyMonthEntries = useMutation({
+    mutationFn: async () => {
+      const result = await copyPreviousMonthEntries(monthValue);
+      if (result.error) throw new Error(result.error);
+      return result.count;
+    },
+    onSuccess: async (count) => {
+      setMutationMessage(
+        (count ?? 0) > 0 ? "month-copied" : "month-copy-empty",
+      );
+      await invalidateFinance();
+      await entriesQuery.refetch();
+    },
+    onError: (caught) =>
+      setMutationMessage(
+        caught instanceof Error ? caught.message : "copy-month",
+      ),
+  });
+  const deleteMonthEntries = useMutation({
+    mutationFn: async () => {
+      const result = await deleteMonthEntriesAction(monthValue);
+      if (result.error) throw new Error(result.error);
+      return result.count;
+    },
+    onSuccess: async () => {
+      setMutationMessage("month-deleted");
+      await invalidateFinance();
+    },
+    onError: (caught) =>
+      setMutationMessage(
+        caught instanceof Error ? caught.message : "delete-month",
       ),
   });
   const entries = entriesQuery.data ?? [];
@@ -184,13 +226,13 @@ export function MonthlyLedger({
   const settledIncome = sum(entries, "income", "settled");
   const settledExpenses = sum(entries, "expense", "settled");
   const previousMonthBalance = previousMonthQuery.data
-    ? sum(previousMonthQuery.data, "income", "settled") -
-      sum(previousMonthQuery.data, "expense", "settled")
+    ? sum(previousMonthQuery.data, "income") -
+      sum(previousMonthQuery.data, "expense")
     : undefined;
+  const today = localDateString();
   const pendingCount = entries.filter(
     (entry) => entry.status === "planned",
   ).length;
-  const today = localDateString();
   const overdueCount = entries.filter(
     (entry) =>
       entry.status === "planned" && entry.due_date && entry.due_date < today,
@@ -210,10 +252,22 @@ export function MonthlyLedger({
     setMutationMessage("");
     await updateEntry.mutateAsync(form);
   };
-  const cancelEntryFromForm = async (form: FormData) => {
+  const deleteEntryFromForm = async (form: FormData) => {
     setMutationMessage("");
-    await cancelEntry.mutateAsync(form);
+    await deleteEntry.mutateAsync(form);
   };
+  const copyPreviousMonth = async () => {
+    setMutationMessage("");
+    const ensured = await ensureEntries.refetch();
+    if (ensured.isError) throw ensured.error;
+    await copyMonthEntries.mutateAsync();
+  };
+  const clearMonth = async () => {
+    setMutationMessage("");
+    await deleteMonthEntries.mutateAsync();
+  };
+  const monthActionsPending =
+    copyMonthEntries.isPending || deleteMonthEntries.isPending;
   const openCreateDrawer = () => {
     setMutationMessage("");
     createEntry.reset();
@@ -302,8 +356,16 @@ export function MonthlyLedger({
   if (isMobileApp) {
     return (
       <>
+        {setStatus.isError && (
+          <p
+            className="mx-auto mb-3 max-w-xl rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
+            role="alert"
+          >
+            Não foi possível atualizar o lançamento. Tente novamente.
+          </p>
+        )}
         <MobileMonthView
-          currentBalance={settledIncome - settledExpenses}
+          currentBalance={income - expenses}
           previousBalance={previousMonthBalance}
           isBalancePending={isLoading}
           isEntriesError={entryLoadFailed}
@@ -315,9 +377,12 @@ export function MonthlyLedger({
             setStatus.isPending ? setStatus.variables?.id : undefined
           }
           onUpdateEntry={updateEntryFromForm}
-          onCancelEntry={cancelEntryFromForm}
+          onDeleteEntry={deleteEntryFromForm}
+          onCopyPreviousMonth={copyPreviousMonth}
+          onDeleteMonth={clearMonth}
+          monthActionsPending={monthActionsPending}
           onCreateEntry={openCreateDrawer}
-          rowMutationPending={updateEntry.isPending || cancelEntry.isPending}
+          rowMutationPending={updateEntry.isPending || deleteEntry.isPending}
           month={month}
           onMonthPreview={setPreviewMonth}
           onMonthSelect={selectMonth}
@@ -376,23 +441,26 @@ export function MonthlyLedger({
             Alterações salvas.
           </p>
         )}
+        {mutationMessage && (
+          <p
+            className={`mb-5 rounded-xl px-4 py-3 text-sm ${isSuccessMutationMessage(mutationMessage) ? "border border-success-800 bg-success-900 text-success-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
+            role={
+              isSuccessMutationMessage(mutationMessage) ? "status" : "alert"
+            }
+          >
+            {successMessages[mutationMessage] ??
+              (mutationMessage === "saved"
+                ? "Alterações salvas."
+                : (errorMessages[mutationMessage] ??
+                  "Não foi possível salvar. Tente novamente."))}
+          </p>
+        )}
         {setStatus.isError && (
           <p
             className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
             role="alert"
           >
-            NÃ£o foi possÃ­vel atualizar o lanÃ§amento. Tente novamente.
-          </p>
-        )}
-        {mutationMessage && (
-          <p
-            className={`mb-5 rounded-xl px-4 py-3 text-sm ${mutationMessage === "saved" ? "border border-success-800 bg-success-900 text-success-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
-            role={mutationMessage === "saved" ? "status" : "alert"}
-          >
-            {mutationMessage === "saved"
-              ? "Alterações salvas."
-              : (errorMessages[mutationMessage] ??
-                "Não foi possível salvar. Tente novamente.")}
+            Não foi possível atualizar o lançamento. Tente novamente.
           </p>
         )}
         {loadFailed && (
@@ -442,29 +510,6 @@ export function MonthlyLedger({
 
         <div className="mt-5">
           <div className="rounded-[18px] border border-line bg-graphite-900 p-5 shadow-card sm:p-7">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-[15px] font-semibold text-ink">
-                  Lançamentos
-                </h2>
-                <p className="mt-1 text-sm text-muted">
-                  Valores previstos e realizados deste mês.
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <span className="rounded-full bg-canvas px-3 py-1 text-xs text-muted">
-                  {entries.length}
-                </span>
-                <Button
-                  onClick={openCreateDrawer}
-                  size="sm"
-                  type="button"
-                  variant="primary"
-                >
-                  Novo
-                </Button>
-              </div>
-            </div>
             <MonthlyEntryList
               entries={entries}
               month={monthValue}
@@ -474,11 +519,18 @@ export function MonthlyLedger({
                 setStatus.isPending ? setStatus.variables?.id : undefined
               }
               onUpdate={updateEntryFromForm}
-              onCancel={cancelEntryFromForm}
+              onDelete={deleteEntryFromForm}
+              onCopyPreviousMonth={copyPreviousMonth}
+              onDeleteMonth={clearMonth}
+              monthActionsPending={monthActionsPending}
               rowMutationPending={
-                updateEntry.isPending || cancelEntry.isPending
+                updateEntry.isPending || deleteEntry.isPending
               }
-              showHeader={false}
+              headerContent={
+                <p className="px-3 text-sm text-muted">
+                  Valores cadastrados neste mês.
+                </p>
+              }
               isLoading={isLoading}
               loadError={entryLoadFailed}
             />
@@ -512,7 +564,7 @@ function NewEntryDrawer({
       shouldScaleBackground={false}
     >
       {open && (
-        <DrawerContent className="max-h-[90dvh] overflow-hidden border-line bg-graphite-900 text-ink">
+        <DrawerContent className="border-line bg-graphite-900 text-ink">
           <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left sm:px-6">
             <DrawerTitle className="text-base">Novo lançamento</DrawerTitle>
           </DrawerHeader>
@@ -523,7 +575,7 @@ function NewEntryDrawer({
               onSubmit(new FormData(event.currentTarget));
             }}
           >
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 sm:px-6">
+            <DrawerBody className="space-y-4 px-5 pb-5 sm:px-6">
               {error && (
                 <p
                   className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
@@ -535,7 +587,11 @@ function NewEntryDrawer({
               )}
               <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
                 Tipo
-                <Select name="entry_type" defaultValue="expense" variant="secondary">
+                <Select
+                  name="entry_type"
+                  defaultValue="expense"
+                  variant="secondary"
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -546,7 +602,7 @@ function NewEntryDrawer({
                 </Select>
               </label>
               <EntryFields month={month} />
-            </div>
+            </DrawerBody>
             <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
               <Button
                 className="w-full"
@@ -554,7 +610,7 @@ function NewEntryDrawer({
                 type="submit"
                 variant="primary"
                 loading={pending}
-                rounded="full"
+                rounded
               >
                 {pending ? "Salvando…" : "Salvar lançamento"}
               </Button>
@@ -564,7 +620,7 @@ function NewEntryDrawer({
                 onClick={() => onOpenChange(false)}
                 type="button"
                 variant="secondary"
-                rounded="full"
+                rounded
               >
                 Cancelar
               </Button>

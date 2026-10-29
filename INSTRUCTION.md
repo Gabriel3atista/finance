@@ -6,13 +6,13 @@ Crie um aplicativo web **simples, mobile-first e compartilhado** para controlar 
 
 Atualmente usamos planilhas anuais com uma aba por mês. Em `./references/*` estão nossas planilhas financeiras desde 2024. Analise esses arquivos antes de propor o modelo de dados ou qualquer implementação. Eles mostram o fluxo real, mas não devem ser reproduzidos literalmente se houver uma experiência mais simples.
 
-O principal resultado esperado é: **abrir o aplicativo, ver o mês atual com contas e receitas já previstas, atualizar valores variáveis, marcar o que foi pago e estimar facilmente como estaremos nos próximos três meses**. Não quero um ERP, um aplicativo bancário ou dezenas de funcionalidades.
+O principal resultado esperado é: **abrir o aplicativo, ver o mês atual com contas e receitas cadastradas, editar valores a qualquer momento e estimar facilmente como estaremos nos próximos três meses**. Não quero um ERP, um aplicativo bancário ou dezenas de funcionalidades.
 
 ## Problemas a resolver
 
 - Não criar nova planilha a cada ano nem novas abas a cada mês.
 - Não copiar manualmente salários, contas fixas e parcelas de um mês para outro.
-- Saber rapidamente quanto entrou, quanto já pagamos, quanto ainda falta pagar e quanto sobrará.
+- Saber rapidamente o total de receitas e despesas cadastradas e quanto sobrará.
 - Ter uma **projeção financeira rolante de três meses futuros**, usada frequentemente para planejar despesas e evitar meses apertados.
 - Permitir que eu e minha esposa vejamos e atualizemos os mesmos dados.
 - Consultar o histórico e entender se a renda e as despesas estão aumentando.
@@ -24,16 +24,17 @@ Por mês, registramos manualmente:
 1. **Receitas:** salários bruto e líquido de ambos, décimo terceiro, PPR/PLR, freelance e outras entradas eventuais. Os valores podem mudar a cada mês.
 2. **Gastos fixos:** financiamento imobiliário, energia, água, internet, condomínio e outros. Muitos se repetem, mas seus valores variam.
 3. **Dívidas:** cartões de crédito, carro, móveis, boletos e compras parceladas.
-4. **Resumo:** total de despesas fixas e dívidas, valores pagos, pendentes e saldo do mês.
+4. **Resumo:** total de despesas fixas e dívidas, receitas, despesas e saldo do mês.
 
 ## Experiência central do MVP
 
 ### 1. Visão mensal
 
 - Navegar livremente entre meses e anos sem criar períodos manualmente.
-- Mostrar receitas previstas/recebidas, despesas previstas/pagas, total pendente, vencidas e saldo projetado/realizado.
+- Mostrar receitas, despesas, vencimentos em atraso e saldo do mês.
+- Permitir marcar pagamentos/recebimentos como realizados ao arrastar o lançamento para a direita; arrastar para a esquerda desfaz a baixa. O estado de pagamento permanece salvo no banco.
 - Editar um valor variável apenas naquele mês, sem alterar os meses anteriores.
-- Marcar pagamento ou recebimento com o mínimo de interações possível.
+- Editar qualquer lançamento enquanto ele existir; a exclusão remove o registro.
 - Mostrar contas recorrentes e parcelas do período automaticamente.
 
 ### 2. Projeção dos próximos três meses — prioridade alta
@@ -48,7 +49,7 @@ Crie uma visualização simples do **mês atual + os três meses seguintes** com
 - Saldo acumulado estimado, **somente quando houver saldo inicial informado**, partindo desse saldo e adicionando os fluxos futuros. Nunca apresente saldo em conta como se fosse conhecido sem esse dado.
 - Destaque discreto para meses com resultado negativo ou maior comprometimento da renda.
 
-O usuário deve poder alterar estimativas para um mês específico (por exemplo, energia mais cara ou renda menor) e ver imediatamente o impacto nos três meses, sem reescrever a recorrência inteira. Diferencie valores confirmados, previstos e hipóteses editadas. Uma projeção nunca deve ser registrada automaticamente como pagamento real.
+O usuário deve poder alterar estimativas para um mês específico (por exemplo, energia mais cara ou renda menor) e ver imediatamente o impacto nos três meses, sem reescrever a recorrência inteira. Diferencie lançamentos cadastrados de hipóteses editadas. Uma hipótese nunca deve criar nem alterar um lançamento automaticamente.
 
 Para despesas variáveis ainda não conhecidas, use um valor-base explícito (por exemplo, último valor ou média histórica, se houver dados suficientes), indique que é uma estimativa e permita ajuste manual. Não invente precisão. A projeção deve avançar automaticamente conforme o calendário, sem exigir manutenção mensal da estrutura.
 
@@ -56,13 +57,11 @@ Para despesas variáveis ainda não conhecidas, use um valor-base explícito (po
 
 ### 3. Cadastros essenciais
 
-- **Receitas:** recorrentes ou eventuais, valor previsto e recebido, competência e data de recebimento; bruto e líquido quando aplicável.
-- **Despesas:** recorrentes ou avulsas, categoria, valor previsto, vencimento, competência e situação de pagamento.
-- **Parcelamentos:** valor total, número de parcelas, início, vencimentos, saldo restante, parcelas pagas e quitação. Aparecem automaticamente nos meses futuros.
+- **Receitas:** recorrentes ou eventuais, valor, competência e vencimento; bruto e líquido quando aplicável.
+- **Despesas:** recorrentes ou avulsas, categoria, valor, vencimento e competência.
+- **Parcelamentos:** valor total, número de parcelas, início e vencimentos. Aparecem automaticamente nos meses futuros.
 - **Cartão de crédito:** representar faturas e compras de forma coerente, evitando contar compra e pagamento da fatura duas vezes. Priorize o modelo mais simples compatível com nossas planilhas.
-- **Pagamentos:** registrar pago, pendente e, apenas se necessário pelos dados reais, pagamentos parciais.
-
-Recorrências devem preservar os lançamentos históricos. Defina comportamento claro para editar somente uma competência ou os meses seguintes. Parcelamentos são obrigações rastreáveis; não duplicar seus valores ao consolidar despesas.
+  Recorrências devem preservar os lançamentos históricos. Defina comportamento claro para editar somente uma competência ou os meses seguintes. Parcelamentos são obrigações rastreáveis; não duplicar seus valores ao consolidar despesas.
 
 ### 4. Dashboard enxuto
 
@@ -105,7 +104,7 @@ Separe o que é despesa mensal, saldo de dívida e montante pago; não misture m
 
 Use uma organização **feature-based** proporcional ao tamanho do projeto: `auth`, `household`, `transactions`, `recurrences`, `installments`, `overview` e `forecast`, adaptando conforme a análise. Evite abstrações prematuras, camadas artificiais e complexidade de domínio que não resolva as dores descritas.
 
-Modele valores monetários com precisão apropriada, competência e datas de vencimento/pagamento separadas, integridade referencial, migrations e autorização no banco. Mantenha credenciais privilegiadas fora do cliente. Garanta que totais e projeções sejam reproduzíveis e não dupliquem obrigações. Diferencie sempre **previsto vs. realizado**.
+Modele valores monetários com precisão apropriada, competência e vencimentos, integridade referencial, migrations e autorização no banco. Mantenha credenciais privilegiadas fora do cliente. Garanta que totais e projeções sejam reproduzíveis e não dupliquem obrigações.
 
 ## Diretrizes de produto
 
@@ -131,7 +130,7 @@ Modele valores monetários com precisão apropriada, competência e datas de ven
 
 1. Inspecione a estrutura e o estado do repositório, instruções existentes e todos os arquivos relevantes de `./references/*`.
 2. Resuma como as planilhas são usadas, os períodos cobertos, dados existentes, fórmulas e regras observadas; destaque lacunas, ambiguidades e possíveis duplicidades sem assumir fatos.
-3. Descreva os fluxos essenciais: **mês atual → ajustar valores → marcar pagamentos → projetar três meses → consultar histórico**.
+3. Descreva os fluxos essenciais: **mês atual → ajustar lançamentos → projetar três meses → consultar histórico**.
 4. Proponha telas mínimas, modelo de dados, relacionamentos, autorização/RLS e regras de recorrências, parcelas, cartões e projeções.
 5. Especifique como a importação histórica será pré-visualizada, revisada e feita de forma auditável e idempotente.
 6. Entregue um plano das fases seguintes com dependências, critérios de conclusão e ações que cabem a mim. Faça perguntas somente quando a resposta mudar materialmente o modelo ou os fluxos.
@@ -186,11 +185,11 @@ Modele valores monetários com precisão apropriada, competência e datas de ven
 
 ### Fase 5 — Receitas, despesas e operação mensal
 
-1. Implementar cadastros e edição de receitas/despesas, competência, vencimento e estado previsto/realizado.
+1. Implementar cadastros, edição e exclusão definitiva de receitas/despesas, competência e vencimento.
 2. Implementar recorrências e parcelamentos com geração por competência, preservação do histórico e escolha explícita entre editar somente um mês ou meses futuros.
-3. Implementar visão mensal, ações rápidas para pago/recebido, pendências/vencidas e resumo consistente, evitando duplicidade entre compras e pagamento de fatura.
+3. Implementar visão mensal, vencimentos atrasados e resumo consistente, evitando duplicidade entre compras e faturas.
 
-**Critérios de conclusão:** valores previstos e realizados não se confundem, totais são reproduzíveis, mudança de uma competência não altera meses anteriores sem confirmação e todos os acessos respeitam o núcleo familiar.
+**Critérios de conclusão:** totais são reproduzíveis, mudança de uma competência não altera meses anteriores sem confirmação, exclusões removem lançamentos e todos os acessos respeitam o núcleo familiar.
 
 ### Fase 6 — Projeção e dashboard
 
@@ -198,7 +197,7 @@ Modele valores monetários com precisão apropriada, competência e datas de ven
 2. Exibir saldo mensal projetado e saldo acumulado somente quando houver saldo inicial informado; destacar estimativas e hipóteses editadas.
 3. Implementar resumo do mês, próximos vencimentos e os dois gráficos históricos definidos no MVP.
 
-**Critérios de conclusão:** alterar uma hipótese afeta somente o mês selecionado e atualiza a projeção; nenhuma projeção vira pagamento realizado automaticamente; saldos não alegam dados bancários inexistentes.
+**Critérios de conclusão:** alterar uma hipótese afeta somente o mês selecionado e atualiza a projeção; hipóteses não criam nem alteram lançamentos automaticamente; saldos não alegam dados bancários inexistentes.
 
 ### Fase 7 — Importação histórica desde 2024
 
@@ -219,7 +218,7 @@ Modele valores monetários com precisão apropriada, competência e datas de ven
 
 ## Critério de sucesso
 
-No início de cada mês, quero abrir o Finance e ver receitas, despesas e parcelas previstas, ajustar valores variáveis e marcar pagamentos. Em poucos segundos, quero entender **quanto falta pagar neste mês e como estarão os próximos três meses**, junto com minha esposa. Também quero acessar nosso histórico desde 2024 e observar a evolução de renda e gastos.
+No início de cada mês, quero abrir o Finance e ver receitas, despesas e parcelas cadastradas, ajustar valores variáveis e excluir lançamentos que não existam mais. Em poucos segundos, quero entender **o saldo deste mês e como estarão os próximos três meses**, junto com minha esposa. Também quero acessar nosso histórico desde 2024 e observar a evolução de renda e gastos.
 
 Se uma funcionalidade não ajudar diretamente nessas tarefas, provavelmente não deve entrar no MVP.
 

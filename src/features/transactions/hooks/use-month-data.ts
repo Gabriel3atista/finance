@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { fetchMonthEntries } from "@/features/transactions/lib/queries";
+import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
 import { useEnsurePeriodEntries } from "@/features/transactions/hooks/use-ensure-period-entries";
 import type { FinancialEntry } from "@/features/transactions/lib/data";
 
@@ -35,31 +36,26 @@ export function useMonthData({
       id: string;
       nextStatus: "planned" | "settled";
     }) => {
+      const settledAt =
+        nextStatus === "settled" ? new Date().toISOString() : null;
       const { error } = await createClient()
         .from("financial_entries")
-        .update({
-          status: nextStatus,
-          settled_at:
-            nextStatus === "settled" ? new Date().toISOString() : null,
-        })
+        .update({ status: nextStatus, settled_at: settledAt })
         .eq("id", id)
         .eq("household_id", householdId)
         .in("status", ["planned", "settled"]);
       if (error) throw error;
-      return { id, nextStatus };
+      return { id, nextStatus, settledAt };
     },
     onMutate: async ({ id, nextStatus }) => {
       await queryClient.cancelQueries({ queryKey: entriesKey });
       const previous = queryClient.getQueryData<FinancialEntry[]>(entriesKey);
+      const settledAt =
+        nextStatus === "settled" ? new Date().toISOString() : null;
       queryClient.setQueryData<FinancialEntry[]>(entriesKey, (current) =>
         current?.map((entry) =>
           entry.id === id
-            ? {
-                ...entry,
-                status: nextStatus,
-                settled_at:
-                  nextStatus === "settled" ? new Date().toISOString() : null,
-              }
+            ? { ...entry, status: nextStatus, settled_at: settledAt }
             : entry,
         ),
       );
@@ -69,15 +65,7 @@ export function useMonthData({
       if (context?.previous)
         queryClient.setQueryData(entriesKey, context.previous);
     },
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: entriesKey });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard(householdId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.forecast(householdId),
-      });
-    },
+    onSettled: () => invalidateFinanceQueries(queryClient, householdId),
   });
 
   return { entries, setStatus, ensureEntries };

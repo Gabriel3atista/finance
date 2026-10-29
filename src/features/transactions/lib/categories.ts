@@ -1,5 +1,5 @@
 export const FINANCIAL_CATEGORIES = [
-  "Despesas",
+  "Fixos",
   "Dívidas e parcelas",
   "Outras entradas",
   "Salário",
@@ -35,5 +35,5 @@ export function normalizeFinancialCategory(
     return "Dívidas e parcelas";
   }
 
-  return "Despesas";
+  return "Fixos";
 }

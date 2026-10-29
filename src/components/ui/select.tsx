@@ -30,7 +30,7 @@ type SelectVisuals = {
 const SelectVisualContext = createContext<SelectVisuals>({
   variant: "default",
   size: "default",
-  rounded: "default",
+  rounded: false,
   loading: false,
 });
 
@@ -49,7 +49,7 @@ export function Select({
   name,
   onValueChange,
   required = false,
-  rounded = "default",
+  rounded = false,
   size = "default",
   value,
   variant = "default",
@@ -80,7 +80,7 @@ export function Select({
         required={isCoarsePointer ? false : required}
         value={selectedValue}
       >
-        <div className="relative w-full">
+        <div className="relative w-full shrink-0">
           <div className="[@media(pointer:coarse)]:hidden">{children}</div>
           <NativeSelect
             autoComplete={rootProps.autoComplete}
@@ -127,15 +127,19 @@ export function SelectTrigger({
 }: ComponentProps<typeof SelectPrimitive.Trigger>) {
   const { loading, rounded, size, variant } = useContext(SelectVisualContext);
   const variantClasses =
-    variant === "unstyled" ? "" : buttonVariants({ variant, size, rounded });
+    variant === "unstyled"
+      ? ""
+      : cn(buttonVariants({ variant, size }), rounded && "rounded-full");
 
   return (
     <SelectPrimitive.Trigger
       aria-busy={loading || undefined}
       className={cn(
         variantClasses,
-        "relative w-full cursor-pointer justify-between pr-10 text-left outline-none",
+        "relative w-full shrink-0 cursor-pointer justify-between pr-10 text-left outline-none",
         className,
+        rounded && "rounded-full",
+        "shrink-0",
       )}
       {...props}
     >
@@ -169,11 +173,11 @@ export function SelectContent({
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "ui-select-content z-[100] max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] translate-y-0 rounded-xl border border-line bg-graphite-900 p-1 text-ink opacity-100 shadow-xl transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:!transform-none motion-reduce:transition-opacity motion-reduce:duration-100",
+          "ui-select-content z-[120] max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] translate-y-0 rounded-xl border border-line bg-graphite-900 p-1 text-ink opacity-100 shadow-xl transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:!transform-none motion-reduce:transition-opacity motion-reduce:duration-100",
           className,
         )}
         position={position}
-        style={{ zIndex: 100, ...style }}
+        style={{ zIndex: 120, ...style }}
         {...props}
       >
         <SelectPrimitive.Viewport className="p-0.5">
@@ -257,18 +261,22 @@ function NativeSelect({
   variant: ButtonVariant;
 }) {
   const variantClasses =
-    variant === "unstyled" ? "" : buttonVariants({ variant, size, rounded });
+    variant === "unstyled"
+      ? ""
+      : cn(buttonVariants({ variant, size }), rounded && "rounded-full");
 
   return (
-    <div className="relative hidden w-full [@media(pointer:coarse)]:block">
+    <div className="relative hidden w-full shrink-0 [@media(pointer:coarse)]:block">
       <select
         {...triggerProps}
         aria-busy={loading || undefined}
         autoComplete={autoComplete}
         className={cn(
           variantClasses,
-          "w-full cursor-pointer appearance-none pr-10 text-left mobile-app:focus:!outline-none truncate",
+          "w-full shrink-0 cursor-pointer appearance-none pr-10 text-left mobile-app:focus:!outline-none truncate",
           disabled && "cursor-not-allowed opacity-50",
+          rounded && "rounded-full",
+          "shrink-0",
         )}
         disabled={disabled}
         name={name}

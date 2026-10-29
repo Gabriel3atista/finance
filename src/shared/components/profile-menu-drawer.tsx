@@ -6,6 +6,7 @@ import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
+  DrawerBody,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
@@ -51,25 +52,24 @@ export function ProfileMenuDrawer({
         </Button>
       </DrawerTrigger>
 
-      <DrawerContent className="max-h-[88dvh] overflow-hidden border-line bg-graphite-900 text-ink">
-        <div className="overflow-y-auto overscroll-contain pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-          <DrawerHeader className="grid-cols-[1fr_auto] items-start gap-4 px-5 pb-0 pt-3 sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <ProfileAvatar
-                userId={userId}
-                userName={userName}
-                fallbackAvatarUrl={fallbackAvatarUrl}
-                className="size-12"
-              />
-              <div className="min-w-0">
-                <DrawerTitle className="truncate text-base font-semibold text-ink">
-                  {userName}
-                </DrawerTitle>
-                <p className="truncate text-sm text-muted">{userEmail}</p>
-              </div>
+      <DrawerContent className="border-line bg-graphite-900 text-ink">
+        <DrawerHeader className="grid-cols-[1fr_auto] items-start gap-4 px-5 pb-0 pt-3 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <ProfileAvatar
+              userId={userId}
+              userName={userName}
+              fallbackAvatarUrl={fallbackAvatarUrl}
+              className="size-12"
+            />
+            <div className="min-w-0">
+              <DrawerTitle className="truncate text-base font-semibold text-ink">
+                {userName}
+              </DrawerTitle>
+              <p className="truncate text-sm text-muted">{userEmail}</p>
             </div>
-          </DrawerHeader>
-
+          </div>
+        </DrawerHeader>
+        <DrawerBody className="pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <nav
             className="mt-6 space-y-1 px-5 sm:px-6"
             aria-label="Menu do usuário"
@@ -94,7 +94,7 @@ export function ProfileMenuDrawer({
           <div className="mx-5 mt-5 border-t border-line pt-4 sm:mx-6">
             <SignOutButton className="w-full justify-start px-4" />
           </div>
-        </div>
+        </DrawerBody>
       </DrawerContent>
     </Drawer>
   );

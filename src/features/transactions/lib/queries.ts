@@ -47,36 +47,50 @@ export async function ensureMonthEntries(
 ) {
   const supabase = createClient();
   const monthValue = monthDate(month);
-  const [recurringResult, plansResult, existingResult] = await Promise.all([
-    supabase
-      .from("recurring_items")
-      .select(recurringColumns)
-      .eq("household_id", householdId)
-      .eq("is_active", true)
-      .lte("starts_on", monthValue)
-      .or(`ends_on.is.null,ends_on.gte.${monthValue}`),
-    supabase
-      .from("installment_plans")
-      .select(installmentColumns)
-      .eq("household_id", householdId)
-      .eq("is_active", true)
-      .lte("first_month", monthValue),
-    supabase
-      .from("financial_entries")
-      .select("recurring_item_id, installment_plan_id, installment_number")
-      .eq("household_id", householdId)
-      .eq("competence_month", monthValue),
-  ]);
-  if (recurringResult.error || plansResult.error || existingResult.error) {
+  const [recurringResult, plansResult, existingResult, exclusionsResult] =
+    await Promise.all([
+      supabase
+        .from("recurring_items")
+        .select(recurringColumns)
+        .eq("household_id", householdId)
+        .eq("is_active", true)
+        .lte("starts_on", monthValue)
+        .or(`ends_on.is.null,ends_on.gte.${monthValue}`),
+      supabase
+        .from("installment_plans")
+        .select(installmentColumns)
+        .eq("household_id", householdId)
+        .eq("is_active", true)
+        .lte("first_month", monthValue),
+      supabase
+        .from("financial_entries")
+        .select("recurring_item_id, installment_plan_id, installment_number")
+        .eq("household_id", householdId)
+        .eq("competence_month", monthValue),
+      supabase
+        .from("financial_entry_exclusions")
+        .select("recurring_item_id, installment_plan_id, installment_number")
+        .eq("household_id", householdId)
+        .eq("competence_month", monthValue),
+    ]);
+  if (
+    recurringResult.error ||
+    plansResult.error ||
+    existingResult.error ||
+    exclusionsResult.error
+  ) {
     throw new Error("Não foi possível carregar os cadastros deste mês.");
   }
 
   const existing = existingResult.data ?? [];
+  const exclusions = exclusionsResult.data ?? [];
   const recurringIds = new Set(
-    existing.map((entry) => entry.recurring_item_id).filter(Boolean),
+    [...existing, ...exclusions]
+      .map((entry) => entry.recurring_item_id)
+      .filter(Boolean),
   );
   const installmentIds = new Set(
-    existing
+    [...existing, ...exclusions]
       .filter((entry) => entry.installment_plan_id)
       .map(
         (entry) => `${entry.installment_plan_id}:${entry.installment_number}`,

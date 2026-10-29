@@ -18,6 +18,19 @@ const Drawer = ({
 );
 Drawer.displayName = "Drawer";
 
+const DrawerNested = ({
+  shouldScaleBackground = false,
+  repositionInputs = false,
+  ...props
+}: React.ComponentProps<typeof DrawerPrimitive.NestedRoot>) => (
+  <DrawerPrimitive.NestedRoot
+    shouldScaleBackground={shouldScaleBackground}
+    repositionInputs={repositionInputs}
+    {...props}
+  />
+);
+DrawerNested.displayName = "DrawerNested";
+
 const DrawerTrigger = DrawerPrimitive.Trigger;
 
 const DrawerPortal = DrawerPrimitive.Portal;
@@ -69,12 +82,12 @@ const DrawerContent = React.forwardRef<
         }
       }}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border border-line bg-graphite-900",
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[80dvh] min-h-0 flex-col overflow-hidden rounded-t-lg bg-graphite-800",
         className,
       )}
       {...props}
     >
-      <div className="mx-auto mt-2 h-[6px] w-[72px] rounded-full bg-muted" />
+      <div className="mx-auto mt-2 h-[4px] w-[64px] shrink-0 rounded-full bg-muted" />
       {children}
     </DrawerPrimitive.Content>
   </DrawerPortal>
@@ -86,7 +99,10 @@ const DrawerHeader = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("grid gap-1.5 p-4 text-center sm:text-left", className)}
+    className={cn(
+      "grid shrink-0 gap-1.5 p-4 text-center sm:text-left",
+      className,
+    )}
     {...props}
   />
 );
@@ -97,11 +113,25 @@ const DrawerFooter = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+    className={cn("mt-auto flex shrink-0 flex-col gap-2 p-4", className)}
     {...props}
   />
 );
 DrawerFooter.displayName = "DrawerFooter";
+
+const DrawerBody = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "min-h-0 flex-1 overflow-y-auto overscroll-contain",
+      className,
+    )}
+    {...props}
+  />
+);
+DrawerBody.displayName = "DrawerBody";
 
 const DrawerTitle = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Title>,
@@ -132,6 +162,7 @@ DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
 export {
   Drawer,
+  DrawerNested,
   DrawerPortal,
   DrawerOverlay,
   DrawerTrigger,
@@ -139,6 +170,7 @@ export {
   DrawerContent,
   DrawerHeader,
   DrawerFooter,
+  DrawerBody,
   DrawerTitle,
   DrawerDescription,
 };

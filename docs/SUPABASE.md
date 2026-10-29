@@ -7,7 +7,7 @@
 - RLS está habilitado em todas as tabelas públicas. Leitura e escrita financeira exigem associação autenticada ao mesmo núcleo; sem sessão, `auth.uid()` é nulo e nenhuma política concede acesso.
 - O criador do núcleo é incluído por um trigger privado. Um segundo membro só pode entrar com convite pendente, não expirado e dirigido ao e-mail confirmado da sessão.
 - Chaves compostas impedem que lançamento financeiro aponte para recorrência, parcelamento ou lote de outro núcleo. `household_id` e autor de criação são imutáveis em registros financeiros.
-- Pagamento parcial não está modelado: cada lançamento tem um único valor e uma data de liquidação. Atraso é derivado de vencimento passado com status `planned`.
+- Lançamentos preservam o estado de pagamento (`planned`, `settled` ou `cancelled`) e a data de baixa; continuam editáveis enquanto existirem e são removidos do banco ao excluir. Atraso é derivado da data de vencimento e do estado pendente.
 - Uma fatura é uma despesa (`source_kind = 'card_statement'`). Compras individuais não são gravadas junto com o pagamento da fatura; isso evita somar compra e fatura em dobro no modelo inicial.
 - Os lançamentos históricos importados preservam hash SHA-256 do arquivo e referência de aba/linha/célula para consulta e auditoria. O envio de novas planilhas foi desativado; registros e metadados existentes permanecem no banco.
 
@@ -36,31 +36,31 @@ As rotas de autenticação, configuração de redirects e publicação do convit
 
 ## Operação mensal e cadastros
 
-A rota `/mes` carrega os lançamentos de uma competência (`?month=AAAA-MM`). Receitas e despesas avulsas, ocorrências recorrentes e parcelas usam a mesma tabela `financial_entries`, com sua origem registrada. A rota `/cadastros` cria recorrências e parcelamentos; suas ocorrências são criadas de forma idempotente quando o respectivo mês é consultado. A seleção “Este e próximos meses” em uma ocorrência recorrente altera apenas ocorrências previstas dessa competência em diante; o histórico e lançamentos já realizados ficam preservados.
+A rota `/mes` carrega os lançamentos de uma competência (`?month=AAAA-MM`). Receitas e despesas avulsas, ocorrências recorrentes e parcelas usam a mesma tabela `financial_entries`, com sua origem registrada. A rota `/cadastros` cria recorrências e parcelamentos; suas ocorrências são criadas de forma idempotente quando o respectivo mês é consultado. A seleção “Este e próximos meses” em uma ocorrência recorrente altera todas as ocorrências dessa competência em diante. Excluir uma ocorrência recorrente ou parcela remove a linha financeira e registra uma exclusão da ocorrência para impedir que a geração automática a recrie.
 
-`supabase/migrations/20261023000000_financial_series_responsibility.sql` é uma migration histórica que adicionou categoria a parcelamentos. A migration `20261028120000_remove_transaction_responsibility.sql` remove a atribuição de responsáveis, suas colunas e os triggers de validação. Antes de usar as novas telas conectadas, aplique as migrations pendentes no projeto Supabase escolhido e confirme que `.env.local` aponta para esse projeto. Não envie valores do arquivo ao suporte ou ao chat.
+`supabase/migrations/20261023000000_financial_series_responsibility.sql` é uma migration histórica que adicionou categoria a parcelamentos e campos de responsável. As migrations seguintes removem a atribuição de responsáveis. A migration `20261029120000_entry_exclusions_and_delete.sql` permite exclusão definitiva e registra ocorrências recorrentes/parcela excluídas para impedir a regeneração, sem remover o estado de pagamento. Antes de usar as novas telas conectadas, aplique as migrations pendentes no projeto Supabase escolhido e confirme que `.env.local` aponta para esse projeto. Não envie valores do arquivo ao suporte ou ao chat.
 
-- A competência fica no primeiro dia do mês. `amount` representa o valor do lançamento, e `status` distingue `planned`, `settled` e `cancelled`; `settled_at` é preenchido somente ao marcar como realizado.
-- Encerrar uma recorrência ou parcelamento preserva ocorrências realizadas e históricas, cancela ocorrências previstas a partir do mês atual e impede a geração das seguintes.
+- A competência fica no primeiro dia do mês. `amount` representa o valor do lançamento. `status` e `settled_at` registram a baixa do lançamento.
+- Encerrar uma recorrência ou parcelamento impede novas ocorrências; os lançamentos que já existem permanecem editáveis até serem excluídos.
 - Parcelas são despesas. A divisão usa centavos inteiros, distribuindo o resto entre as primeiras parcelas para que a soma seja exatamente igual ao valor total.
 
 ## Histórico importado
 
-A rota `/historico` é somente leitura e consulta os lançamentos históricos já gravados em `financial_entries`, junto com os lotes e a origem de cada item em `import_batches`. Os registros preservam o estado original, o hash SHA-256 do arquivo e as referências de aba, linha e célula. Esses dados continuam sujeitos ao RLS por núcleo familiar.
+A rota `/historico` é somente leitura e consulta os lançamentos históricos já gravados em `financial_entries`, junto com os lotes e a origem de cada item em `import_batches`. Os registros preservam o hash SHA-256 do arquivo e as referências de aba, linha e célula. Esses dados continuam sujeitos ao RLS por núcleo familiar.
 
 O fluxo de envio foi aposentado: a interface, o parser `.xlsx`, a dependência de planilhas e a função `public.commit_historical_import(...)` foram removidos. A migration de aposentadoria revoga inserção e atualização autenticadas em `import_batches`, sem apagar lotes, lançamentos ou campos de proveniência existentes. Use o app para cadastrar novos lançamentos.
 
 ## Projeções e saldo acumulado
 
-`supabase/migrations/20261024000000_forecast_settings_and_overrides.sql` cria `household_finance_settings` para registrar o saldo inicial e a data de conferência, e `financial_forecast_overrides` para hipóteses vinculadas a lançamentos previstos. Ambas têm RLS por núcleo. Um trigger rejeita hipótese em lançamento já realizado e remove a hipótese quando o lançamento é realizado ou cancelado.
+`supabase/migrations/20261024000000_forecast_settings_and_overrides.sql` cria `household_finance_settings` para registrar o saldo inicial e a data de conferência, e `financial_forecast_overrides` para hipóteses vinculadas a lançamentos. Ambas têm RLS por núcleo; hipóteses são removidas em cascata quando o lançamento é excluído.
 
 `supabase/migrations/20261024120000_historical_category_forecasts.sql` cria uma tabela separada e protegida por RLS para ajustes de estimativas históricas de categorias variáveis.
 
-A projeção materializa recorrências e parcelas para o mês atual e os três seguintes, soma recebimentos/despesas por competência e mostra saldo acumulado somente após informar um saldo inicial datado. O saldo acumulado considera lançamentos pendentes e liquidações posteriores à data do saldo informado; valores já liquidados antes dessa data já estão refletidos no saldo inicial. Hipóteses afetam somente a projeção e nunca alteram `financial_entries.amount` ou seu estado.
+A projeção materializa recorrências e parcelas para o mês atual e os três seguintes, soma entradas e despesas por competência e mostra saldo acumulado somente após informar um saldo inicial datado. Para compor o saldo acumulado, considera lançamentos pendentes e baixas posteriores à data do saldo informado. Hipóteses afetam somente a projeção e nunca alteram `financial_entries.amount`.
 
-Despesas categorizadas sem previsão recorrente usam como estimativa a média dos valores realizados nas competências com dados dentro dos seis meses anteriores. Só mostramos a estimativa quando há pelo menos duas competências registradas e nenhuma despesa prevista da mesma categoria naquele mês. A hipótese ajustada é salva por núcleo, competência e categoria em `financial_forecast_category_overrides`, sem criar um lançamento financeiro.
+Despesas categorizadas sem valor recorrente usam como estimativa a média dos lançamentos nas competências com dados dentro dos seis meses anteriores. Só mostramos a estimativa quando há pelo menos duas competências registradas e nenhuma despesa da mesma categoria naquele mês. A hipótese ajustada é salva por núcleo, competência e categoria em `financial_forecast_category_overrides`, sem criar um lançamento financeiro.
 
-Os dois gráficos históricos usam somente lançamentos `settled`: renda recebida e despesas pagas/percentual da renda comprometida nos últimos seis meses. Lançamentos históricos importados são consultáveis em `/historico`; seus estados permanecem como foram registrados durante a importação.
+Os dois gráficos históricos usam lançamentos realizados por competência para exibir receitas e despesas nos últimos seis meses. Lançamentos históricos importados são consultáveis em `/historico`.
 
 ## Conferir isolamento entre núcleos
 

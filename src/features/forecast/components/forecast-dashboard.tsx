@@ -197,8 +197,8 @@ export function ForecastDashboard({
       </header>
       {forecast.some((item) => item.estimates.length > 0) && (
         <p className="mb-4 max-w-3xl rounded-xl bg-warning-900 px-4 py-3 text-xs leading-5 text-warning-100">
-          Despesas por categoria sem valor previsto usam a média dos valores
-          realizados nos últimos seis meses disponíveis, quando há pelo menos
+          Despesas por categoria sem valor lançado usam a média dos valores
+          cadastrados nos últimos seis meses disponíveis, quando há pelo menos
           duas competências com dados. Ajustes ficam limitados ao mês
           selecionado.
         </p>
@@ -246,7 +246,7 @@ export function ForecastDashboard({
                 Próximos vencimentos
               </h2>
               <p className="mt-1 text-sm text-muted">
-                Em atraso ou previstos para os próximos 30 dias.
+                Vencidos ou com vencimento nos próximos 30 dias.
               </p>
             </div>
             <span className="rounded-full bg-canvas px-3 py-1 text-xs text-muted">
@@ -286,7 +286,7 @@ export function ForecastDashboard({
             </div>
           ) : (
             <p className="mt-8 rounded-xl bg-canvas px-4 py-6 text-center text-sm text-muted">
-              Nenhuma pendência com vencimento nos próximos 30 dias.
+              Nenhum lançamento com vencimento nos próximos 30 dias.
             </p>
           )}
         </section>
@@ -381,13 +381,12 @@ export function ForecastDashboard({
 
       <section className="mt-7">
         <header className="mb-4">
-          <Eyebrow>Histórico realizado</Eyebrow>
+          <Eyebrow>Histórico de lançamentos</Eyebrow>
           <h2 className="mt-1 text-xl font-semibold tracking-tight text-ink">
             Evolução financeira
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Últimos seis meses com pagamentos e recebimentos marcados como
-            realizados.
+            Últimos seis meses de receitas e despesas cadastradas.
           </p>
         </header>
         <div className="grid gap-5 lg:grid-cols-2">
@@ -395,9 +394,9 @@ export function ForecastDashboard({
           <ExpenseCommitmentChart data={history} />
         </div>
         <p className="mt-3 text-xs leading-5 text-muted">
-          O histórico mostra apenas lançamentos realizados já registrados no
-          Finance. Os lançamentos históricos importados permanecem disponíveis
-          para consulta na página de histórico.
+          O histórico mostra lançamentos realizados já registrados no Finance.
+          Os lançamentos históricos importados permanecem disponíveis para
+          consulta na página de histórico.
         </p>
       </section>
     </section>
@@ -511,6 +510,7 @@ function MonthForecastCard({
         </p>
       )}
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted">
+        <span>{entries.length} lançamentos</span>
         <span>
           <FinancialValue>
             {formatMoney(totals.settledIncome + totals.settledExpenses)}
@@ -641,8 +641,7 @@ function ForecastEntry({
               />
             </label>
             <p className="text-[10px] leading-4 text-muted">
-              A hipótese altera somente esta projeção; não muda o lançamento nem
-              registra pagamento.
+              A hipótese altera somente esta projeção; não muda o lançamento.
             </p>
             <Button
               className="w-full"
@@ -672,7 +671,7 @@ function ForecastEntry({
                 variant="ghost"
                 disabled={mutations.clearForecastOverride.isPending}
               >
-                Voltar ao valor previsto
+                Voltar ao valor cadastrado
               </Button>
             </form>
           )}
@@ -699,7 +698,7 @@ function ForecastEstimate({
             {estimate.category}
           </p>
           <p className="mt-1 text-[10px] text-muted">
-            Média de {estimate.monthsUsed} competências com valor realizado
+            Média de {estimate.monthsUsed} competências com valores registrados
           </p>
         </div>
         <div className="shrink-0 text-right">
@@ -756,8 +755,8 @@ function ForecastEstimate({
             />
           </label>
           <p className="text-[10px] leading-4 text-muted">
-            A média vem dos valores realizados da categoria. Esta hipótese não
-            cria lançamento nem registra pagamento.
+            A média vem dos valores registrados na categoria. Esta hipótese não
+            cria nem altera lançamentos.
           </p>
           <Button
             className="w-full"
@@ -838,7 +837,7 @@ function MoneyBarChart({
   return (
     <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
       <h3 className="text-sm font-semibold text-ink">{title}</h3>
-      <p className="mt-1 text-xs text-muted">Renda recebida por competência</p>
+      <p className="mt-1 text-xs text-muted">Receitas por competência</p>
       {hasData ? (
         <div className="mt-4 overflow-x-auto">
           <svg
@@ -928,7 +927,7 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
         <span className="inline-flex items-center gap-1.5">
           <i className="size-2 rounded-sm bg-success-400" aria-hidden="true" />
-          Despesas pagas
+          Despesas registradas
         </span>
         <span className="inline-flex items-center gap-1.5">
           <i
@@ -944,10 +943,10 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
             className="h-[220px] min-w-[520px] w-full"
             viewBox="0 0 640 220"
             role="img"
-            aria-label="Despesas realizadas e percentual da renda comprometido nos últimos seis meses"
+            aria-label="Despesas e percentual da renda comprometida nos últimos seis meses"
           >
             <title>
-              Despesas realizadas e comprometimento da renda: últimos seis meses
+              Despesas e comprometimento da renda: últimos seis meses
             </title>
             {[0, 1, 2, 3].map((line) => {
               const y = 174 - line * 48;
@@ -974,7 +973,7 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
                   <title>
                     {hidden
                       ? monthTitle(item.month)
-                      : `${monthTitle(item.month)}: ${formatMoney(item.expenses)} em despesas pagas`}
+                      : `${monthTitle(item.month)}: ${formatMoney(item.expenses)} em despesas`}
                   </title>
                   <rect
                     x={x}
@@ -1008,7 +1007,7 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
             )}
             {ratioPoints.map((point) => (
               <g key={point.key}>
-                <title>{`${point.key}: ${point.ratio.toFixed(0)}% da renda recebida comprometida`}</title>
+                <title>{`${point.key}: ${point.ratio.toFixed(0)}% da renda comprometida`}</title>
                 <circle
                   cx={point.x}
                   cy={point.y}
@@ -1025,8 +1024,8 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
         <ChartEmpty />
       )}
       <p className="mt-1 text-[10px] text-muted">
-        Comprometimento = despesas pagas ÷ renda recebida; meses sem renda não
-        recebem percentual.
+        Comprometimento = despesas ÷ receitas; meses sem renda não recebem
+        percentual.
       </p>
     </section>
   );
@@ -1036,7 +1035,7 @@ function ChartEmpty() {
   return (
     <div className="mt-4 grid min-h-[220px] place-items-center rounded-xl bg-canvas px-5 text-center">
       <p className="max-w-xs text-sm leading-5 text-muted">
-        Ainda não há lançamentos realizados suficientes para mostrar a evolução.
+        Ainda não há lançamentos suficientes para mostrar a evolução.
       </p>
     </div>
   );

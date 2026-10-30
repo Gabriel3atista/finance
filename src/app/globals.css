@@ -12,6 +12,15 @@
 }
 
 @layer utilities {
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
   .dropdown-menu-content {
     --dropdown-menu-enter-x: 0;
     --dropdown-menu-enter-y: 0;
@@ -80,6 +89,26 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  [data-vaul-drawer][data-state="open"] {
+    animation: vaul-drawer-fade-in 160ms ease-out both !important;
+    transition: none !important;
+  }
+
+  [data-vaul-drawer][data-state="closed"] {
+    animation: vaul-drawer-fade-out 160ms ease-out both !important;
+    transition: none !important;
+  }
+
+  [data-vaul-overlay][data-state="open"] {
+    animation: vaul-overlay-fade-in 160ms ease-out both !important;
+    transition: none !important;
+  }
+
+  [data-vaul-overlay][data-state="closed"] {
+    animation: vaul-overlay-fade-out 160ms ease-out both !important;
+    transition: none !important;
+  }
+
   .dropdown-menu-content[data-state="open"] {
     animation-duration: 120ms;
   }
@@ -109,6 +138,46 @@
     to {
       opacity: 0;
       transform: none;
+    }
+  }
+
+  @keyframes vaul-drawer-fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes vaul-drawer-fade-out {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes vaul-overlay-fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes vaul-overlay-fade-out {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
     }
   }
 }

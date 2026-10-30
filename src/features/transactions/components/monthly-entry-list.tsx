@@ -21,7 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -45,6 +44,7 @@ import {
 } from "@/components/ui/drawer";
 import { EntryFields } from "@/features/transactions/components/entry-fields";
 import {
+  FINANCIAL_CATEGORIES,
   isFinancialCategory,
   normalizeFinancialCategory,
   type FinancialCategory,
@@ -95,18 +95,30 @@ export function MonthlyEntryList({
   loadError?: boolean;
 }) {
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [selectedEntrySnapshot, setSelectedEntrySnapshot] =
+    useState<FinancialEntry | null>(null);
+  const [entryDrawerOpen, setEntryDrawerOpen] = useState(false);
+  const entryDrawerOpenRef = useRef(false);
   const [entryToDelete, setEntryToDelete] = useState<FinancialEntry | null>(
     null,
   );
+  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
+  const deleteDrawerOpenRef = useRef(false);
+  const closeEntryAfterDeleteRef = useRef(false);
   const [deleteError, setDeleteError] = useState("");
   const [monthAction, setMonthAction] = useState<MonthAction | null>(null);
+  const [monthActionDrawerOpen, setMonthActionDrawerOpen] = useState(false);
+  const monthActionDrawerOpenRef = useRef(false);
   const [monthActionError, setMonthActionError] = useState("");
   const [actionError, setActionError] = useState("");
   const [categoryFilter, setCategoryFilter] =
     useState<CategoryFilterValue>("all");
   const reducedMotion = useReducedMotion() === true;
   const today = localDateString();
-  const selectedEntry = entries.find((entry) => entry.id === selectedEntryId);
+  const selectedEntry =
+    entries.find((entry) => entry.id === selectedEntryId) ??
+    selectedEntrySnapshot ??
+    undefined;
   const filteredEntries = entries.filter(
     (entry) =>
       categoryFilter === "all" ||
@@ -124,28 +136,53 @@ export function MonthlyEntryList({
   }
 
   useEffect(() => {
-    setSelectedEntryId(null);
-    setEntryToDelete(null);
+    entryDrawerOpenRef.current = false;
+    deleteDrawerOpenRef.current = false;
+    monthActionDrawerOpenRef.current = false;
+    setEntryDrawerOpen(false);
+    setDeleteDrawerOpen(false);
+    setMonthActionDrawerOpen(false);
+    closeEntryAfterDeleteRef.current = false;
     setActionError("");
     setDeleteError("");
-    setMonthAction(null);
     setMonthActionError("");
   }, [month]);
+
+  function setEntryDrawerState(open: boolean) {
+    entryDrawerOpenRef.current = open;
+    setEntryDrawerOpen(open);
+  }
+
+  function setDeleteDrawerState(open: boolean) {
+    deleteDrawerOpenRef.current = open;
+    setDeleteDrawerOpen(open);
+  }
+
+  function setMonthActionDrawerState(open: boolean) {
+    monthActionDrawerOpenRef.current = open;
+    setMonthActionDrawerOpen(open);
+  }
+
+  function openEntryDrawer(entry: FinancialEntry) {
+    setActionError("");
+    setSelectedEntryId(entry.id);
+    setSelectedEntrySnapshot(entry);
+    setEntryDrawerState(true);
+  }
 
   async function runAction(action: () => Promise<void>) {
     setActionError("");
     try {
       await action();
-      setSelectedEntryId(null);
+      setEntryDrawerState(false);
     } catch {
       setActionError("Não foi possível concluir. Tente novamente.");
     }
   }
 
   function closeDrawer(open: boolean) {
-    if (open) return;
-    setSelectedEntryId(null);
-    setActionError("");
+    setEntryDrawerState(open);
+    if (!open) setActionError("");
   }
 
   async function confirmDelete() {
@@ -157,8 +194,8 @@ export function MonthlyEntryList({
 
     try {
       await onDelete(form);
-      setEntryToDelete(null);
-      setSelectedEntryId(null);
+      closeEntryAfterDeleteRef.current = true;
+      setDeleteDrawerState(false);
     } catch {
       setDeleteError("Falha ao excluir. Tente novamente.");
     }
@@ -170,7 +207,7 @@ export function MonthlyEntryList({
     try {
       if (monthAction === "copy") await onCopyPreviousMonth();
       else await onDeleteMonth();
-      setMonthAction(null);
+      setMonthActionDrawerState(false);
     } catch {
       setMonthActionError(
         monthAction === "copy"
@@ -182,8 +219,14 @@ export function MonthlyEntryList({
 
   return (
     <Drawer
-      open={Boolean(selectedEntry)}
+      open={entryDrawerOpen}
       onOpenChange={closeDrawer}
+      onAnimationEnd={(open) => {
+        if (!open && !entryDrawerOpenRef.current) {
+          setSelectedEntryId(null);
+          setSelectedEntrySnapshot(null);
+        }
+      }}
       shouldScaleBackground={false}
     >
       <section className="flex flex-col gap-3">
@@ -208,11 +251,10 @@ export function MonthlyEntryList({
                 Novo
               </Button>
               <EntryOptionsMenu
-                category={categoryFilter}
-                onCategoryChange={handleCategoryChange}
                 onActionSelect={(action) => {
                   setMonthAction(action);
                   setMonthActionError("");
+                  setMonthActionDrawerState(true);
                 }}
                 actionsPending={monthActionsPending}
               />
@@ -223,16 +265,19 @@ export function MonthlyEntryList({
         {!showHeader && (
           <div className="mb-3 flex justify-end">
             <EntryOptionsMenu
-              category={categoryFilter}
-              onCategoryChange={handleCategoryChange}
               onActionSelect={(action) => {
                 setMonthAction(action);
                 setMonthActionError("");
+                setMonthActionDrawerState(true);
               }}
               actionsPending={monthActionsPending}
             />
           </div>
         )}
+        <CategoryFilter
+          value={categoryFilter}
+          onValueChange={handleCategoryChange}
+        />
         <div>
           {isLoading ? (
             <div
@@ -257,10 +302,7 @@ export function MonthlyEntryList({
                   ariaLabel={`${entry.title}, ${entry.entry_type === "income" ? "Receita" : "Despesa"}, ${normalizeFinancialCategory(entry.category, entry.entry_type, entry.source_kind)}, ${formatMoney(Number(entry.amount))}, ${statusLabel(entry, today)}. Abrir detalhes`}
                   entry={entry}
                   key={entry.id}
-                  onOpen={() => {
-                    setActionError("");
-                    setSelectedEntryId(entry.id);
-                  }}
+                  onOpen={() => openEntryDrawer(entry)}
                   onSetStatus={onSetStatus}
                   reducedMotion={reducedMotion}
                   statusPending={statusPendingId === entry.id}
@@ -378,8 +420,9 @@ export function MonthlyEntryList({
         </div>
       </section>
 
-      {selectedEntry && (
-        <DrawerContent>
+      <DrawerContent>
+        {selectedEntry && (
+          <>
           <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left sm:px-6">
             <div className="flex min-w-0 items-center justify-between gap-3">
               <DrawerTitle className="truncate text-base text-moon-100">
@@ -392,6 +435,7 @@ export function MonthlyEntryList({
                 onClick={() => {
                   setDeleteError("");
                   setEntryToDelete(selectedEntry);
+                  setDeleteDrawerState(true);
                 }}
                 size="icon"
                 type="button"
@@ -477,20 +521,33 @@ export function MonthlyEntryList({
               </div>
             </DrawerFooter>
           </form>
-        </DrawerContent>
-      )}
+          </>
+        )}
+      </DrawerContent>
       <DrawerNested
-        open={Boolean(entryToDelete)}
+        open={deleteDrawerOpen}
         onOpenChange={(open) => {
-          if (!open) {
-            setEntryToDelete(null);
+          if (open) {
+            setDeleteDrawerState(true);
+          } else if (!rowMutationPending) {
+            setDeleteDrawerState(false);
             setDeleteError("");
+          }
+        }}
+        onAnimationEnd={(open) => {
+          if (!open && !deleteDrawerOpenRef.current) {
+            setEntryToDelete(null);
+            if (closeEntryAfterDeleteRef.current) {
+              closeEntryAfterDeleteRef.current = false;
+              setEntryDrawerState(false);
+            }
           }
         }}
         shouldScaleBackground={false}
       >
-        {entryToDelete && (
-          <DrawerContent className="border-line bg-graphite-900 text-ink">
+        <DrawerContent className="border-line bg-graphite-900 text-ink">
+          {entryToDelete && (
+            <>
             <DrawerHeader className="px-5 pb-3 pt-4 text-left sm:px-6">
               <DrawerTitle className="text-base">
                 Excluir lançamento?
@@ -513,7 +570,7 @@ export function MonthlyEntryList({
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   disabled={rowMutationPending}
-                  onClick={() => setEntryToDelete(null)}
+                  onClick={() => setDeleteDrawerState(false)}
                   type="button"
                   variant="secondary"
                   rounded
@@ -534,21 +591,30 @@ export function MonthlyEntryList({
                 </Button>
               </div>
             </DrawerFooter>
-          </DrawerContent>
-        )}
+            </>
+          )}
+        </DrawerContent>
       </DrawerNested>
       <DrawerNested
-        open={Boolean(monthAction)}
+        open={monthActionDrawerOpen}
         onOpenChange={(open) => {
-          if (!open && !monthActionsPending) {
-            setMonthAction(null);
+          if (open) {
+            setMonthActionDrawerState(true);
+          } else if (!monthActionsPending) {
+            setMonthActionDrawerState(false);
             setMonthActionError("");
+          }
+        }}
+        onAnimationEnd={(open) => {
+          if (!open && !monthActionDrawerOpenRef.current) {
+            setMonthAction(null);
           }
         }}
         shouldScaleBackground={false}
       >
-        {monthAction && (
-          <DrawerContent className="border-line bg-graphite-900 text-ink">
+        <DrawerContent className="border-line bg-graphite-900 text-ink">
+          {monthAction && (
+            <>
             <DrawerHeader className="px-5 pb-3 pt-4 text-left sm:px-6">
               <DrawerTitle className="text-base">
                 {monthAction === "copy"
@@ -575,7 +641,7 @@ export function MonthlyEntryList({
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   disabled={monthActionsPending}
-                  onClick={() => setMonthAction(null)}
+                  onClick={() => setMonthActionDrawerState(false)}
                   rounded
                   type="button"
                   variant="secondary"
@@ -599,8 +665,9 @@ export function MonthlyEntryList({
                 </Button>
               </div>
             </DrawerFooter>
-          </DrawerContent>
-        )}
+            </>
+          )}
+        </DrawerContent>
       </DrawerNested>
     </Drawer>
   );
@@ -792,13 +859,9 @@ function statusLabel(entry: FinancialEntry, today: string) {
 }
 
 function EntryOptionsMenu({
-  category,
-  onCategoryChange,
   onActionSelect,
   actionsPending,
 }: {
-  category: CategoryFilterValue;
-  onCategoryChange: (value: string) => void;
   onActionSelect: (action: MonthAction) => void;
   actionsPending: boolean;
 }) {
@@ -814,28 +877,19 @@ function EntryOptionsMenu({
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium text-muted">Filtrar categoria</p>
-          <CategoryFilter
-            className="w-full"
-            value={category}
-            onValueChange={onCategoryChange}
-          />
-        </div>
-        <DropdownMenuSeparator className="my-3" />
         <div className="flex flex-col gap-1">
           <DropdownMenuItem
             disabled={actionsPending}
             onSelect={() => onActionSelect("copy")}
           >
-            Copiar os dados do mês anterior
+            Copiar mês anterior
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-rose-300 focus:bg-rose-500/10 focus:text-rose-200"
             disabled={actionsPending}
             onSelect={() => onActionSelect("delete")}
           >
-            Apagar todos os dados do mês
+            Apagar tudo
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
@@ -846,32 +900,39 @@ function EntryOptionsMenu({
 function CategoryFilter({
   value,
   onValueChange,
-  className,
 }: {
   value: CategoryFilterValue;
   onValueChange: (value: string) => void;
-  className?: string;
 }) {
   return (
-    <div className={cn("w-[124px] shrink-0 sm:w-[160px]", className)}>
-      <Select
-        name="filter_category"
-        onValueChange={onValueChange}
-        value={value}
-        variant="secondary"
-        size="sm"
-      >
-        <SelectTrigger className="min-w-0 truncate">
-          <SelectValue className="max-w-[150px] truncate" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas as categorias</SelectItem>
-          <SelectItem value="Fixos">Fixos</SelectItem>
-          <SelectItem value="Dívidas e parcelas">Dívidas e parcelas</SelectItem>
-          <SelectItem value="Outras entradas">Outras entradas</SelectItem>
-          <SelectItem value="Salário">Salário</SelectItem>
-        </SelectContent>
-      </Select>
+    <div
+      aria-label="Filtrar lançamentos por categoria"
+      className="scrollbar-hidden flex min-w-0 gap-2 overflow-x-auto touch-pan-x"
+      role="group"
+    >
+      {[
+        { label: "Todas", value: "all" as const },
+        ...FINANCIAL_CATEGORIES.map((category) => ({
+          label: category,
+          value: category,
+        })),
+      ].map((category) => (
+        <button
+          aria-pressed={value === category.value}
+          className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-graphite-900"
+          key={category.value}
+          onClick={() => onValueChange(category.value)}
+          type="button"
+        >
+          <Badge
+            className="pointer-events-none"
+            size="sm"
+            variant={value === category.value ? "primary" : "secondary"}
+          >
+            {category.label}
+          </Badge>
+        </button>
+      ))}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   isValidElement,
   useContext,
   useEffect,
+  useId,
   useState,
   type ComponentProps,
   type ReactNode,
@@ -21,6 +22,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 
 type SelectVisuals = {
+  controlId: string;
   variant: ButtonVariant;
   size: ButtonTextSize;
   rounded: ButtonRounded;
@@ -29,12 +31,16 @@ type SelectVisuals = {
 
 const SelectVisualContext = createContext<SelectVisuals>({
   variant: "default",
+  controlId: "",
   size: "default",
   rounded: false,
   loading: false,
 });
 
 type SelectProps = ComponentProps<typeof SelectPrimitive.Root> & {
+  containerClassName?: string;
+  label?: string;
+  id?: string;
   loading?: boolean;
   rounded?: ButtonRounded;
   size?: ButtonTextSize;
@@ -43,8 +49,11 @@ type SelectProps = ComponentProps<typeof SelectPrimitive.Root> & {
 
 export function Select({
   children,
+  containerClassName,
   defaultValue,
   disabled = false,
+  id,
+  label,
   loading = false,
   name,
   onValueChange,
@@ -56,49 +65,65 @@ export function Select({
   ...rootProps
 }: SelectProps) {
   const isCoarsePointer = useCoarsePointer();
+  const generatedId = useId();
   const [uncontrolledValue, setUncontrolledValue] = useState(
     value ?? defaultValue ?? "",
   );
   const selectedValue = value ?? uncontrolledValue;
   const { options, placeholder, triggerProps } = readSelectChildren(children);
+  const controlId = id ?? triggerProps.id ?? generatedId;
 
   function changeValue(nextValue: string) {
     if (value === undefined) setUncontrolledValue(nextValue);
     onValueChange?.(nextValue);
   }
 
-  const visuals = { variant, size, rounded, loading };
+  const visuals = { variant, size, rounded, loading, controlId };
 
   return (
     <SelectVisualContext.Provider value={visuals}>
-      <SelectPrimitive.Root
-        {...rootProps}
-        defaultValue={undefined}
-        disabled={disabled || loading || isCoarsePointer}
-        name={isCoarsePointer ? undefined : name}
-        onValueChange={changeValue}
-        required={isCoarsePointer ? false : required}
-        value={selectedValue}
+      <div
+        className={cn(
+          "flex w-full min-w-0 shrink-0 flex-col gap-1.5",
+          containerClassName,
+        )}
       >
-        <div className="relative w-full shrink-0">
-          <div className="[@media(pointer:coarse)]:hidden">{children}</div>
-          <NativeSelect
-            autoComplete={rootProps.autoComplete}
-            disabled={disabled || loading || !isCoarsePointer}
-            name={isCoarsePointer ? name : undefined}
-            onChange={(event) => changeValue(event.currentTarget.value)}
-            options={options}
-            placeholder={placeholder}
-            required={isCoarsePointer && required}
-            selectedValue={selectedValue}
-            rounded={rounded}
-            size={size}
-            triggerProps={triggerProps}
-            variant={variant}
-            loading={loading}
-          />
-        </div>
-      </SelectPrimitive.Root>
+        <label
+          className={cn("text-xs font-medium text-muted", !label && "sr-only")}
+          htmlFor={controlId}
+        >
+          {label || "Campo de seleção"}
+        </label>
+        <SelectPrimitive.Root
+          {...rootProps}
+          defaultValue={undefined}
+          disabled={disabled || loading || isCoarsePointer}
+          name={isCoarsePointer ? undefined : name}
+          onValueChange={changeValue}
+          required={isCoarsePointer ? false : required}
+          value={selectedValue}
+        >
+          <div className="relative w-full shrink-0">
+            <div className="[@media(pointer:coarse)]:hidden">{children}</div>
+            <NativeSelect
+              autoComplete={rootProps.autoComplete}
+              controlId={controlId}
+              disabled={disabled || loading || !isCoarsePointer}
+              name={isCoarsePointer ? name : undefined}
+              onChange={(event) => changeValue(event.currentTarget.value)}
+              options={options}
+              placeholder={placeholder}
+              required={isCoarsePointer && required}
+              selectedValue={selectedValue}
+              rounded={rounded}
+              size={size}
+              triggerProps={triggerProps}
+              variant={variant}
+              loading={loading}
+            />
+          </div>
+        </SelectPrimitive.Root>
+      </div>
     </SelectVisualContext.Provider>
   );
 }
@@ -123,9 +148,11 @@ export function SelectValue({
 export function SelectTrigger({
   className = "",
   children,
+  id,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Trigger>) {
-  const { loading, rounded, size, variant } = useContext(SelectVisualContext);
+  const { controlId, loading, rounded, size, variant } =
+    useContext(SelectVisualContext);
   const variantClasses =
     variant === "unstyled"
       ? ""
@@ -141,6 +168,7 @@ export function SelectTrigger({
         rounded && "rounded-full",
         "shrink-0",
       )}
+      id={controlId || id}
       {...props}
     >
       {children}
@@ -244,6 +272,7 @@ function NativeSelect({
   rounded,
   size,
   triggerProps,
+  controlId,
   variant,
 }: {
   autoComplete?: string;
@@ -258,6 +287,7 @@ function NativeSelect({
   rounded: ButtonRounded;
   size: ButtonTextSize;
   triggerProps: NativeTriggerProps;
+  controlId: string;
   variant: ButtonVariant;
 }) {
   const variantClasses =
@@ -279,6 +309,7 @@ function NativeSelect({
           "shrink-0",
         )}
         disabled={disabled}
+        id={controlId}
         name={name}
         onChange={onChange}
         required={required}

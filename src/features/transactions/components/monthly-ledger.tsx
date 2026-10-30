@@ -564,8 +564,8 @@ function NewEntryDrawer({
       shouldScaleBackground={false}
     >
       {open && (
-        <DrawerContent className="border-line bg-graphite-900 text-ink">
-          <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left sm:px-6">
+        <DrawerContent>
+          <DrawerHeader className="shrink-0 px-3 pb-3 pt-4 text-left">
             <DrawerTitle className="text-base">Novo lançamento</DrawerTitle>
           </DrawerHeader>
           <form
@@ -575,7 +575,7 @@ function NewEntryDrawer({
               onSubmit(new FormData(event.currentTarget));
             }}
           >
-            <DrawerBody className="space-y-4 px-5 pb-5 sm:px-6">
+            <DrawerBody className="space-y-4 px-3 pb-5">
               {error && (
                 <p
                   className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
@@ -585,25 +585,23 @@ function NewEntryDrawer({
                     "Não foi possível salvar o lançamento. Tente novamente."}
                 </p>
               )}
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                Tipo
-                <Select
-                  name="entry_type"
-                  defaultValue="expense"
-                  variant="secondary"
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="expense">Despesa</SelectItem>
-                    <SelectItem value="income">Receita</SelectItem>
-                  </SelectContent>
-                </Select>
-              </label>
+              <Select
+                label="Tipo"
+                name="entry_type"
+                defaultValue="expense"
+                variant="secondary"
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="expense">Despesa</SelectItem>
+                  <SelectItem value="income">Receita</SelectItem>
+                </SelectContent>
+              </Select>
               <EntryFields month={month} />
             </DrawerBody>
-            <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
+            <DrawerFooter className="shrink-0 border-t border-line px-3 pb-3 pt-4">
               <Button
                 className="w-full"
                 disabled={pending}

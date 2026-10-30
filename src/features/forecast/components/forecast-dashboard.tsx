@@ -323,30 +323,26 @@ export function ForecastDashboard({
             }}
             className="mt-4 space-y-3"
           >
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-              Saldo disponível (R$)
-              <Input
-                name="opening_balance"
-                inputMode="decimal"
-                defaultValue={
-                  openingBalance === null
-                    ? ""
-                    : openingBalance.toFixed(2).replace(".", ",")
-                }
-                placeholder="Ex.: 12500,00 ou -350,00"
-                required
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-              Data da conferência
-              <Input
-                type="date"
-                name="balance_as_of"
-                max={today}
-                defaultValue={balanceAsOf ?? today}
-                required
-              />
-            </label>
+            <Input
+              label="Saldo disponível (R$)"
+              name="opening_balance"
+              inputMode="decimal"
+              defaultValue={
+                openingBalance === null
+                  ? ""
+                  : openingBalance.toFixed(2).replace(".", ",")
+              }
+              placeholder="Ex.: 12500,00 ou -350,00"
+              required
+            />
+            <Input
+              label="Data da conferência"
+              type="date"
+              name="balance_as_of"
+              max={today}
+              defaultValue={balanceAsOf ?? today}
+              required
+            />
             <Button
               className="w-full"
               disabled={mutations.saveOpeningBalance.isPending}
@@ -620,26 +616,22 @@ function ForecastEntry({
             className="mt-2 space-y-2 rounded-lg bg-canvas p-2.5"
           >
             <Input type="hidden" name="entry_id" value={entry.id} />
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-              Valor hipotético (R$)
-              <Input
-                className="min-h-9"
-                name="override_amount"
-                inputMode="decimal"
-                defaultValue={effective.toFixed(2).replace(".", ",")}
-                required
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-              Observação <span className="font-normal">(opcional)</span>
-              <Input
-                className="min-h-9"
-                name="note"
-                maxLength={160}
-                defaultValue={override?.note ?? ""}
-                placeholder="Ex.: conta de luz mais alta"
-              />
-            </label>
+            <Input
+              label="Valor hipotético (R$)"
+              className="min-h-9"
+              name="override_amount"
+              inputMode="decimal"
+              defaultValue={effective.toFixed(2).replace(".", ",")}
+              required
+            />
+            <Input
+              label="Observação (opcional)"
+              className="min-h-9"
+              name="note"
+              maxLength={160}
+              defaultValue={override?.note ?? ""}
+              placeholder="Ex.: conta de luz mais alta"
+            />
             <p className="text-[10px] leading-4 text-muted">
               A hipótese altera somente esta projeção; não muda o lançamento.
             </p>
@@ -734,26 +726,22 @@ function ForecastEstimate({
             name="competence_month"
             value={estimate.competenceMonth}
           />
-          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-            Valor hipotético (R$)
-            <Input
-              className="min-h-9"
-              name="override_amount"
-              inputMode="decimal"
-              defaultValue={estimate.amount.toFixed(2).replace(".", ",")}
-              required
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-            Observação <span className="font-normal">(opcional)</span>
-            <Input
-              className="min-h-9"
-              name="note"
-              maxLength={160}
-              defaultValue={estimate.note ?? ""}
-              placeholder="Ex.: consumo maior este mês"
-            />
-          </label>
+          <Input
+            label="Valor hipotético (R$)"
+            className="min-h-9"
+            name="override_amount"
+            inputMode="decimal"
+            defaultValue={estimate.amount.toFixed(2).replace(".", ",")}
+            required
+          />
+          <Input
+            label="Observação (opcional)"
+            className="min-h-9"
+            name="note"
+            maxLength={160}
+            defaultValue={estimate.note ?? ""}
+            placeholder="Ex.: consumo maior este mês"
+          />
           <p className="text-[10px] leading-4 text-muted">
             A média vem dos valores registrados na categoria. Esta hipótese não
             cria nem altera lançamentos.

@@ -81,22 +81,24 @@ export function HistoryList({ householdId }: { householdId: string }) {
             </p>
           </div>
           {years.length > 0 && (
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted sm:w-40">
-              Filtrar por ano
-              <Select onValueChange={setYear} value={year}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os anos</SelectItem>
-                  {years.map((item) => (
-                    <SelectItem key={item} value={item}>
-                      {item}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </label>
+            <Select
+              label="Filtrar por ano"
+              containerClassName="sm:w-40"
+              onValueChange={setYear}
+              value={year}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os anos</SelectItem>
+                {years.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
       </section>

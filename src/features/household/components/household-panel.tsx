@@ -172,16 +172,15 @@ export function HouseholdPanel({
             }}
             className="mt-6 space-y-4"
           >
-            <label className="block text-sm font-medium text-ink">
-              Nome do núcleo
-              <Input
-                className="mt-2 min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
-                name="name"
-                maxLength={100}
-                placeholder="Ex.: Família Silva"
-                required
-              />
-            </label>
+            <Input
+              label="Nome do núcleo"
+              containerClassName="gap-2"
+              className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
+              name="name"
+              maxLength={100}
+              placeholder="Ex.: Família Silva"
+              required
+            />
             {createError && (
               <p role="alert" className="text-sm text-rose-300">
                 {createError}
@@ -262,18 +261,17 @@ export function HouseholdPanel({
 
       {household.member_role === "owner" ? (
         <form onSubmit={sendInvitation} className="mt-6 space-y-4">
-          <label className="block text-sm font-medium text-ink">
-            E-mail da pessoa convidada
-            <Input
-              className="mt-2 min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
-              autoComplete="email"
-              type="email"
-              required
-              value={inviteEmail}
-              onChange={(event) => setInviteEmail(event.target.value)}
-              placeholder="nome@exemplo.com"
-            />
-          </label>
+          <Input
+            label="E-mail da pessoa convidada"
+            containerClassName="gap-2"
+            className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
+            autoComplete="email"
+            type="email"
+            required
+            value={inviteEmail}
+            onChange={(event) => setInviteEmail(event.target.value)}
+            placeholder="nome@exemplo.com"
+          />
           {inviteError && (
             <p role="alert" className="text-sm text-rose-300">
               {inviteError}

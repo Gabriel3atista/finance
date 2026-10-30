@@ -429,49 +429,48 @@ export function MonthlyEntryList({
       <DrawerContent>
         {selectedEntry && (
           <>
-          <DrawerHeader className="shrink-0 px-5 pb-3 pt-4 text-left sm:px-6">
-            <div className="flex min-w-0 items-center justify-between gap-3">
-              <DrawerTitle className="truncate text-base text-moon-100">
-                {selectedEntry.title}
-              </DrawerTitle>
-              <Button
-                aria-label="Excluir lançamento"
-                disabled={rowMutationPending}
-                icon="TrashOutline"
-                onClick={() => {
-                  setDeleteError("");
-                  setEntryToDelete(selectedEntry);
-                  setDeleteDrawerState(true);
-                }}
-                size="icon"
-                type="button"
-                variant="destructive-subtle"
-                rounded
-              />
-            </div>
-          </DrawerHeader>
+            <DrawerHeader className="shrink-0 px-3 pb-3 pt-4 text-left">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <DrawerTitle className="truncate text-base text-moon-100">
+                  {selectedEntry.title}
+                </DrawerTitle>
+                <Button
+                  aria-label="Excluir lançamento"
+                  disabled={rowMutationPending}
+                  icon="TrashOutline"
+                  onClick={() => {
+                    setDeleteError("");
+                    setEntryToDelete(selectedEntry);
+                    setDeleteDrawerState(true);
+                  }}
+                  size="icon"
+                  type="button"
+                  variant="destructive-subtle"
+                  rounded
+                />
+              </div>
+            </DrawerHeader>
 
-          <form
-            className="flex min-h-0 flex-1 flex-col overflow-hidden"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              void runAction(() => onUpdate(form));
-            }}
-          >
-            <Input name="id" type="hidden" value={selectedEntry.id} />
-            <DrawerBody className="space-y-4 px-5 pb-5 sm:px-6">
-              {actionError && (
-                <p
-                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
-                  role="alert"
-                >
-                  {actionError}
-                </p>
-              )}
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                Tipo
+            <form
+              className="flex min-h-0 flex-1 flex-col overflow-hidden"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const form = new FormData(event.currentTarget);
+                void runAction(() => onUpdate(form));
+              }}
+            >
+              <Input name="id" type="hidden" value={selectedEntry.id} />
+              <DrawerBody className="space-y-4 px-3 pb-5">
+                {actionError && (
+                  <p
+                    className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                    role="alert"
+                  >
+                    {actionError}
+                  </p>
+                )}
                 <Select
+                  label="Tipo"
                   name="entry_type"
                   defaultValue={selectedEntry.entry_type}
                   variant="secondary"
@@ -484,12 +483,13 @@ export function MonthlyEntryList({
                     <SelectItem value="income">Receita</SelectItem>
                   </SelectContent>
                 </Select>
-              </label>
-              <EntryFields month={month} entry={selectedEntry} />
-              {selectedEntry.source_kind === "recurrence" && (
-                <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                  Aplicar alteração
-                  <Select name="scope" defaultValue="single">
+                <EntryFields month={month} entry={selectedEntry} />
+                {selectedEntry.source_kind === "recurrence" && (
+                  <Select
+                    label="Aplicar alteração"
+                    name="scope"
+                    defaultValue="single"
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -500,33 +500,32 @@ export function MonthlyEntryList({
                       </SelectItem>
                     </SelectContent>
                   </Select>
-                </label>
-              )}
-            </DrawerBody>
-            <DrawerFooter className="shrink-0 border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
-              <div className="grid grid-cols-1 gap-3">
-                <Button
-                  className="w-full"
-                  disabled={rowMutationPending}
-                  type="submit"
-                  variant="primary"
-                  rounded
-                >
-                  {rowMutationPending ? "Salvando…" : "Salvar"}
-                </Button>
-                <Button
-                  className="w-full"
-                  disabled={rowMutationPending}
-                  onClick={() => closeDrawer(false)}
-                  type="button"
-                  variant="secondary"
-                  rounded
-                >
-                  Fechar
-                </Button>
-              </div>
-            </DrawerFooter>
-          </form>
+                )}
+              </DrawerBody>
+              <DrawerFooter className="shrink-0 border-t border-line/30 px-3 pb-3 pt-4">
+                <div className="grid grid-cols-1 gap-3">
+                  <Button
+                    className="w-full"
+                    disabled={rowMutationPending}
+                    type="submit"
+                    variant="primary"
+                    rounded
+                  >
+                    {rowMutationPending ? "Salvando…" : "Salvar"}
+                  </Button>
+                  <Button
+                    className="w-full"
+                    disabled={rowMutationPending}
+                    onClick={() => closeDrawer(false)}
+                    type="button"
+                    variant="secondary"
+                    rounded
+                  >
+                    Fechar
+                  </Button>
+                </div>
+              </DrawerFooter>
+            </form>
           </>
         )}
       </DrawerContent>
@@ -551,52 +550,52 @@ export function MonthlyEntryList({
         }}
         shouldScaleBackground={false}
       >
-        <DrawerContent className="border-line bg-graphite-900 text-ink">
+        <DrawerContent>
           {entryToDelete && (
             <>
-            <DrawerHeader className="px-5 pb-3 pt-4 text-left sm:px-6">
-              <DrawerTitle className="text-base">
-                Excluir lançamento?
-              </DrawerTitle>
-              <DrawerDescription className="text-muted">
-                Este lançamento será removido permanentemente.
-              </DrawerDescription>
-            </DrawerHeader>
-            <DrawerBody className="px-5 pb-5 sm:px-6">
-              {deleteError && (
-                <p
-                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
-                  role="alert"
-                >
-                  {deleteError}
-                </p>
-              )}
-            </DrawerBody>
-            <DrawerFooter className="border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  disabled={rowMutationPending}
-                  onClick={() => setDeleteDrawerState(false)}
-                  type="button"
-                  variant="secondary"
-                  rounded
-                >
-                  Voltar
-                </Button>
-                <Button
-                  className="bg-rose-500 text-white hover:bg-rose-600 active:bg-rose-700"
-                  disabled={rowMutationPending}
-                  leadingIcon="TrashOutline"
-                  loading={rowMutationPending}
-                  onClick={() => void confirmDelete()}
-                  type="button"
-                  variant="primary"
-                  rounded
-                >
-                  Excluir
-                </Button>
-              </div>
-            </DrawerFooter>
+              <DrawerHeader className="px-3 pb-3 pt-4 text-left">
+                <DrawerTitle className="text-base">
+                  Excluir lançamento?
+                </DrawerTitle>
+                <DrawerDescription className="text-muted">
+                  Este lançamento será removido permanentemente.
+                </DrawerDescription>
+              </DrawerHeader>
+              <DrawerBody className="px-3 pb-5">
+                {deleteError && (
+                  <p
+                    className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                    role="alert"
+                  >
+                    {deleteError}
+                  </p>
+                )}
+              </DrawerBody>
+              <DrawerFooter className="border-t border-line px-3 pb-3 pt-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    disabled={rowMutationPending}
+                    onClick={() => setDeleteDrawerState(false)}
+                    type="button"
+                    variant="secondary"
+                    rounded
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    className="bg-rose-500 text-white hover:bg-rose-600 active:bg-rose-700"
+                    disabled={rowMutationPending}
+                    leadingIcon="TrashOutline"
+                    loading={rowMutationPending}
+                    onClick={() => void confirmDelete()}
+                    type="button"
+                    variant="primary"
+                    rounded
+                  >
+                    Excluir
+                  </Button>
+                </div>
+              </DrawerFooter>
             </>
           )}
         </DrawerContent>
@@ -618,59 +617,59 @@ export function MonthlyEntryList({
         }}
         shouldScaleBackground={false}
       >
-        <DrawerContent className="border-line bg-graphite-900 text-ink">
+        <DrawerContent>
           {monthAction && (
             <>
-            <DrawerHeader className="px-5 pb-3 pt-4 text-left sm:px-6">
-              <DrawerTitle className="text-base">
-                {monthAction === "copy"
-                  ? "Copiar dados do mês anterior?"
-                  : "Apagar todos os dados do mês?"}
-              </DrawerTitle>
-              <DrawerDescription className="text-muted">
-                {monthAction === "copy"
-                  ? "Todos os lançamentos ativos do mês anterior serão copiados como pendentes."
-                  : "Todos os lançamentos desta competência serão removidos, inclusive os realizados e importados. Esta ação não pode ser desfeita."}
-              </DrawerDescription>
-            </DrawerHeader>
-            <DrawerBody className="px-5 pb-5 sm:px-6">
-              {monthActionError && (
-                <p
-                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
-                  role="alert"
-                >
-                  {monthActionError}
-                </p>
-              )}
-            </DrawerBody>
-            <DrawerFooter className="border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  disabled={monthActionsPending}
-                  onClick={() => setMonthActionDrawerState(false)}
-                  rounded
-                  type="button"
-                  variant="secondary"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  className={
-                    monthAction === "delete"
-                      ? "bg-rose-500 text-white hover:bg-rose-600 active:bg-rose-700"
-                      : ""
-                  }
-                  disabled={monthActionsPending}
-                  loading={monthActionsPending}
-                  onClick={() => void confirmMonthAction()}
-                  rounded
-                  type="button"
-                  variant="primary"
-                >
-                  {monthAction === "copy" ? "Copiar" : "Apagar mês"}
-                </Button>
-              </div>
-            </DrawerFooter>
+              <DrawerHeader className="px-3 pb-3 pt-4 text-left">
+                <DrawerTitle className="text-base">
+                  {monthAction === "copy"
+                    ? "Copiar dados do mês anterior?"
+                    : "Apagar todos os dados do mês?"}
+                </DrawerTitle>
+                <DrawerDescription className="text-muted">
+                  {monthAction === "copy"
+                    ? "Todos os lançamentos ativos do mês anterior serão copiados como pendentes."
+                    : "Todos os lançamentos desta competência serão removidos, inclusive os realizados e importados. Esta ação não pode ser desfeita."}
+                </DrawerDescription>
+              </DrawerHeader>
+              <DrawerBody className="px-3 pb-5">
+                {monthActionError && (
+                  <p
+                    className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                    role="alert"
+                  >
+                    {monthActionError}
+                  </p>
+                )}
+              </DrawerBody>
+              <DrawerFooter className="border-t border-line px-3 pb-3 pt-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    disabled={monthActionsPending}
+                    onClick={() => setMonthActionDrawerState(false)}
+                    rounded
+                    type="button"
+                    variant="secondary"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    className={
+                      monthAction === "delete"
+                        ? "bg-rose-500 text-white hover:bg-rose-600 active:bg-rose-700"
+                        : ""
+                    }
+                    disabled={monthActionsPending}
+                    loading={monthActionsPending}
+                    onClick={() => void confirmMonthAction()}
+                    rounded
+                    type="button"
+                    variant="primary"
+                  >
+                    {monthAction === "copy" ? "Copiar" : "Apagar mês"}
+                  </Button>
+                </div>
+              </DrawerFooter>
             </>
           )}
         </DrawerContent>

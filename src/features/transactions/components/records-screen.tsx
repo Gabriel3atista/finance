@@ -218,24 +218,21 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
             }}
             className="mt-5 space-y-4"
           >
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-              Tipo
-              <Select name="entry_type" defaultValue="expense">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="expense">Despesa</SelectItem>
-                  <SelectItem value="income">Receita</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
+            <Select label="Tipo" name="entry_type" defaultValue="expense">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="expense">Despesa</SelectItem>
+                <SelectItem value="income">Receita</SelectItem>
+              </SelectContent>
+            </Select>
             <SeriesFields month={currentMonth} />
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-              Última competência{" "}
-              <span className="font-normal text-muted">(opcional)</span>
-              <Input type="month" name="ends_on" />
-            </label>
+            <Input
+              label="Última competência (opcional)"
+              type="month"
+              name="ends_on"
+            />
             <Button
               className="w-full"
               disabled={createRecurring.isPending}
@@ -262,56 +259,47 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
             className="mt-5 space-y-4"
           >
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted sm:col-span-2">
-                Descrição
-                <Input
-                  name="title"
-                  maxLength={160}
-                  required
-                  placeholder="Ex.: Móveis da sala"
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                Valor total (R$)
-                <Input
-                  name="total_amount"
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  required
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                Número de parcelas
-                <Input
-                  name="installment_count"
-                  type="number"
-                  min={1}
-                  max={600}
-                  step={1}
-                  required
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                Primeira competência
-                <Input
-                  name="first_month"
-                  type="month"
-                  defaultValue={currentMonth}
-                  required
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                Dia de vencimento
-                <Input
-                  name="due_day"
-                  type="number"
-                  min={1}
-                  max={31}
-                  placeholder="Opcional"
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                Categoria
+              <Input
+                label="Descrição"
+                containerClassName="sm:col-span-2"
+                name="title"
+                maxLength={160}
+                required
+                placeholder="Ex.: Móveis da sala"
+              />
+              <Input
+                label="Valor total (R$)"
+                name="total_amount"
+                inputMode="decimal"
+                placeholder="0,00"
+                required
+              />
+              <Input
+                label="Número de parcelas"
+                name="installment_count"
+                type="number"
+                min={1}
+                max={600}
+                step={1}
+                required
+              />
+              <Input
+                label="Primeira competência"
+                name="first_month"
+                type="month"
+                defaultValue={currentMonth}
+                required
+              />
+              <Input
+                label="Dia de vencimento"
+                name="due_day"
+                type="number"
+                min={1}
+                max={31}
+                placeholder="Opcional"
+              />
+              <div className="flex flex-col gap-1.5 text-xs font-medium text-muted">
+                <span>Categoria</span>
                 <Input
                   type="hidden"
                   name="category"
@@ -320,7 +308,7 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
                 <Badge className="w-fit" size="sm" variant="secondary">
                   Dívidas e parcelas
                 </Badge>
-              </label>
+              </div>
             </div>
             <p className="text-xs leading-5 text-muted">
               Os centavos restantes são distribuídos entre as primeiras parcelas

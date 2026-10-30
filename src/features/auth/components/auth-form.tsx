@@ -190,36 +190,34 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {mode !== "update-password" && (
-          <label className="block text-sm font-medium text-ink">
-            E-mail
-            <Input
-              autoComplete="email"
-              className="mt-2 min-h-11 px-3.5"
-              name="email"
-              placeholder="voce@exemplo.com"
-              required
-              type="email"
-            />
-          </label>
+          <Input
+            label="E-mail"
+            containerClassName="gap-2"
+            autoComplete="email"
+            className="min-h-11 px-3.5"
+            name="email"
+            placeholder="voce@exemplo.com"
+            required
+            type="email"
+          />
         )}
 
         {mode !== "forgot" && (
-          <label className="block text-sm font-medium text-ink">
-            {mode === "update-password" ? "Nova senha" : "Senha"}
-            <Input
-              autoComplete={
-                mode === "login" ? "current-password" : "new-password"
-              }
-              className="mt-2 min-h-11 px-3.5"
-              name="password"
-              placeholder={
-                mode === "login" ? "Sua senha" : "Pelo menos 8 caracteres"
-              }
-              minLength={8}
-              required
-              type="password"
-            />
-          </label>
+          <Input
+            label={mode === "update-password" ? "Nova senha" : "Senha"}
+            containerClassName="gap-2"
+            autoComplete={
+              mode === "login" ? "current-password" : "new-password"
+            }
+            className="min-h-11 px-3.5"
+            name="password"
+            placeholder={
+              mode === "login" ? "Sua senha" : "Pelo menos 8 caracteres"
+            }
+            minLength={8}
+            required
+            type="password"
+          />
         )}
 
         {(error || callbackError) && (

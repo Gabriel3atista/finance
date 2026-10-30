@@ -82,7 +82,7 @@ const DrawerContent = React.forwardRef<
         }
       }}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[80dvh] min-h-0 flex-col overflow-hidden rounded-t-lg bg-graphite-800",
+        "fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] z-50 mt-24 flex h-auto max-h-[80dvh] min-h-0 flex-col overflow-hidden rounded-[23px] border border-line/30 bg-graphite-800/60 p-0 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-lg",
         className,
       )}
       {...props}
@@ -100,7 +100,7 @@ const DrawerHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "grid shrink-0 gap-1.5 p-4 text-center sm:text-left",
+      "grid shrink-0 gap-1.5 p-3 text-center sm:text-left",
       className,
     )}
     {...props}
@@ -113,7 +113,7 @@ const DrawerFooter = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("mt-auto flex shrink-0 flex-col gap-2 p-4", className)}
+    className={cn("mt-auto flex shrink-0 flex-col gap-2 px-3 py-3", className)}
     {...props}
   />
 );
@@ -125,7 +125,7 @@ const DrawerBody = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "min-h-0 flex-1 overflow-y-auto overscroll-contain",
+      "min-h-0 flex-1 overflow-y-auto overscroll-contain px-3",
       className,
     )}
     {...props}

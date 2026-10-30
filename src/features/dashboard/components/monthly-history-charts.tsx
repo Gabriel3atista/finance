@@ -45,23 +45,22 @@ export function MonthlyHistoryCharts({ data }: { data: DashboardMonth[] }) {
   return (
     <>
       <div className="mb-3 flex justify-end">
-        <label className="flex flex-row items-center gap-2 text-xs font-medium text-muted">
-          <Select
-            onValueChange={(value) => setPeriod(Number(value))}
-            value={String(period)}
-          >
-            <SelectTrigger className="w-auto min-w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {periodOptions.map((option) => (
-                <SelectItem key={option.months} value={String(option.months)}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
+        <Select
+          containerClassName="w-auto flex-row items-center gap-2"
+          onValueChange={(value) => setPeriod(Number(value))}
+          value={String(period)}
+        >
+          <SelectTrigger className="w-auto min-w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {periodOptions.map((option) => (
+              <SelectItem key={option.months} value={String(option.months)}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <MonthlyBarChart data={filteredData} />
     </>

@@ -52,8 +52,8 @@ export function ProfileMenuDrawer({
         </Button>
       </DrawerTrigger>
 
-      <DrawerContent className="border-line bg-graphite-900 text-ink">
-        <DrawerHeader className="grid-cols-[1fr_auto] items-start gap-4 px-5 pb-0 pt-3 sm:px-6">
+      <DrawerContent>
+        <DrawerHeader className="grid-cols-[1fr_auto] items-start gap-4 px-3 pb-0 pt-3">
           <div className="flex min-w-0 items-center gap-3">
             <ProfileAvatar
               userId={userId}
@@ -69,11 +69,8 @@ export function ProfileMenuDrawer({
             </div>
           </div>
         </DrawerHeader>
-        <DrawerBody className="pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-          <nav
-            className="mt-6 space-y-1 px-5 sm:px-6"
-            aria-label="Menu do usuário"
-          >
+        <DrawerBody className="pb-0">
+          <nav className="mt-6 space-y-1 px-0" aria-label="Menu do usuário">
             {profileLinks.map((link) => (
               <Link
                 key={link.href}
@@ -91,7 +88,7 @@ export function ProfileMenuDrawer({
             ))}
           </nav>
 
-          <div className="mx-5 mt-5 border-t border-line pt-4 sm:mx-6">
+          <div className="-mx-3 mt-5 border-t border-line px-3 pt-4">
             <SignOutButton className="w-full justify-start px-4" />
           </div>
         </DrawerBody>

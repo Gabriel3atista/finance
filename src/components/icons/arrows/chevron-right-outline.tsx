@@ -1,13 +1,14 @@
 import type { IconSvgProps } from "../icon-types";
 
-export default function Equals(props: IconSvgProps) {
+export default function ChevronRightOutline(props: IconSvgProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
       <path
-        d="M6 9h12M6 15h12"
+        d="m9 18 6-6-6-6"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

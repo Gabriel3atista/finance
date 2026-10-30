@@ -84,7 +84,7 @@ export function ProfileMenuDrawer({
                 {link.label}
                 <NextIcon
                   className="ml-auto text-muted"
-                  name="ChevronRight"
+                  name="ChevronRightOutline"
                   size={16}
                 />
               </Link>

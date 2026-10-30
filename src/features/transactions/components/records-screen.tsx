@@ -170,7 +170,7 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
       {saved && (
         <p
           role="status"
-          className="mb-5 rounded-xl border border-success-800 bg-success-900 px-4 py-3 text-sm text-success-100"
+          className="mb-5 rounded-xl border border-mint-800 bg-mint-900 px-4 py-3 text-sm text-mint-100"
         >
           Cadastro salvo. As ocorrências serão criadas quando cada mês for
           aberto.
@@ -179,7 +179,7 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
       {deactivated && (
         <p
           role="status"
-          className="mb-5 rounded-xl border border-success-800 bg-success-900 px-4 py-3 text-sm text-success-100"
+          className="mb-5 rounded-xl border border-mint-800 bg-mint-900 px-4 py-3 text-sm text-mint-100"
         >
           Cadastro encerrado. Lançamentos já criados continuam no histórico.
         </p>
@@ -191,7 +191,7 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
               ? "status"
               : "alert"
           }
-          className={`mb-5 rounded-xl px-4 py-3 text-sm ${mutationMessage === "saved" || mutationMessage === "deactivated" ? "border border-success-800 bg-success-900 text-success-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
+          className={`mb-5 rounded-xl px-4 py-3 text-sm ${mutationMessage === "saved" || mutationMessage === "deactivated" ? "border border-mint-800 bg-mint-900 text-mint-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
         >
           {mutationMessage === "saved"
             ? "Cadastro salvo. As ocorrências serão criadas quando cada mês for aberto."

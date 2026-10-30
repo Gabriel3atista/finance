@@ -215,7 +215,7 @@ export function ForecastDashboard({
       )}
       {savedMessage && (
         <p
-          className="mb-4 rounded-xl border border-success-800 bg-success-900 px-4 py-3 text-sm text-success-100"
+          className="mb-4 rounded-xl border border-mint-800 bg-mint-900 px-4 py-3 text-sm text-mint-100"
           role="status"
         >
           {savedMessage}
@@ -449,7 +449,7 @@ function MonthForecastCard({
         <span
           className={cn(
             "mt-1 size-2 rounded-full",
-            balance < 0 ? "bg-rose-400" : "bg-success-400",
+            balance < 0 ? "bg-rose-400" : "bg-mint-400",
           )}
           aria-hidden="true"
         />
@@ -597,7 +597,7 @@ function ForecastEntry({
               override
                 ? "text-warning-200"
                 : entry.status === "settled"
-                  ? "text-success-200"
+                  ? "text-mint-200"
                   : "text-muted",
             )}
           >
@@ -815,7 +815,7 @@ function AmountLine({
       <dd
         className={cn(
           "text-xs font-semibold tabular-nums",
-          positive ? "text-success-200" : "text-ink",
+          positive ? "text-mint-200" : "text-ink",
         )}
       >
         <FinancialValue>{formatMoney(value)}</FinancialValue>
@@ -926,7 +926,7 @@ function ExpenseCommitmentChart({ data }: { data: HistoryMonth[] }) {
       </h3>
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <i className="size-2 rounded-sm bg-success-400" aria-hidden="true" />
+          <i className="size-2 rounded-sm bg-mint-400" aria-hidden="true" />
           Despesas registradas
         </span>
         <span className="inline-flex items-center gap-1.5">

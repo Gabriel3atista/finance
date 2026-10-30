@@ -1,10 +1,10 @@
 import type { IconSvgProps } from "../icon-types";
 
-export default function ArrowDownTrend(props: IconSvgProps) {
+export default function ArrowDownRightOutline(props: IconSvgProps) {
   return (
-    <svg viewBox="0 0 20 20" fill="none" {...props}>
+    <svg viewBox="0 0 24 24" fill="none" {...props}>
       <path
-        d="m4 6.5 4 4 2.5-2.5 5.5 5.5m-4 0h4v-4"
+        d="M7 7 17 17m0-9v9H8"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"

@@ -1,6 +1,6 @@
 import type { IconSvgProps } from "../icon-types";
 
-export default function Dashboard(props: IconSvgProps) {
+export default function DashboardOutline(props: IconSvgProps) {
   return (
     <svg
       viewBox="0 0 24 24"

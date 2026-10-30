@@ -49,11 +49,12 @@ const config: Config = {
         yellow: {
           500: "hsl(43.92 100% 50.98% / <alpha-value>)",
         },
-        ink: "hsl(207.69 27.66% 90.78%)",
-        muted: "hsl(227.14 5.69% 51.76%)",
+        ink: "hsl(210 18% 94%)",
+        muted: "hsl(220 8% 60%)",
         canvas: "hsl(225 15.38% 5.1%)",
-        line: "hsl(222.86 7.22% 14%)",
-        accent: "hsl(207.69 27.66% 90.78%)",
+        line: "hsl(225 10% 17%)",
+        accent: "hsl(43.92 100% 50.98% / <alpha-value>)",
+        "accent-soft": "hsl(43.92 100% 50.98% / 0.12)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Arial", "sans-serif"],

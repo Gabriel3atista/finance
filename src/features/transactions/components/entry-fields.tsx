@@ -63,7 +63,7 @@ export function EntryFields({
           }
         />
       </label>
-      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted">
+      <label className="flex min-w-0 flex-col gap-1.5 text-xs font-medium text-muted">
         Vencimento
         <Input
           type="date"

@@ -43,7 +43,7 @@ export function BalanceChangeIndicator({
     >
       <NextIcon
         className={`transition-opacity duration-300 ${loading ? "opacity-0" : "opacity-100"}`}
-        name={comparison.direction === "up" ? "ArrowUpTrend" : "ArrowDownTrend"}
+        name={comparison.direction === "up" ? "ArrowUpTrendOutline" : "ArrowDownTrendOutline"}
         size={16}
       />
       {percentageChange === null ? (

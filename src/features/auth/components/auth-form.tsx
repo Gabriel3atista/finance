@@ -174,7 +174,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           aria-label="Finance"
         >
           <span className="grid size-10 place-items-center rounded-[14px] bg-moon-200 text-graphite-900">
-            <NextIcon name="BrandMark" size={20} />
+            <NextIcon name="BrandMarkOutline" size={20} />
           </span>
           <span className="text-base font-semibold tracking-tight text-ink">
             Finance

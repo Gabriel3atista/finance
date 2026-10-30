@@ -151,11 +151,11 @@ export function SelectTrigger({
         {loading ? (
           <NextIcon
             className="animate-spin motion-reduce:animate-none"
-            name="Loading"
+            name="LoadingOutline"
             size={16}
           />
         ) : (
-          <NextIcon name="ChevronDown" size={16} />
+          <NextIcon name="ChevronDownOutline" size={16} />
         )}
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
@@ -217,7 +217,7 @@ export function SelectItem({
     >
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator className="absolute right-2 inline-flex items-center">
-        <NextIcon name="Check" size={16} />
+        <NextIcon name="CheckOutline" size={16} />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   );
@@ -306,11 +306,11 @@ function NativeSelect({
         {loading ? (
           <NextIcon
             className="animate-spin motion-reduce:animate-none"
-            name="Loading"
+            name="LoadingOutline"
             size={16}
           />
         ) : (
-          <NextIcon name="ChevronDown" size={16} />
+          <NextIcon name="ChevronDownOutline" size={16} />
         )}
       </span>
     </div>

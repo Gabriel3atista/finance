@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 const variants = [
   { name: "Primary", value: "primary" },
   { name: "Default", value: "default" },
+  { name: "White", value: "white" },
   { name: "Secondary", value: "secondary" },
   { name: "Outline", value: "outline" },
   { name: "Ghost", value: "ghost" },
@@ -52,7 +53,7 @@ export default function ButtonDesignSystemPage() {
           title="Variantes"
           description="A hierarquia visual disponível para diferentes níveis de ação."
         >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
             {variants.map(({ name, value }) => (
               <div
                 className="flex min-h-28 flex-col items-start justify-between gap-5 rounded-xl border border-line/70 bg-graphite-900/60 p-4"
@@ -88,7 +89,7 @@ export default function ButtonDesignSystemPage() {
               <span className="text-[10px] text-muted">sm + full</span>
             </div>
             <div className="flex flex-col items-center gap-3">
-              <Button rounded leadingIcon="Plus">
+              <Button rounded leadingIcon="PlusOutline">
                 Nova transação
               </Button>
               <span className="text-[10px] text-muted">default + full</span>
@@ -96,7 +97,7 @@ export default function ButtonDesignSystemPage() {
             <div className="flex flex-col items-center gap-3">
               <Button
                 aria-label="Adicionar item"
-                icon="Plus"
+                icon="PlusOutline"
                 rounded
                 size="icon-sm"
                 variant="secondary"
@@ -127,15 +128,15 @@ export default function ButtonDesignSystemPage() {
             </div>
             <div className="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
               <div className="flex flex-col items-center gap-3">
-                <Button leadingIcon="Plus" trailingIcon="ArrowRight" size="sm">
+                <Button leadingIcon="PlusOutline" trailingIcon="ArrowRightOutline" size="sm">
                   Pequeno
                 </Button>
                 <span className="text-[10px] text-muted">sm + ícone</span>
               </div>
               <div className="flex flex-col items-center gap-3">
                 <Button
-                  leadingIcon="Plus"
-                  trailingIcon="ArrowRight"
+                  leadingIcon="PlusOutline"
+                  trailingIcon="ArrowRightOutline"
                   size="default"
                 >
                   Padrão
@@ -143,7 +144,7 @@ export default function ButtonDesignSystemPage() {
                 <span className="text-[10px] text-muted">default + ícone</span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <Button leadingIcon="Plus" size="lg" trailingIcon="ArrowRight">
+                <Button leadingIcon="PlusOutline" size="lg" trailingIcon="ArrowRightOutline">
                   Grande
                 </Button>
                 <span className="text-[10px] text-muted">lg + dois ícones</span>
@@ -153,19 +154,19 @@ export default function ButtonDesignSystemPage() {
               <div className="flex flex-col items-center gap-3">
                 <Button
                   aria-label="Adicionar item"
-                  icon="Plus"
+                  icon="PlusOutline"
                   size="icon-sm"
                 />
                 <span className="text-[10px] text-muted">icon-sm</span>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <Button aria-label="Adicionar item" icon="Plus" size="icon" />
+                <Button aria-label="Adicionar item" icon="PlusOutline" size="icon" />
                 <span className="text-[10px] text-muted">icon</span>
               </div>
               <div className="flex flex-col items-center gap-3">
                 <Button
                   aria-label="Adicionar item"
-                  icon="Plus"
+                  icon="PlusOutline"
                   size="icon-lg"
                 />
                 <span className="text-[10px] text-muted">icon-lg</span>
@@ -178,8 +179,8 @@ export default function ButtonDesignSystemPage() {
             description="Ações com ícones, foco por teclado e estado indisponível."
           >
             <div className="flex min-h-36 flex-wrap items-center gap-3 rounded-xl border border-line/70 bg-graphite-900/60 p-5">
-              <Button leadingIcon="Plus">Nova transação</Button>
-              <Button trailingIcon="ArrowRight" variant="outline">
+              <Button leadingIcon="PlusOutline">Nova transação</Button>
+              <Button trailingIcon="ArrowRightOutline" variant="outline">
                 Ver detalhes
               </Button>
               <Button disabled variant="secondary">
@@ -188,7 +189,7 @@ export default function ButtonDesignSystemPage() {
               <Button loading>Salvando</Button>
               <Button
                 aria-label="Salvando alterações"
-                icon="Plus"
+                icon="PlusOutline"
                 loading
                 size="icon"
                 variant="ghost"
@@ -205,20 +206,20 @@ export default function ButtonDesignSystemPage() {
           description="Comparação direta de cada variante no mesmo contexto."
         >
           <div className="overflow-x-auto">
-            <div className="min-w-[680px]">
-              <div className="grid grid-cols-6 gap-3 border-b border-line px-3 pb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted">
+            <div className="min-w-[780px]">
+              <div className="grid grid-cols-7 gap-3 border-b border-line px-3 pb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-muted">
                 {variants.map(({ name, value }) => (
                   <span key={value}>{name}</span>
                 ))}
               </div>
-              <div className="grid grid-cols-6 items-center gap-3 px-3 py-4">
+              <div className="grid grid-cols-7 items-center gap-3 px-3 py-4">
                 {variants.map(({ value }) => (
                   <Button key={value} variant={value}>
                     Salvar alterações
                   </Button>
                 ))}
               </div>
-              <div className="grid grid-cols-6 items-center gap-3 rounded-lg bg-graphite-900/60 px-3 py-4">
+              <div className="grid grid-cols-7 items-center gap-3 rounded-lg bg-graphite-900/60 px-3 py-4">
                 {variants.map(({ value }) => (
                   <Button disabled key={value} variant={value}>
                     Salvar alterações

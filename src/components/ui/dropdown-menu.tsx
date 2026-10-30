@@ -3,6 +3,7 @@
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ComponentProps } from "react";
 import { NextIcon } from "@/components/atoms/next-icon";
+import type { Icons } from "@/components/icons";
 import { cn } from "@/shared/lib/utils";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
@@ -16,9 +17,13 @@ function DropdownMenuSubTrigger({
   className,
   inset,
   children,
+  leadingIcon,
+  trailingIcon,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
   inset?: boolean;
+  leadingIcon?: Icons;
+  trailingIcon?: Icons;
 }) {
   return (
     <DropdownMenuPrimitive.SubTrigger
@@ -29,8 +34,10 @@ function DropdownMenuSubTrigger({
       )}
       {...props}
     >
+      {leadingIcon && <NextIcon name={leadingIcon} size={16} />}
       {children}
-      <NextIcon name="ChevronRight" size="sm" className="ml-auto" />
+      {trailingIcon && <NextIcon name={trailingIcon} size={16} />}
+      <NextIcon name="ChevronRightOutline" size="sm" className="ml-auto" />
     </DropdownMenuPrimitive.SubTrigger>
   );
 }
@@ -59,7 +66,7 @@ function DropdownMenuContent({
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         className={cn(
-          "dropdown-menu-content z-[110] min-w-48 rounded-xl border border-line bg-graphite-900 p-3 text-ink shadow-xl outline-none",
+          "dropdown-menu-content z-[110] min-w-48 rounded-xl border border-line bg-graphite-800 p-1 text-ink shadow-xl outline-none",
           className,
         )}
         sideOffset={sideOffset}
@@ -72,10 +79,15 @@ function DropdownMenuContent({
 function DropdownMenuItem({
   className,
   inset,
+  leadingIcon,
+  trailingIcon,
   variant = "default",
+  children,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Item> & {
   inset?: boolean;
+  leadingIcon?: Icons;
+  trailingIcon?: Icons;
   variant?: "default" | "destructive";
 }) {
   return (
@@ -87,7 +99,11 @@ function DropdownMenuItem({
         className,
       )}
       {...props}
-    />
+    >
+      {leadingIcon && <NextIcon name={leadingIcon} size={16} />}
+      {children}
+      {trailingIcon && <NextIcon name={trailingIcon} size={16} />}
+    </DropdownMenuPrimitive.Item>
   );
 }
 
@@ -108,7 +124,7 @@ function DropdownMenuCheckboxItem({
     >
       <span className="absolute left-3 flex size-4 items-center justify-center">
         <DropdownMenuPrimitive.ItemIndicator>
-          <NextIcon name="Check" size="xs" />
+          <NextIcon name="CheckOutline" size="xs" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}

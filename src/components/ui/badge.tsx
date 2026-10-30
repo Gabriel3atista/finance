@@ -1,5 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
+import { NextIcon } from "@/components/atoms/next-icon";
+import type { Icons } from "@/components/icons";
 import { cn } from "@/shared/lib/utils";
 
 export const badgeVariants = cva(
@@ -9,6 +11,7 @@ export const badgeVariants = cva(
       variant: {
         primary: "bg-yellow-500 text-graphite-900",
         default: "bg-moon-200 text-graphite-900",
+        white: "bg-white text-graphite-900",
         secondary: "bg-graphite-600 text-ink",
         outline: "border border-line bg-graphite-900 text-moon-100",
         ghost: "text-muted",
@@ -33,13 +36,40 @@ export type BadgeVariant = NonNullable<
 export type BadgeSize = NonNullable<VariantProps<typeof badgeVariants>["size"]>;
 
 export type BadgeProps = ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants>;
+  VariantProps<typeof badgeVariants> & {
+    leadingIcon?: Icons;
+    trailingIcon?: Icons;
+  };
 
-export function Badge({ className, size, variant, ...props }: BadgeProps) {
+const badgeIconSizes: Record<BadgeSize, number> = {
+  sm: 12,
+  default: 14,
+  lg: 16,
+};
+
+export function Badge({
+  children,
+  className,
+  leadingIcon,
+  size = "default",
+  trailingIcon,
+  variant,
+  ...props
+}: BadgeProps) {
+  const iconSize = badgeIconSizes[size ?? "default"];
+
   return (
     <span
-      className={cn(badgeVariants({ size, variant }), className)}
+      className={cn(
+        badgeVariants({ size, variant }),
+        (leadingIcon || trailingIcon) && "gap-1.5",
+        className,
+      )}
       {...props}
-    />
+    >
+      {leadingIcon && <NextIcon name={leadingIcon} size={iconSize} />}
+      {children}
+      {trailingIcon && <NextIcon name={trailingIcon} size={iconSize} />}
+    </span>
   );
 }

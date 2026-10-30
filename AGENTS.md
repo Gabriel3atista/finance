@@ -48,3 +48,17 @@ As skills deste repositório estão em `.agents/skills/`. Use este mapa para esc
 
 - Quando o usuario indicar uma cor para a paleta do Tailwind, aplique-a ao tom `500` da escala correspondente, salvo se ele indicar outro tom.
 - Escreva os valores de cor em HSL.
+
+## Design system
+
+- A referência visual atual do produto é `/mes`. Consulte [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) antes de definir cores ou criar padrões visuais para novas telas.
+- Use `graphite-900` como canvas, `graphite-800`/`graphite-700` para superfícies progressivamente mais claras, `ink` para conteúdo principal, `muted` para conteúdo auxiliar e `line` para bordas padrão.
+- A escala `graphite` é invertida em relação à expectativa comum do Tailwind: números maiores são mais escuros. Preserve esse sentido ao escolher tons.
+- Use `accent`/`accent-soft` para amarelo de identidade, `mint-*` para estados positivos, `rose-*` para despesas, erros e ações destrutivas, e azul para progresso circular.
+- Prefira `Button`, `Badge`, `Select`, `DropdownMenu`, `Input`, `Card`, `Drawer` e `Skeleton` de `src/components/ui`. Use suas variantes existentes e centralize novas variantes no próprio componente; `Select` compartilha as variantes de `Button`.
+- Evite cores locais ou valores RGB/HSL avulsos quando houver token semântico equivalente. Não migre outras telas como parte da definição do padrão, salvo quando a tarefa pedir essa migração.
+
+## Ícones
+
+- Registre e consuma ícones somente pelo catálogo `src/components/icons/index.ts` e pelo componente `NextIcon`.
+- Nomeie variantes de traço com o sufixo `Outline` e variantes preenchidas com `Filled`. Ao renomear, mantenha o nome do arquivo, o componente exportado, a chave do catálogo e todos os consumidores alinhados.

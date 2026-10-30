@@ -1,70 +1,72 @@
 // Accessibility
-import Eye from "./accessibility/eye";
-import EyeOff from "./accessibility/eye-off";
+import EyeOffOutline from "./accessibility/eye-off-outline";
+import EyeOutline from "./accessibility/eye-outline";
 // Arrows
-import ArrowDownRight from "./arrows/arrow-down-right";
-import ArrowDownTrend from "./arrows/arrow-down-trend";
-import ArrowRight from "./arrows/arrow-right";
-import ArrowUpRight from "./arrows/arrow-up-right";
-import ArrowUpTrend from "./arrows/arrow-up-trend";
-import ChevronDown from "./arrows/chevron-down";
-import ChevronRight from "./arrows/chevron-right";
-import History from "./arrows/history";
+import ArrowDownRightOutline from "./arrows/arrow-down-right-outline";
+import ArrowDownTrendOutline from "./arrows/arrow-down-trend-outline";
+import ArrowRightOutline from "./arrows/arrow-right-outline";
+import ArrowUpRightOutline from "./arrows/arrow-up-right-outline";
+import ArrowUpTrendOutline from "./arrows/arrow-up-trend-outline";
+import ChevronDownOutline from "./arrows/chevron-down-outline";
+import ChevronRightOutline from "./arrows/chevron-right-outline";
+import HistoryOutline from "./arrows/history-outline";
 // Brands
 import Google from "./brands/google";
 // Charts
-import Forecast from "./charts/forecast";
+import ForecastOutline from "./charts/forecast-outline";
 // Finance
-import Equals from "./finance/equals";
+import EqualsOutline from "./finance/equals-outline";
 // Layout
-import BrandMark from "./layout/brand-mark";
-import Calendar from "./layout/calendar";
-import Dashboard from "./layout/dashboard";
+import BrandMarkOutline from "./layout/brand-mark-outline";
+import CalendarOutline from "./layout/calendar-outline";
+import DashboardOutline from "./layout/dashboard-outline";
 import HorizontalDots from "./layout/horizontal-dots";
-import Plus from "./layout/plus";
-import Records from "./layout/records";
+import PlusOutline from "./layout/plus-outline";
+import RecordsOutline from "./layout/records-outline";
 import VerticalDots from "./layout/vertical-dots";
 // Notifications
-import Bell from "./notifications/bell";
+import BellOutline from "./notifications/bell-outline";
 // Actions
+import CopyOutline from "./actions/copy-outline";
 import TrashOutline from "./actions/trash-outline";
 // Status
-import Check from "./status/check";
-import CheckCircle from "./status/check-circle";
+import CheckCircleOutline from "./status/check-circle-outline";
+import CheckOutline from "./status/check-outline";
 import CheckRoundedFilled from "./status/check-rounded-filled";
-import Clock from "./status/clock";
+import ClockOutline from "./status/clock-outline";
 import ClockRoundedFilled from "./status/clock-rounded-filled";
 import CloseRoundedFilled from "./status/close-rounded-filled";
-import Loading from "./status/loading";
+import LoadingOutline from "./status/loading-outline";
 
 export const iconsMap = {
-  ArrowDownRight,
-  ArrowDownTrend,
-  ArrowRight,
-  ArrowUpRight,
-  ArrowUpTrend,
-  Bell,
-  BrandMark,
-  Calendar,
-  Check,
-  CheckCircle,
+  ArrowDownRightOutline,
+  ArrowDownTrendOutline,
+  ArrowRightOutline,
+  ArrowUpRightOutline,
+  ArrowUpTrendOutline,
+  BellOutline,
+  BrandMarkOutline,
+  CalendarOutline,
+  CheckCircleOutline,
+  CheckOutline,
   CheckRoundedFilled,
-  ChevronDown,
-  ChevronRight,
-  Clock,
+  ChevronDownOutline,
+  ChevronRightOutline,
+  ClockOutline,
   ClockRoundedFilled,
   CloseRoundedFilled,
-  Dashboard,
-  Equals,
-  Eye,
-  EyeOff,
-  Forecast,
+  CopyOutline,
+  DashboardOutline,
+  EqualsOutline,
+  EyeOffOutline,
+  EyeOutline,
+  ForecastOutline,
   Google,
-  History,
+  HistoryOutline,
   HorizontalDots,
-  Loading,
-  Plus,
-  Records,
+  LoadingOutline,
+  PlusOutline,
+  RecordsOutline,
   TrashOutline,
   VerticalDots,
 } as const;

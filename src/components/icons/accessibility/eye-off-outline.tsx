@@ -1,6 +1,6 @@
 import type { IconSvgProps } from "../icon-types";
 
-export default function EyeOff(props: IconSvgProps) {
+export default function EyeOffOutline(props: IconSvgProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
       <path

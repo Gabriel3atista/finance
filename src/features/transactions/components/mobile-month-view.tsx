@@ -86,7 +86,7 @@ export function MobileMonthView({
     )
     .reduce((total, entry) => total + entry.amount, 0);
   return (
-    <section className="flex flex-col gap-3 mx-auto max-w-xl">
+    <section className="mx-auto flex min-h-[calc(100dvh_-_12rem_-_env(safe-area-inset-top))] max-w-xl flex-col gap-3 sm:min-h-[calc(100dvh_-_13.75rem_-_env(safe-area-inset-top))] lg:min-h-[calc(100dvh_-_9.75rem)]">
       <MonthSelector
         month={month}
         onMonthPreview={onMonthPreview}
@@ -98,10 +98,10 @@ export function MobileMonthView({
           className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border-[1px] border-white/50 mix-blend-overlay"
         />
         <div className="relative z-10 flex items-center justify-between gap-3">
-          <p className="text-sm text-white/70">Saldo previsto</p>
+          <p className="text-sm text-ink">Saldo previsto</p>
           <ValuesVisibilityToggle
             iconOnly
-            className="min-h-8 size-8 rounded-full bg-transparent p-0 text-white/70 hover:bg-white/10 hover:text-white"
+            className="min-h-8 size-8 rounded-full bg-transparent p-0 text-ink"
             loading={isBalancePending || isPreviousBalancePending}
           />
         </div>
@@ -173,7 +173,7 @@ export function MobileMonthView({
           </div>
         </dl>
       </article>
-      <section className="mt-6">
+      <section className="mt-6 flex min-h-0 flex-1 flex-col">
         <MonthlyEntryList
           entries={entries}
           month={monthValue}

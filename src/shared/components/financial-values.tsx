@@ -99,11 +99,11 @@ export function ValuesVisibilityToggle({
       {loading ? (
         <NextIcon
           className="animate-spin motion-reduce:animate-none"
-          name="Loading"
+          name="LoadingOutline"
           size={20}
         />
       ) : (
-        <NextIcon name={hidden ? "EyeOff" : "Eye"} size={20} />
+        <NextIcon name={hidden ? "EyeOffOutline" : "EyeOutline"} size={20} />
       )}
       <span className={iconOnly ? "sr-only" : "hidden text-xs sm:inline"}>
         {label}

@@ -394,7 +394,7 @@ export function MonthlyLedger({
 
   return (
     <>
-      <section className="mx-auto max-w-5xl">
+      <section className="mx-auto flex min-h-[calc(100dvh_-_12rem_-_env(safe-area-inset-top))] max-w-5xl flex-col sm:min-h-[calc(100dvh_-_13.75rem_-_env(safe-area-inset-top))] lg:min-h-[calc(100dvh_-_9.75rem)]">
         <header className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
             <Eyebrow>Operação mensal</Eyebrow>
@@ -435,7 +435,7 @@ export function MonthlyLedger({
         )}
         {saved && (
           <p
-            className="mb-5 rounded-xl border border-success-800 bg-success-900 px-4 py-3 text-sm text-success-100"
+            className="mb-5 rounded-xl border border-mint-800 bg-mint-900 px-4 py-3 text-sm text-mint-100"
             role="status"
           >
             Alterações salvas.
@@ -443,7 +443,7 @@ export function MonthlyLedger({
         )}
         {mutationMessage && (
           <p
-            className={`mb-5 rounded-xl px-4 py-3 text-sm ${isSuccessMutationMessage(mutationMessage) ? "border border-success-800 bg-success-900 text-success-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
+            className={`mb-5 rounded-xl px-4 py-3 text-sm ${isSuccessMutationMessage(mutationMessage) ? "border border-mint-800 bg-mint-900 text-mint-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
             role={
               isSuccessMutationMessage(mutationMessage) ? "status" : "alert"
             }
@@ -508,8 +508,8 @@ export function MonthlyLedger({
           />
         </div>
 
-        <div className="mt-5">
-          <div className="rounded-[18px] border border-line bg-graphite-900 p-5 shadow-card sm:p-7">
+        <div className="mt-5 flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col rounded-[18px] border border-line bg-graphite-900 p-5 shadow-card sm:p-7">
             <MonthlyEntryList
               entries={entries}
               month={monthValue}

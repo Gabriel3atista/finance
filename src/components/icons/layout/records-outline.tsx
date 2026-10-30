@@ -1,6 +1,6 @@
 import type { IconSvgProps } from "../icon-types";
 
-export default function History(props: IconSvgProps) {
+export default function RecordsOutline(props: IconSvgProps) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -11,8 +11,7 @@ export default function History(props: IconSvgProps) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M3.5 12a8.5 8.5 0 1 0 2.7-6.2L3.5 8.5" />
-      <path d="M3.5 4.5v4h4M12 7.5V12l3 2" />
+      <path d="M4.5 6.5h15M7 6.5v13h10v-13M9.5 6.5V4h5v2.5M10 10v6M14 10v6" />
     </svg>
   );
 }

@@ -58,7 +58,7 @@ export function AppShell({
                   aria-label="Notificações"
                   title="Notificações"
                   className="size-10 rounded-full"
-                  icon="Bell"
+                  icon="BellOutline"
                 />
               </div>
               <div className="app-shell-desktop-context hidden text-sm text-muted lg:block mobile-app:!hidden">

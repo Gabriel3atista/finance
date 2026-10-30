@@ -20,7 +20,7 @@ export function MonthOverview() {
         </div>
         <div className="flex items-center gap-2 self-start rounded-full border border-line bg-graphite-900 px-3 py-1.5 text-xs font-medium text-muted sm:self-auto">
           <span
-            className="size-1.5 rounded-full bg-success-400"
+            className="size-1.5 rounded-full bg-mint-400"
             aria-hidden="true"
           />
           Núcleo familiar
@@ -28,9 +28,9 @@ export function MonthOverview() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <SummaryCard title="Receitas" icon="ArrowUpRight" />
-        <SummaryCard title="Despesas" icon="ArrowDownRight" />
-        <SummaryCard title="Saldo do mês" icon="Equals" />
+        <SummaryCard title="Receitas" icon="ArrowUpRightOutline" />
+        <SummaryCard title="Despesas" icon="ArrowDownRightOutline" />
+        <SummaryCard title="Saldo do mês" icon="EqualsOutline" />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.85fr)]">
@@ -45,12 +45,12 @@ export function MonthOverview() {
               </p>
             </div>
             <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-canvas text-muted">
-              <NextIcon name="Records" size={24} />
+              <NextIcon name="RecordsOutline" size={24} />
             </div>
           </div>
           <div className="flex min-h-[205px] flex-col items-center justify-center text-center">
             <div className="grid size-11 place-items-center rounded-full bg-graphite-800 text-muted">
-              <NextIcon name="History" size={24} />
+              <NextIcon name="HistoryOutline" size={24} />
             </div>
             <h3 className="mt-4 text-sm font-semibold text-ink">
               Nenhuma movimentação ainda
@@ -71,7 +71,7 @@ export function MonthOverview() {
               <p className="mt-1 text-sm text-muted">Planejamento à frente</p>
             </div>
             <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-              <NextIcon name="Forecast" size={24} />
+              <NextIcon name="ForecastOutline" size={24} />
             </div>
           </div>
           <div className="mt-5 divide-y divide-line">

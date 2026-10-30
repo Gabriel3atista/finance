@@ -229,7 +229,7 @@ export function MonthlyEntryList({
       }}
       shouldScaleBackground={false}
     >
-      <section className="flex flex-col gap-3">
+      <section className="flex min-h-0 flex-1 flex-col gap-3">
         {showHeader && (
           <header className="flex flex-nowrap items-center justify-between gap-3 pl-3 py-2">
             <div className="flex items-center gap-2">
@@ -243,7 +243,7 @@ export function MonthlyEntryList({
             <div className="flex items-center gap-2">
               <Button
                 aria-label="Novo lançamento"
-                leadingIcon="Plus"
+                leadingIcon="PlusOutline"
                 onClick={onCreateEntry}
                 type="button"
                 variant="primary"
@@ -278,7 +278,7 @@ export function MonthlyEntryList({
           value={categoryFilter}
           onValueChange={handleCategoryChange}
         />
-        <div>
+        <div className="min-h-0 flex-1">
           {isLoading ? (
             <div
               aria-label="Carregando lançamentos"
@@ -391,13 +391,19 @@ export function MonthlyEntryList({
               tente novamente.
             </p>
           ) : (
-            <div className="flex min-h-44 flex-col items-center justify-center px-4 text-center">
+            <div
+              className={cn(
+                "flex min-h-44 flex-col items-center justify-center px-4 text-center",
+                entries.length === 0 &&
+                  "h-full rounded-xl border border-dashed border-line bg-graphite-800",
+              )}
+            >
               {entries.length === 0 && (
                 <span
                   className="grid size-11 place-items-center rounded-full bg-accent-soft text-lg text-accent"
                   aria-hidden="true"
                 >
-                  +
+                  <NextIcon name="CalendarOutline" />
                 </span>
               )}
               <h3
@@ -879,15 +885,18 @@ function EntryOptionsMenu({
       <DropdownMenuContent align="end" className="w-56">
         <div className="flex flex-col gap-1">
           <DropdownMenuItem
+            className="focus:bg-graphite-600 text-ink"
             disabled={actionsPending}
             onSelect={() => onActionSelect("copy")}
+            leadingIcon="CopyOutline"
           >
             Copiar mês anterior
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-rose-300 focus:bg-rose-500/10 focus:text-rose-200"
+            className="text-rose-500 focus:bg-rose-500/10"
             disabled={actionsPending}
             onSelect={() => onActionSelect("delete")}
+            leadingIcon="TrashOutline"
           >
             Apagar tudo
           </DropdownMenuItem>
@@ -904,35 +913,79 @@ function CategoryFilter({
   value: CategoryFilterValue;
   onValueChange: (value: string) => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [fadeEdges, setFadeEdges] = useState({ left: 0, right: 0 });
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    function updateFadeEdges() {
+      const element = scrollRef.current;
+      if (!element) return;
+      const maxScroll = element.scrollWidth - element.clientWidth;
+      const fadeDistance = 48;
+      setFadeEdges({
+        left: Math.min(1, Math.max(0, element.scrollLeft / fadeDistance)),
+        right: Math.min(
+          1,
+          Math.max(0, (maxScroll - element.scrollLeft) / fadeDistance),
+        ),
+      });
+    }
+
+    updateFadeEdges();
+    container.addEventListener("scroll", updateFadeEdges, { passive: true });
+    const resizeObserver = new ResizeObserver(updateFadeEdges);
+    resizeObserver.observe(container);
+
+    return () => {
+      container.removeEventListener("scroll", updateFadeEdges);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
-    <div
-      aria-label="Filtrar lançamentos por categoria"
-      className="scrollbar-hidden flex min-w-0 gap-2 overflow-x-auto touch-pan-x"
-      role="group"
-    >
-      {[
-        { label: "Todas", value: "all" as const },
-        ...FINANCIAL_CATEGORIES.map((category) => ({
-          label: category,
-          value: category,
-        })),
-      ].map((category) => (
-        <button
-          aria-pressed={value === category.value}
-          className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-graphite-900"
-          key={category.value}
-          onClick={() => onValueChange(category.value)}
-          type="button"
-        >
-          <Badge
-            className="pointer-events-none"
-            size="sm"
-            variant={value === category.value ? "primary" : "secondary"}
+    <div className="relative min-w-0">
+      <div
+        aria-label="Filtrar lançamentos por categoria"
+        className="scrollbar-hidden flex min-w-0 gap-2 overflow-x-auto touch-pan-x"
+        ref={scrollRef}
+        role="group"
+      >
+        {[
+          { label: "Todas", value: "all" as const },
+          ...FINANCIAL_CATEGORIES.map((category) => ({
+            label: category,
+            value: category,
+          })),
+        ].map((category) => (
+          <button
+            aria-pressed={value === category.value}
+            className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2 focus-visible:ring-offset-graphite-900"
+            key={category.value}
+            onClick={() => onValueChange(category.value)}
+            type="button"
           >
-            {category.label}
-          </Badge>
-        </button>
-      ))}
+            <Badge
+              className="pointer-events-none"
+              variant={value === category.value ? "white" : "secondary"}
+            >
+              {category.label}
+            </Badge>
+          </button>
+        ))}
+      </div>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-graphite-900 to-transparent transition-opacity duration-100"
+        style={{ opacity: fadeEdges.left }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-graphite-900 to-transparent transition-opacity duration-100"
+        style={{ opacity: fadeEdges.right }}
+      />
     </div>
   );
 }

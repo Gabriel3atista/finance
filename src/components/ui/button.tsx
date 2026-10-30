@@ -21,6 +21,8 @@ export const buttonVariants = cva(
           "bg-yellow-500 text-graphite-900 hover:bg-yellow-500/90 active:bg-yellow-500/80",
         default:
           "bg-moon-200 text-graphite-900 hover:bg-moon-200/90 active:bg-moon-200/80",
+        white:
+          "bg-white text-graphite-900 hover:bg-white/90 active:bg-white/80",
         destructive:
           "bg-rose-500 text-moon-100 hover:bg-rose-500/90 active:bg-rose-500/80",
         "destructive-subtle":
@@ -103,7 +105,7 @@ function Spinner() {
   return (
     <NextIcon
       className="animate-spin motion-reduce:animate-none"
-      name="Loading"
+      name="LoadingOutline"
       size={16}
     />
   );

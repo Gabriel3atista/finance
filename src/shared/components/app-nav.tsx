@@ -6,11 +6,11 @@ import { NextIcon } from "@/components/atoms/next-icon";
 import { cn } from "@/shared/lib/utils";
 
 const items = [
-  { href: "/dashboard", label: "Painel", icon: "Dashboard" },
-  { href: "/mes", label: "Meu mês", icon: "Calendar" },
-  { href: "/projecao", label: "Projeção", icon: "Forecast" },
-  { href: "/historico", label: "Histórico", icon: "History" },
-  { href: "/cadastros", label: "Cadastros", icon: "Records" },
+  { href: "/dashboard", label: "Painel", icon: "DashboardOutline" },
+  { href: "/mes", label: "Meu mês", icon: "CalendarOutline" },
+  { href: "/projecao", label: "Projeção", icon: "ForecastOutline" },
+  { href: "/historico", label: "Histórico", icon: "HistoryOutline" },
+  { href: "/cadastros", label: "Cadastros", icon: "RecordsOutline" },
 ] as const;
 
 export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
@@ -29,7 +29,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
           aria-label="Finance, página inicial"
         >
           <span className="grid size-9 place-items-center rounded-xl bg-moon-200 text-graphite-900">
-            <NextIcon name="BrandMark" size={24} />
+            <NextIcon name="BrandMarkOutline" size={24} />
           </span>
           <span className="text-[15px] font-semibold tracking-tight text-ink">
             Finance

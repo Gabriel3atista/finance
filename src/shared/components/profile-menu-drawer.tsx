@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
+  useDrawer,
 } from "@/components/ui/drawer";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { ProfileAvatar } from "@/shared/components/profile-avatar";
@@ -32,10 +32,10 @@ export function ProfileMenuDrawer({
   userEmail: string;
   fallbackAvatarUrl: string;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const drawer = useDrawer();
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer {...drawer.props}>
       <DrawerTrigger asChild>
         <Button
           type="button"
@@ -75,7 +75,7 @@ export function ProfileMenuDrawer({
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setIsOpen(false)}
+                onClick={drawer.closeDrawer}
                 className="focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none flex min-h-12 items-center rounded-xl px-4 text-sm font-medium text-ink hover:bg-canvas"
               >
                 {link.label}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +13,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  useDrawer,
 } from "@/components/ui/drawer";
 import {
   addMonths,
@@ -137,7 +138,7 @@ export function MonthlyLedger({
   });
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
-  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const createEntryDrawer = useDrawer();
   const invalidateFinance = () =>
     invalidateFinanceQueries(queryClient, householdId, {
       revalidateOccurrences: true,
@@ -148,7 +149,7 @@ export function MonthlyLedger({
       if (result.error) throw new Error(result.error);
     },
     onSuccess: async () => {
-      setCreateDrawerOpen(false);
+      createEntryDrawer.closeDrawer();
       setMutationMessage("saved");
       await invalidateFinance();
     },
@@ -271,12 +272,11 @@ export function MonthlyLedger({
   const openCreateDrawer = () => {
     setMutationMessage("");
     createEntry.reset();
-    setCreateDrawerOpen(true);
+    createEntryDrawer.openDrawer();
   };
   const newEntryDrawer = (
     <NewEntryDrawer
-      open={createDrawerOpen}
-      onOpenChange={setCreateDrawerOpen}
+      drawer={createEntryDrawer}
       month={monthValue}
       pending={createEntry.isPending}
       error={
@@ -543,89 +543,84 @@ export function MonthlyLedger({
 }
 
 function NewEntryDrawer({
-  open,
-  onOpenChange,
+  drawer,
   month,
   pending,
   error,
   onSubmit,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  drawer: ReturnType<typeof useDrawer>;
   month: string;
   pending: boolean;
   error: string;
   onSubmit: (form: FormData) => void;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
+
   return (
-    <Drawer
-      open={open}
-      onOpenChange={onOpenChange}
-      shouldScaleBackground={false}
-    >
-      {open && (
-        <DrawerContent>
-          <DrawerHeader className="shrink-0 px-3 pb-3 pt-4 text-left">
-            <DrawerTitle className="text-base">Novo lançamento</DrawerTitle>
-          </DrawerHeader>
-          <form
-            className="flex min-h-0 flex-1 flex-col overflow-hidden"
-            onSubmit={(event) => {
-              event.preventDefault();
-              onSubmit(new FormData(event.currentTarget));
-            }}
-          >
-            <DrawerBody className="space-y-4 px-3 pb-5">
-              {error && (
-                <p
-                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
-                  role="alert"
-                >
-                  {errorMessages[error] ??
-                    "Não foi possível salvar o lançamento. Tente novamente."}
-                </p>
-              )}
-              <Select
-                label="Tipo"
-                name="entry_type"
-                defaultValue="expense"
-                variant="secondary"
+    <Drawer {...drawer.props} onCloseComplete={() => formRef.current?.reset()}>
+      <DrawerContent>
+        <DrawerHeader className="shrink-0 px-3 pb-3 pt-4 text-left">
+          <DrawerTitle className="text-base">Novo lançamento</DrawerTitle>
+        </DrawerHeader>
+        <form
+          ref={formRef}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit(new FormData(event.currentTarget));
+          }}
+        >
+          <DrawerBody className="space-y-4 px-3 pb-5">
+            {error && (
+              <p
+                className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                role="alert"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="expense">Despesa</SelectItem>
-                  <SelectItem value="income">Receita</SelectItem>
-                </SelectContent>
-              </Select>
-              <EntryFields month={month} />
-            </DrawerBody>
-            <DrawerFooter className="shrink-0 border-t border-line px-3 pb-3 pt-4">
-              <Button
-                className="w-full"
-                disabled={pending}
-                type="submit"
-                variant="primary"
-                loading={pending}
-                rounded
-              >
-                {pending ? "Salvando…" : "Salvar lançamento"}
-              </Button>
-              <Button
-                className="w-full"
-                disabled={pending}
-                onClick={() => onOpenChange(false)}
-                type="button"
-                variant="secondary"
-                rounded
-              >
-                Cancelar
-              </Button>
-            </DrawerFooter>
-          </form>
-        </DrawerContent>
-      )}
+                {errorMessages[error] ??
+                  "Não foi possível salvar o lançamento. Tente novamente."}
+              </p>
+            )}
+            <Select
+              label="Tipo"
+              name="entry_type"
+              defaultValue="expense"
+              variant="secondary"
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="expense">Despesa</SelectItem>
+                <SelectItem value="income">Receita</SelectItem>
+              </SelectContent>
+            </Select>
+            <EntryFields month={month} />
+          </DrawerBody>
+          <DrawerFooter className="shrink-0 border-t border-line px-3 pb-3 pt-4">
+            <Button
+              className="w-full"
+              disabled={pending}
+              type="submit"
+              variant="primary"
+              loading={pending}
+              rounded
+            >
+              {pending ? "Salvando…" : "Salvar lançamento"}
+            </Button>
+            <Button
+              className="w-full"
+              disabled={pending}
+              onClick={drawer.closeDrawer}
+              type="button"
+              variant="secondary"
+              rounded
+            >
+              Cancelar
+            </Button>
+          </DrawerFooter>
+        </form>
+      </DrawerContent>
     </Drawer>
   );
 }

@@ -41,6 +41,7 @@ import {
   DrawerHeader,
   DrawerNested,
   DrawerTitle,
+  useDrawer,
 } from "@/components/ui/drawer";
 import { EntryFields } from "@/features/transactions/components/entry-fields";
 import {
@@ -97,20 +98,46 @@ export function MonthlyEntryList({
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [selectedEntrySnapshot, setSelectedEntrySnapshot] =
     useState<FinancialEntry | null>(null);
-  const [entryDrawerOpen, setEntryDrawerOpen] = useState(false);
-  const entryDrawerOpenRef = useRef(false);
   const [entryToDelete, setEntryToDelete] = useState<FinancialEntry | null>(
     null,
   );
-  const [deleteDrawerOpen, setDeleteDrawerOpen] = useState(false);
-  const deleteDrawerOpenRef = useRef(false);
   const closeEntryAfterDeleteRef = useRef(false);
   const [deleteError, setDeleteError] = useState("");
   const [monthAction, setMonthAction] = useState<MonthAction | null>(null);
-  const [monthActionDrawerOpen, setMonthActionDrawerOpen] = useState(false);
-  const monthActionDrawerOpenRef = useRef(false);
   const [monthActionError, setMonthActionError] = useState("");
   const [actionError, setActionError] = useState("");
+  const entryDrawer = useDrawer({
+    onOpenChange: (open) => {
+      if (!open) setActionError("");
+    },
+    onCloseComplete: () => {
+      setSelectedEntryId(null);
+      setSelectedEntrySnapshot(null);
+    },
+  });
+  const deleteDrawer = useDrawer({
+    canClose: () => !rowMutationPending,
+    onOpenChange: (open) => {
+      if (!open && !rowMutationPending) setDeleteError("");
+    },
+    onCloseComplete: () => {
+      setEntryToDelete(null);
+      if (closeEntryAfterDeleteRef.current) {
+        closeEntryAfterDeleteRef.current = false;
+        entryDrawer.closeDrawer();
+      }
+    },
+  });
+  const monthActionDrawer = useDrawer({
+    canClose: () => !monthActionsPending,
+    onOpenChange: (open) => {
+      if (!open && !monthActionsPending) setMonthActionError("");
+    },
+    onCloseComplete: () => setMonthAction(null),
+  });
+  const closeEntryDrawer = entryDrawer.closeDrawer;
+  const closeDeleteDrawer = deleteDrawer.closeDrawer;
+  const closeMonthActionDrawer = monthActionDrawer.closeDrawer;
   const [categoryFilter, setCategoryFilter] =
     useState<CategoryFilterValue>("all");
   const reducedMotion = useReducedMotion() === true;
@@ -136,53 +163,30 @@ export function MonthlyEntryList({
   }
 
   useEffect(() => {
-    entryDrawerOpenRef.current = false;
-    deleteDrawerOpenRef.current = false;
-    monthActionDrawerOpenRef.current = false;
-    setEntryDrawerOpen(false);
-    setDeleteDrawerOpen(false);
-    setMonthActionDrawerOpen(false);
+    closeEntryDrawer();
+    closeDeleteDrawer();
+    closeMonthActionDrawer();
     closeEntryAfterDeleteRef.current = false;
     setActionError("");
     setDeleteError("");
     setMonthActionError("");
-  }, [month]);
-
-  function setEntryDrawerState(open: boolean) {
-    entryDrawerOpenRef.current = open;
-    setEntryDrawerOpen(open);
-  }
-
-  function setDeleteDrawerState(open: boolean) {
-    deleteDrawerOpenRef.current = open;
-    setDeleteDrawerOpen(open);
-  }
-
-  function setMonthActionDrawerState(open: boolean) {
-    monthActionDrawerOpenRef.current = open;
-    setMonthActionDrawerOpen(open);
-  }
+  }, [closeDeleteDrawer, closeEntryDrawer, closeMonthActionDrawer, month]);
 
   function openEntryDrawer(entry: FinancialEntry) {
     setActionError("");
     setSelectedEntryId(entry.id);
     setSelectedEntrySnapshot(entry);
-    setEntryDrawerState(true);
+    entryDrawer.openDrawer();
   }
 
   async function runAction(action: () => Promise<void>) {
     setActionError("");
     try {
       await action();
-      setEntryDrawerState(false);
+      entryDrawer.closeDrawer();
     } catch {
       setActionError("Não foi possível concluir. Tente novamente.");
     }
-  }
-
-  function closeDrawer(open: boolean) {
-    setEntryDrawerState(open);
-    if (!open) setActionError("");
   }
 
   async function confirmDelete() {
@@ -195,7 +199,7 @@ export function MonthlyEntryList({
     try {
       await onDelete(form);
       closeEntryAfterDeleteRef.current = true;
-      setDeleteDrawerState(false);
+      deleteDrawer.closeDrawer();
     } catch {
       setDeleteError("Falha ao excluir. Tente novamente.");
     }
@@ -207,7 +211,7 @@ export function MonthlyEntryList({
     try {
       if (monthAction === "copy") await onCopyPreviousMonth();
       else await onDeleteMonth();
-      setMonthActionDrawerState(false);
+      monthActionDrawer.closeDrawer();
     } catch {
       setMonthActionError(
         monthAction === "copy"
@@ -218,17 +222,7 @@ export function MonthlyEntryList({
   }
 
   return (
-    <Drawer
-      open={entryDrawerOpen}
-      onOpenChange={closeDrawer}
-      onAnimationEnd={(open) => {
-        if (!open && !entryDrawerOpenRef.current) {
-          setSelectedEntryId(null);
-          setSelectedEntrySnapshot(null);
-        }
-      }}
-      shouldScaleBackground={false}
-    >
+    <Drawer {...entryDrawer.props}>
       <section className="flex min-h-0 flex-1 flex-col gap-3">
         {showHeader && (
           <header className="flex flex-nowrap items-center justify-between gap-3 pl-3 py-2">
@@ -254,7 +248,7 @@ export function MonthlyEntryList({
                 onActionSelect={(action) => {
                   setMonthAction(action);
                   setMonthActionError("");
-                  setMonthActionDrawerState(true);
+                  monthActionDrawer.openDrawer();
                 }}
                 actionsPending={monthActionsPending}
               />
@@ -268,7 +262,7 @@ export function MonthlyEntryList({
               onActionSelect={(action) => {
                 setMonthAction(action);
                 setMonthActionError("");
-                setMonthActionDrawerState(true);
+                monthActionDrawer.openDrawer();
               }}
               actionsPending={monthActionsPending}
             />
@@ -441,7 +435,7 @@ export function MonthlyEntryList({
                   onClick={() => {
                     setDeleteError("");
                     setEntryToDelete(selectedEntry);
-                    setDeleteDrawerState(true);
+                    deleteDrawer.openDrawer();
                   }}
                   size="icon"
                   type="button"
@@ -516,7 +510,7 @@ export function MonthlyEntryList({
                   <Button
                     className="w-full"
                     disabled={rowMutationPending}
-                    onClick={() => closeDrawer(false)}
+                    onClick={entryDrawer.closeDrawer}
                     type="button"
                     variant="secondary"
                     rounded
@@ -529,27 +523,7 @@ export function MonthlyEntryList({
           </>
         )}
       </DrawerContent>
-      <DrawerNested
-        open={deleteDrawerOpen}
-        onOpenChange={(open) => {
-          if (open) {
-            setDeleteDrawerState(true);
-          } else if (!rowMutationPending) {
-            setDeleteDrawerState(false);
-            setDeleteError("");
-          }
-        }}
-        onAnimationEnd={(open) => {
-          if (!open && !deleteDrawerOpenRef.current) {
-            setEntryToDelete(null);
-            if (closeEntryAfterDeleteRef.current) {
-              closeEntryAfterDeleteRef.current = false;
-              setEntryDrawerState(false);
-            }
-          }
-        }}
-        shouldScaleBackground={false}
-      >
+      <DrawerNested {...deleteDrawer.props}>
         <DrawerContent>
           {entryToDelete && (
             <>
@@ -575,7 +549,7 @@ export function MonthlyEntryList({
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     disabled={rowMutationPending}
-                    onClick={() => setDeleteDrawerState(false)}
+                    onClick={deleteDrawer.closeDrawer}
                     type="button"
                     variant="secondary"
                     rounded
@@ -600,23 +574,7 @@ export function MonthlyEntryList({
           )}
         </DrawerContent>
       </DrawerNested>
-      <DrawerNested
-        open={monthActionDrawerOpen}
-        onOpenChange={(open) => {
-          if (open) {
-            setMonthActionDrawerState(true);
-          } else if (!monthActionsPending) {
-            setMonthActionDrawerState(false);
-            setMonthActionError("");
-          }
-        }}
-        onAnimationEnd={(open) => {
-          if (!open && !monthActionDrawerOpenRef.current) {
-            setMonthAction(null);
-          }
-        }}
-        shouldScaleBackground={false}
-      >
+      <DrawerNested {...monthActionDrawer.props}>
         <DrawerContent>
           {monthAction && (
             <>
@@ -646,7 +604,7 @@ export function MonthlyEntryList({
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     disabled={monthActionsPending}
-                    onClick={() => setMonthActionDrawerState(false)}
+                    onClick={monthActionDrawer.closeDrawer}
                     rounded
                     type="button"
                     variant="secondary"

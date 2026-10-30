@@ -49,7 +49,7 @@ function DropdownMenuSubContent({
   return (
     <DropdownMenuPrimitive.SubContent
       className={cn(
-        "dropdown-menu-content z-[110] min-w-40 rounded-xl border border-line bg-graphite-900 p-1 text-ink shadow-xl outline-none",
+        "dropdown-menu-content z-[110] min-w-40 rounded-xl border border-line/30 bg-graphite-800/60 p-1 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] outline-none backdrop-blur-lg",
         className,
       )}
       {...props}
@@ -66,7 +66,7 @@ function DropdownMenuContent({
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         className={cn(
-          "dropdown-menu-content z-[110] min-w-48 rounded-xl border border-line bg-graphite-800 p-1 text-ink shadow-xl outline-none",
+          "dropdown-menu-content z-[110] min-w-48 rounded-xl border border-line/30 bg-graphite-800/60 p-1 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] outline-none backdrop-blur-lg",
           className,
         )}
         sideOffset={sideOffset}
@@ -95,7 +95,8 @@ function DropdownMenuItem({
       className={cn(
         "flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition-colors focus:bg-graphite-800 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:shrink-0",
         inset && "pl-8",
-        variant === "destructive" && "text-rose-500 focus:bg-rose-500/10 focus:text-rose-400",
+        variant === "destructive" &&
+          "text-rose-500 focus:bg-rose-500/10 focus:text-rose-400",
         className,
       )}
       {...props}
@@ -184,10 +185,7 @@ function DropdownMenuSeparator({
   );
 }
 
-function DropdownMenuShortcut({
-  className,
-  ...props
-}: ComponentProps<"span">) {
+function DropdownMenuShortcut({ className, ...props }: ComponentProps<"span">) {
   return (
     <span
       className={cn("ml-auto text-xs tracking-widest text-muted", className)}

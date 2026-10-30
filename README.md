@@ -1,6 +1,6 @@
 # Finance
 
-Aplicação web da família para acompanhar receitas, despesas e projeções mensais.
+Aplicação web da família para acompanhar receitas, despesas e o histórico financeiro mensal.
 
 ## Desenvolvimento local
 
@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Abra <http://localhost:3000>. A aplicação oferece `/login`, `/signup`, `/forgot-password`, `/update-password` e `/household`, além das rotas `/mes`, `/projecao`, `/historico` e `/cadastros`.
+Abra <http://localhost:3000>. A aplicação oferece `/login`, `/signup`, `/forgot-password`, `/update-password` e `/household`, além das rotas `/mes`, `/historico` e `/cadastros`.
 
 ## Qualidade e produção
 

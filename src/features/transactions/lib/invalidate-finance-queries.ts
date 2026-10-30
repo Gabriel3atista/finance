@@ -20,9 +20,6 @@ export async function invalidateFinanceQueries(
       queryKey: queryKeys.dashboard(householdId),
     }),
     queryClient.invalidateQueries({
-      queryKey: queryKeys.forecast(householdId),
-    }),
-    queryClient.invalidateQueries({
       queryKey: queryKeys.history(householdId),
     }),
   ]);

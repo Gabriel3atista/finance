@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </Eyebrow>
           <div className="max-w-[330px] pb-2">
             <div className="mb-7 grid size-[52px] place-items-center rounded-2xl bg-moon-200 text-graphite-900 shadow-sm">
-              <NextIcon name="ForecastOutline" size={24} />
+              <NextIcon name="BrandMarkOutline" size={24} />
             </div>
             <p className="text-[32px] font-semibold leading-[1.12] tracking-[-0.045em] text-ink">
               Mais clareza para decidir juntos.

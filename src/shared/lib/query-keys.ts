@@ -24,6 +24,5 @@ export const queryKeys = {
   installmentPlans: (householdId: string) =>
     ["installment-plans", householdId] as const,
   dashboard: (householdId: string) => ["dashboard", householdId] as const,
-  forecast: (householdId: string) => ["forecast", householdId] as const,
   history: (householdId: string) => ["history", householdId] as const,
 };

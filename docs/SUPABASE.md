@@ -50,15 +50,9 @@ A rota `/historico` é somente leitura e consulta os lançamentos históricos j�
 
 O fluxo de envio foi aposentado: a interface, o parser `.xlsx`, a dependência de planilhas e a função `public.commit_historical_import(...)` foram removidos. A migration de aposentadoria revoga inserção e atualização autenticadas em `import_batches`, sem apagar lotes, lançamentos ou campos de proveniência existentes. Use o app para cadastrar novos lançamentos.
 
-## Projeções e saldo acumulado
+## Remoção da projeção
 
-`supabase/migrations/20261024000000_forecast_settings_and_overrides.sql` cria `household_finance_settings` para registrar o saldo inicial e a data de conferência, e `financial_forecast_overrides` para hipóteses vinculadas a lançamentos. Ambas têm RLS por núcleo; hipóteses são removidas em cascata quando o lançamento é excluído.
-
-`supabase/migrations/20261024120000_historical_category_forecasts.sql` cria uma tabela separada e protegida por RLS para ajustes de estimativas históricas de categorias variáveis.
-
-A projeção materializa recorrências e parcelas para o mês atual e os três seguintes, soma entradas e despesas por competência e mostra saldo acumulado somente após informar um saldo inicial datado. Para compor o saldo acumulado, considera lançamentos pendentes e baixas posteriores à data do saldo informado. Hipóteses afetam somente a projeção e nunca alteram `financial_entries.amount`.
-
-Despesas categorizadas sem valor recorrente usam como estimativa a média dos lançamentos nas competências com dados dentro dos seis meses anteriores. Só mostramos a estimativa quando há pelo menos duas competências registradas e nenhuma despesa da mesma categoria naquele mês. A hipótese ajustada é salva por núcleo, competência e categoria em `financial_forecast_category_overrides`, sem criar um lançamento financeiro.
+A rota `/projecao` foi aposentada. A migration `20261030120000_remove_forecast_feature.sql` remove as tabelas usadas exclusivamente por essa tela e o trigger que apagava hipóteses ao atualizar o status de um lançamento. A limpeza era apenas um efeito colateral da projeção; a operação de pagamento continua atualizando `financial_entries.status` diretamente.
 
 Os dois gráficos históricos usam lançamentos realizados por competência para exibir receitas e despesas nos últimos seis meses. Lançamentos históricos importados são consultáveis em `/historico`.
 

@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerBody,
   DrawerContent,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -53,7 +53,7 @@ export function ProfileMenuDrawer({
       </DrawerTrigger>
 
       <DrawerContent>
-        <DrawerHeader className="grid-cols-[1fr_auto] items-start gap-4 px-3 pb-0 pt-3">
+        <DrawerHeader className="shrink-0 px-3 pb-3 pt-4 text-left">
           <div className="flex min-w-0 items-center gap-3">
             <ProfileAvatar
               userId={userId}
@@ -69,29 +69,27 @@ export function ProfileMenuDrawer({
             </div>
           </div>
         </DrawerHeader>
-        <DrawerBody className="pb-0">
-          <nav className="mt-6 space-y-1 px-0" aria-label="Menu do usuário">
+        <DrawerBody className="space-y-2 pb-5">
+          <nav className="space-y-2" aria-label="Menu do usuário">
             {profileLinks.map((link) => (
-              <Link
+              <Button
+                asChild
                 key={link.href}
-                href={link.href}
-                onClick={drawer.closeDrawer}
-                className="focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none flex min-h-12 items-center rounded-xl px-4 text-sm font-medium text-ink hover:bg-canvas"
+                className="w-full justify-between"
+                size="lg"
+                trailingIcon="ChevronRightOutline"
+                variant="secondary"
               >
-                {link.label}
-                <NextIcon
-                  className="ml-auto text-muted"
-                  name="ChevronRightOutline"
-                  size={16}
-                />
-              </Link>
+                <Link href={link.href} onClick={drawer.closeDrawer}>
+                  {link.label}
+                </Link>
+              </Button>
             ))}
           </nav>
-
-          <div className="-mx-3 mt-5 border-t border-line px-3 pt-4">
-            <SignOutButton className="w-full justify-start px-4" />
-          </div>
         </DrawerBody>
+        <DrawerFooter className="shrink-0 border-t border-line px-3 pb-3 pt-4">
+          <SignOutButton className="w-full justify-start" />
+        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );

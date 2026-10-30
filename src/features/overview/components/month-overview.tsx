@@ -71,7 +71,7 @@ export function MonthOverview() {
               <p className="mt-1 text-sm text-muted">Planejamento à frente</p>
             </div>
             <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-              <NextIcon name="ForecastOutline" size={24} />
+              <NextIcon name="CalendarOutline" size={24} />
             </div>
           </div>
           <div className="mt-5 divide-y divide-line">

@@ -8,7 +8,7 @@
 - `/forgot-password` e `/update-password`: recuperação e troca da senha.
 - `/auth/callback`: troca do código PKCE por sessão.
 - `/household`: criação do núcleo, visualização e aceite de convites.
-- `/mes`, `/projecao`, `/historico` e `/cadastros`: exigem sessão autenticada e vínculo familiar.
+- `/mes`, `/historico` e `/cadastros`: exigem sessão autenticada e vínculo familiar.
 
 As sessões são guardadas em cookies pelo `@supabase/ssr`. O middleware renova a sessão e valida os claims; as consultas financeiras continuam protegidas por RLS.
 

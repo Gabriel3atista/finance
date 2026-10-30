@@ -88,7 +88,7 @@ export function AppShell({
             </main>
           </div>
           <nav
-            className="app-shell-mobile-nav fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-graphite-900/60 p-1 shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-xl lg:hidden standalone-wide:!block"
+            className="app-shell-mobile-nav fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] left-1/2 z-20 -translate-x-1/2 rounded-full border border-line/30 bg-graphite-800/60 p-1 shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-xl lg:hidden standalone-wide:!block"
             aria-label="Navegação principal"
           >
             <AppNav variant="mobile" />

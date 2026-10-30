@@ -102,7 +102,7 @@ Separe o que é despesa mensal, saldo de dívida e montante pago; não misture m
 - Biblioteca de gráficos leve e adequada ao stack, se necessária.
 - Utilize versões estáveis e compatíveis; não adicione dependências sem justificativa.
 
-Use uma organização **feature-based** proporcional ao tamanho do projeto: `auth`, `household`, `transactions`, `recurrences`, `installments`, `overview` e `forecast`, adaptando conforme a análise. Evite abstrações prematuras, camadas artificiais e complexidade de domínio que não resolva as dores descritas.
+Use uma organização **feature-based** proporcional ao tamanho do projeto: `auth`, `household`, `transactions`, `recurrences`, `installments` e `overview`, adaptando conforme a análise. Evite abstrações prematuras, camadas artificiais e complexidade de domínio que não resolva as dores descritas.
 
 Modele valores monetários com precisão apropriada, competência e vencimentos, integridade referencial, migrations e autorização no banco. Mantenha credenciais privilegiadas fora do cliente. Garanta que totais e projeções sejam reproduzíveis e não dupliquem obrigações.
 

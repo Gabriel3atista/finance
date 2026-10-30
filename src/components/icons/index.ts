@@ -12,8 +12,6 @@ import ChevronRightOutline from "./arrows/chevron-right-outline";
 import HistoryOutline from "./arrows/history-outline";
 // Brands
 import Google from "./brands/google";
-// Charts
-import ForecastOutline from "./charts/forecast-outline";
 // Finance
 import EqualsOutline from "./finance/equals-outline";
 // Layout
@@ -60,7 +58,6 @@ export const iconsMap = {
   EqualsOutline,
   EyeOffOutline,
   EyeOutline,
-  ForecastOutline,
   Google,
   HistoryOutline,
   HorizontalDots,

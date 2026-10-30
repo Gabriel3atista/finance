@@ -113,9 +113,6 @@ export function Dashboard({
               Abrir meu mês
             </Link>
           </Button>
-          <Button asChild variant="secondary">
-            <Link href="/projecao">Ver projeção</Link>
-          </Button>
         </div>
       </header>
 
@@ -183,12 +180,6 @@ export function Dashboard({
               Pendências vencidas e previstas para os próximos 30 dias.
             </p>
           </div>
-          <Link
-            className="text-sm font-medium text-accent underline-offset-4 hover:underline"
-            href="/projecao"
-          >
-            Abrir projeção
-          </Link>
         </header>
 
         {upcoming.length ? (

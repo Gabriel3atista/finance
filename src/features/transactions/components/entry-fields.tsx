@@ -10,6 +10,7 @@ import {
   FINANCIAL_CATEGORIES,
   normalizeFinancialCategory,
 } from "@/features/transactions/lib/categories";
+import { localDateString } from "@/shared/lib/date";
 
 export function EntryFields({
   month,
@@ -63,7 +64,7 @@ export function EntryFields({
         containerClassName="min-w-0"
         type="date"
         name="due_date"
-        defaultValue={entry?.due_date ?? ""}
+        defaultValue={entry ? (entry.due_date ?? "") : localDateString()}
       />
       <Input type="hidden" name="competence_month" value={month} />
     </div>

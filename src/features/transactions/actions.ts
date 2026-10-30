@@ -2,11 +2,15 @@
 
 import { redirect } from "next/navigation";
 import {
+  installmentAmount,
+  parseCurrencyInput,
+} from "@/shared/lib/currency";
+import {
   dateForDay,
-  moneyInputToNumber,
+  isValidDateString,
   parseMonth,
   parseMonthInput,
-} from "@/features/transactions/lib/data";
+} from "@/shared/lib/date";
 import { isFinancialCategory } from "@/features/transactions/lib/categories";
 import { getSignedInContext } from "@/features/transactions/lib/server-context";
 
@@ -22,13 +26,8 @@ function categoryValue(formData: FormData) {
 
 function validDueDate(value: FormDataEntryValue | null) {
   if (value === null || value === "") return null;
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value))
-    return undefined;
-  const date = new Date(`${value}T00:00:00Z`);
-  return Number.isNaN(date.valueOf()) ||
-    date.toISOString().slice(0, 10) !== value
-    ? undefined
-    : value;
+  if (typeof value !== "string" || !isValidDateString(value)) return undefined;
+  return value;
 }
 
 async function getUserContext() {
@@ -44,7 +43,7 @@ export async function createFinancialEntry(
 ): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
   const category = categoryValue(formData);
-  const amount = moneyInputToNumber(formData.get("amount"));
+  const amount = parseCurrencyInput(formData.get("amount"));
   const competenceMonth = parseMonthInput(formData.get("competence_month"));
   const dueDate = validDueDate(formData.get("due_date"));
   const entryType = String(formData.get("entry_type"));
@@ -83,7 +82,7 @@ export async function createRecurringItem(
 ): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
   const category = categoryValue(formData);
-  const amount = moneyInputToNumber(formData.get("amount"));
+  const amount = parseCurrencyInput(formData.get("amount"));
   const startsOn = parseMonthInput(formData.get("starts_on"));
   const endsOnValue = String(formData.get("ends_on") ?? "");
   const endsOn = endsOnValue ? parseMonthInput(endsOnValue) : null;
@@ -127,7 +126,7 @@ export async function createInstallmentPlan(
 ): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
   const category = "Dívidas e parcelas";
-  const totalAmount = moneyInputToNumber(formData.get("total_amount"));
+  const totalAmount = parseCurrencyInput(formData.get("total_amount"));
   const installmentCount = Number(formData.get("installment_count"));
   const firstMonth = parseMonthInput(formData.get("first_month"));
   const dueDayValue = String(formData.get("due_day") ?? "");
@@ -168,7 +167,7 @@ export async function updateFinancialEntry(
   const id = String(formData.get("id") ?? "");
   const title = textValue(formData, "title", 160);
   const category = categoryValue(formData);
-  const amount = moneyInputToNumber(formData.get("amount"));
+  const amount = parseCurrencyInput(formData.get("amount"));
   const dueDate = validDueDate(formData.get("due_date"));
   const entryType = String(formData.get("entry_type"));
   const scope = String(formData.get("scope") ?? "single");

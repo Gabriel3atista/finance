@@ -2,9 +2,48 @@
 
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ComponentProps } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { NextIcon } from "@/components/atoms/next-icon";
 import type { Icons } from "@/components/icons";
 import { cn } from "@/shared/lib/utils";
+
+const dropdownMenuContentVariants = cva(
+  "dropdown-menu-content z-[110] rounded-xl border outline-none backdrop-blur-lg",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-line/30 bg-graphite-800/60 p-1 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)]",
+        solid: "border-line bg-graphite-800 p-1 text-ink shadow-xl",
+        unstyled:
+          "border-transparent bg-transparent p-0 text-inherit shadow-none backdrop-blur-none",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  },
+);
+
+const dropdownMenuItemVariants = cva(
+  "flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "text-ink focus:bg-graphite-800",
+        ghost: "text-ink focus:bg-graphite-600",
+        destructive: "text-rose-500 focus:bg-rose-500/10 focus:text-rose-400",
+        "destructive-ghost":
+          "text-rose-500 hover:bg-rose-500/20 focus:bg-rose-500/20 focus:text-rose-500",
+        "destructive-subtle":
+          "bg-rose-500/20 text-rose-500 focus:bg-rose-500/30 focus:text-rose-500",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  },
+);
+
+type DropdownMenuContentVariantProps = VariantProps<
+  typeof dropdownMenuContentVariants
+>;
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
@@ -44,12 +83,15 @@ function DropdownMenuSubTrigger({
 
 function DropdownMenuSubContent({
   className,
+  variant,
   ...props
-}: ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+}: ComponentProps<typeof DropdownMenuPrimitive.SubContent> &
+  DropdownMenuContentVariantProps) {
   return (
     <DropdownMenuPrimitive.SubContent
       className={cn(
-        "dropdown-menu-content z-[110] min-w-40 rounded-xl border border-line/30 bg-graphite-800/60 p-1 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] outline-none backdrop-blur-lg",
+        dropdownMenuContentVariants({ variant }),
+        "min-w-40",
         className,
       )}
       {...props}
@@ -60,13 +102,16 @@ function DropdownMenuSubContent({
 function DropdownMenuContent({
   className,
   sideOffset = 6,
+  variant,
   ...props
-}: ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+}: ComponentProps<typeof DropdownMenuPrimitive.Content> &
+  DropdownMenuContentVariantProps) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         className={cn(
-          "dropdown-menu-content z-[110] min-w-48 rounded-xl border border-line/30 bg-graphite-800/60 p-1 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] outline-none backdrop-blur-lg",
+          dropdownMenuContentVariants({ variant }),
+          "min-w-48",
           className,
         )}
         sideOffset={sideOffset}
@@ -88,15 +133,13 @@ function DropdownMenuItem({
   inset?: boolean;
   leadingIcon?: Icons;
   trailingIcon?: Icons;
-  variant?: "default" | "destructive";
+  variant?: VariantProps<typeof dropdownMenuItemVariants>["variant"];
 }) {
   return (
     <DropdownMenuPrimitive.Item
       className={cn(
-        "flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition-colors focus:bg-graphite-800 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:shrink-0",
+        dropdownMenuItemVariants({ variant }),
         inset && "pl-8",
-        variant === "destructive" &&
-          "text-rose-500 focus:bg-rose-500/10 focus:text-rose-400",
         className,
       )}
       {...props}

@@ -10,10 +10,8 @@ import { BalanceChangeIndicator } from "@/shared/components/balance-change-indic
 import { AnimatedNumber } from "@/shared/components/animated-number";
 import { MonthSelector } from "@/features/transactions/components/month-selector";
 import { MonthlyEntryList } from "@/features/transactions/components/monthly-entry-list";
-import {
-  formatMoney,
-  type FinancialEntry,
-} from "@/features/transactions/lib/data";
+import type { FinancialEntry } from "@/features/transactions/lib/data";
+import { formatCurrency } from "@/shared/lib/currency";
 
 export function MobileMonthView({
   currentBalance,
@@ -141,7 +139,7 @@ export function MobileMonthView({
             </dt>
             <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold tabular-nums text-ink">
               <span className="min-w-0 truncate">
-                <FinancialValue size="sm">{formatMoney(income)}</FinancialValue>
+                <FinancialValue size="sm">{formatCurrency(income)}</FinancialValue>
               </span>
               <CircularProgress
                 label="das receitas recebidas"
@@ -161,7 +159,7 @@ export function MobileMonthView({
             <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold tabular-nums text-ink">
               <span className="min-w-0 truncate">
                 <FinancialValue size="sm">
-                  {formatMoney(expenses)}
+                  {formatCurrency(expenses)}
                 </FinancialValue>
               </span>
               <CircularProgress

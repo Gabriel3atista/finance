@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { NextIcon } from "@/components/atoms/next-icon";
 import { compareBalances } from "@/shared/lib/balance-comparison";
 import { AnimatedNumber } from "@/shared/components/animated-number";
+import { formatNumber } from "@/shared/lib/currency";
 
 export function BalanceChangeIndicator({
   currentBalance,
@@ -24,10 +25,10 @@ export function BalanceChangeIndicator({
   const percentageLabel =
     percentageChange === null
       ? "—"
-      : `${new Intl.NumberFormat("pt-BR", {
+      : `${formatNumber(percentageChange, {
           maximumFractionDigits: 1,
           signDisplay: "always",
-        }).format(percentageChange)}%`;
+        })}%`;
   const description = loading
     ? "Carregando comparação com o mês anterior"
     : percentageChange === null

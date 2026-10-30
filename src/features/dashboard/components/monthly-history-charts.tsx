@@ -14,17 +14,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { formatMonth } from "@/shared/lib/date";
+import { formatCompactCurrency, formatCurrency } from "@/shared/lib/currency";
+import { formatMonth, formatShortMonth } from "@/shared/lib/date";
 import {
   FinancialValue,
   useValuesVisibility,
 } from "@/shared/components/financial-values";
 import type { DashboardMonth } from "@/features/dashboard/lib/data";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const chartConfig = {
   income: { label: "Receita", color: "hsl(207.69 27.66% 90.78%)" },
@@ -70,9 +66,7 @@ export function MonthlyHistoryCharts({ data }: { data: DashboardMonth[] }) {
 function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
   const { hidden } = useValuesVisibility();
   const chartData = data.map((item) => ({
-    month: new Intl.DateTimeFormat("pt-BR", { month: "short" })
-      .format(item.month)
-      .replace(".", ""),
+    month: formatShortMonth(item.month),
     fullMonth: formatMonth(item.month),
     income: item.income,
     expenses: item.expenses,
@@ -111,7 +105,7 @@ function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
               key={field}
             >
               <FinancialValue>
-                {currency.format(latest?.[field as "income" | "expenses"] ?? 0)}
+                {formatCurrency(latest?.[field as "income" | "expenses"] ?? 0)}
               </FinancialValue>
               <span className="mt-0.5 block text-[10px] font-normal text-muted">
                 {series.label} neste mês
@@ -150,12 +144,7 @@ function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
             tickFormatter={(value: number) =>
               hidden
                 ? "•••"
-                : new Intl.NumberFormat("pt-BR", {
-                    notation: "compact",
-                    style: "currency",
-                    currency: "BRL",
-                    maximumFractionDigits: 1,
-                  }).format(value)
+                : formatCompactCurrency(value)
             }
             tickCount={4}
             width={58}

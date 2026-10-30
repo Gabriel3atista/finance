@@ -50,11 +50,9 @@ import {
   normalizeFinancialCategory,
   type FinancialCategory,
 } from "@/features/transactions/lib/categories";
-import {
-  formatMoney,
-  localDateString,
-  type FinancialEntry,
-} from "@/features/transactions/lib/data";
+import type { FinancialEntry } from "@/features/transactions/lib/data";
+import { formatCurrency } from "@/shared/lib/currency";
+import { formatDate, localDateString } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { cn } from "@/shared/lib/utils";
 
@@ -293,7 +291,7 @@ export function MonthlyEntryList({
             <div className="flex flex-col gap-3">
               {filteredEntries.map((entry) => (
                 <SwipeableEntry
-                  ariaLabel={`${entry.title}, ${entry.entry_type === "income" ? "Receita" : "Despesa"}, ${normalizeFinancialCategory(entry.category, entry.entry_type, entry.source_kind)}, ${formatMoney(Number(entry.amount))}, ${statusLabel(entry, today)}. Abrir detalhes`}
+                  ariaLabel={`${entry.title}, ${entry.entry_type === "income" ? "Receita" : "Despesa"}, ${normalizeFinancialCategory(entry.category, entry.entry_type, entry.source_kind)}, ${formatCurrency(Number(entry.amount))}, ${statusLabel(entry, today)}. Abrir detalhes`}
                   entry={entry}
                   key={entry.id}
                   onOpen={() => openEntryDrawer(entry)}
@@ -331,7 +329,7 @@ export function MonthlyEntryList({
                       >
                         <FinancialValue>
                           {entry.entry_type === "income" ? "+" : "−"}
-                          {formatMoney(Number(entry.amount))}
+                          {formatCurrency(Number(entry.amount))}
                         </FinancialValue>
                       </span>
                     </span>
@@ -545,7 +543,7 @@ export function MonthlyEntryList({
                   </p>
                 )}
               </DrawerBody>
-              <DrawerFooter className="border-t border-line px-3 pb-3 pt-4">
+              <DrawerFooter className="border-t border-line/30 px-3 pb-3 pt-4">
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     disabled={rowMutationPending}
@@ -600,7 +598,7 @@ export function MonthlyEntryList({
                   </p>
                 )}
               </DrawerBody>
-              <DrawerFooter className="border-t border-line px-3 pb-3 pt-4">
+              <DrawerFooter className="border-t border-line/30 px-3 pb-3 pt-4">
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     disabled={monthActionsPending}
@@ -842,18 +840,18 @@ function EntryOptionsMenu({
       <DropdownMenuContent align="end" className="w-56">
         <div className="flex flex-col gap-1">
           <DropdownMenuItem
-            className="focus:bg-graphite-600 text-ink"
             disabled={actionsPending}
             onSelect={() => onActionSelect("copy")}
             leadingIcon="CopyOutline"
+            variant="ghost"
           >
             Copiar mês anterior
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-rose-500 focus:bg-rose-500/10"
             disabled={actionsPending}
             onSelect={() => onActionSelect("delete")}
             leadingIcon="TrashOutline"
+            variant="destructive-ghost"
           >
             Apagar tudo
           </DropdownMenuItem>
@@ -947,6 +945,3 @@ function CategoryFilter({
   );
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T12:00:00`));
-}

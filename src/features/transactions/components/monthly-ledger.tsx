@@ -15,19 +15,19 @@ import {
   DrawerTitle,
   useDrawer,
 } from "@/components/ui/drawer";
+import type { FinancialEntry } from "@/features/transactions/lib/data";
+import { formatCurrency } from "@/shared/lib/currency";
 import {
   addMonths,
-  formatMoney,
+  formatMonth,
   localDateString,
   monthString,
   parseMonth,
-  type FinancialEntry,
-} from "@/features/transactions/lib/data";
+} from "@/shared/lib/date";
 import { useMonthData } from "@/features/transactions/hooks/use-month-data";
 import { fetchMonthEntries } from "@/features/transactions/lib/queries";
 import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
 import { queryKeys } from "@/shared/lib/query-keys";
-import { formatMonth } from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
 import {
@@ -476,31 +476,31 @@ export function MonthlyLedger({
         <div className="grid gap-3 sm:grid-cols-3">
           <Summary
             title="Receitas previstas"
-            value={formatMoney(income)}
+            value={formatCurrency(income)}
             detail={
               <>
-                <FinancialValue>{formatMoney(settledIncome)}</FinancialValue>{" "}
+                <FinancialValue>{formatCurrency(settledIncome)}</FinancialValue>{" "}
                 recebidas
               </>
             }
           />
           <Summary
             title="Despesas previstas"
-            value={formatMoney(expenses)}
+            value={formatCurrency(expenses)}
             detail={
               <>
-                <FinancialValue>{formatMoney(settledExpenses)}</FinancialValue>{" "}
+                <FinancialValue>{formatCurrency(settledExpenses)}</FinancialValue>{" "}
                 pagas
               </>
             }
           />
           <Summary
             title="Saldo previsto"
-            value={formatMoney(income - expenses)}
+            value={formatCurrency(income - expenses)}
             detail={
               <>
                 <FinancialValue>
-                  {formatMoney(settledIncome - settledExpenses)}
+                  {formatCurrency(settledIncome - settledExpenses)}
                 </FinancialValue>{" "}
                 realizado
               </>

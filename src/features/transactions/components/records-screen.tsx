@@ -21,10 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  formatMoney,
+  formatCurrency,
   installmentAmount,
-  monthString,
-} from "@/features/transactions/lib/data";
+} from "@/shared/lib/currency";
+import { monthString } from "@/shared/lib/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -339,7 +339,7 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
             id: item.id,
             title: item.title,
             detail: `${item.entry_type === "income" ? "Receita" : "Despesa"} · ${item.due_day ? `dia ${item.due_day}` : "sem vencimento"}${item.ends_on ? ` · até ${item.ends_on.slice(0, 7)}` : " · sem data final"}`,
-            amount: formatMoney(Number(item.planned_amount)),
+            amount: formatCurrency(Number(item.planned_amount)),
             active: item.is_active,
           }))}
         />
@@ -356,7 +356,7 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
             id: plan.id,
             title: plan.title,
             detail: `${plan.installment_count} parcelas · início ${plan.first_month.slice(0, 7)}${plan.due_day ? ` · vence dia ${plan.due_day}` : ""}`,
-            amount: `${formatMoney(installmentAmount(Number(plan.total_amount), plan.installment_count, 1))} / parcela`,
+            amount: `${formatCurrency(installmentAmount(Number(plan.total_amount), plan.installment_count, 1))} / parcela`,
             active: plan.is_active,
           }))}
         />

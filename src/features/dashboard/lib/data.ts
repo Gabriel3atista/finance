@@ -1,12 +1,8 @@
 "use client";
 
 import { createClient } from "@/features/auth/lib/supabase/client";
-import {
-  addMonths,
-  localDateString,
-  monthDate,
-  type FinancialEntry,
-} from "@/features/transactions/lib/data";
+import type { FinancialEntry } from "@/features/transactions/lib/data";
+import { addDays, addMonths, localDateString, monthDate } from "@/shared/lib/date";
 import { fetchMonthEntries } from "@/features/transactions/lib/queries";
 
 export type DashboardMonth = {
@@ -135,8 +131,3 @@ function sum(
     .reduce((total, entry) => total + Number(entry.amount), 0);
 }
 
-function addDays(date: Date, amount: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + amount);
-  return next;
-}

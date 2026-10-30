@@ -151,7 +151,7 @@ const DrawerContent = React.forwardRef<
         }
       }}
       className={cn(
-        "fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] z-50 mt-24 flex h-auto max-h-[80dvh] min-h-0 flex-col overflow-hidden rounded-[23px] border border-line/30 bg-graphite-800/60 p-0 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-lg",
+        "fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] standalone:bottom-0 standalone:pb-[env(safe-area-inset-bottom,0px)] z-50 mt-24 flex h-auto max-h-[80dvh] min-h-0 flex-col overflow-hidden rounded-[28px] border border-line/30 bg-graphite-800/60 p-0 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-lg",
         className,
       )}
       style={{ ...drawerMotionStyle, ...style }}

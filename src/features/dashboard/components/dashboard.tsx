@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/shared/lib/currency";
 import {
   addMonths,
-  formatMoney,
+  formatDate,
+  formatMonth,
   localDateString,
   monthString,
-} from "@/features/transactions/lib/data";
-import { formatMonth } from "@/shared/lib/date";
+} from "@/shared/lib/date";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { BalanceChangeIndicator } from "@/shared/components/balance-change-indicator";
 import { Eyebrow } from "@/shared/components/eyebrow";
@@ -236,7 +237,7 @@ function SummaryCard({
           tone === "normal" && "text-ink",
         )}
       >
-        <FinancialValue>{formatMoney(value)}</FinancialValue>
+        <FinancialValue>{formatCurrency(value)}</FinancialValue>
       </p>
       <div className="mt-1 flex items-center justify-between gap-2">
         <p className="text-xs text-muted">{month}</p>
@@ -282,12 +283,9 @@ function DueRow({ entry }: { entry: DashboardDueEntry }) {
         </span>
       </span>
       <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">
-        <FinancialValue>{formatMoney(entry.amount)}</FinancialValue>
+        <FinancialValue>{formatCurrency(entry.amount)}</FinancialValue>
       </span>
     </Link>
   );
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR").format(new Date(`${value}T12:00:00`));
-}

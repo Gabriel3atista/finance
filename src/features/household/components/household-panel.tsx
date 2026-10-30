@@ -10,6 +10,7 @@ import { createClient } from "@/features/auth/lib/supabase/client";
 import { Eyebrow } from "@/shared/components/eyebrow";
 import { fetchHouseholdPage } from "@/features/household/lib/queries";
 import { queryKeys } from "@/shared/lib/query-keys";
+import { formatDate } from "@/shared/lib/date";
 
 export function HouseholdPanel({
   userId,
@@ -210,9 +211,7 @@ export function HouseholdPanel({
                     </p>
                     <p className="mt-1 text-xs text-muted">
                       Expira em{" "}
-                      {new Date(invitation.expires_at).toLocaleDateString(
-                        "pt-BR",
-                      )}
+                      {formatDate(invitation.expires_at)}
                     </p>
                   </div>
                   <form

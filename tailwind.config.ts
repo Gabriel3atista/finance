@@ -75,6 +75,7 @@ const config: Config = {
         "standalone-wide",
         "@media (display-mode: standalone) and (min-width: 768px)",
       );
+      addVariant("standalone", "@media (display-mode: standalone)");
     }),
   ],
 };

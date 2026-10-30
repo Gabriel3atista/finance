@@ -8,7 +8,7 @@ import {
   type PointerEvent,
 } from "react";
 import { Button } from "@/components/ui/button";
-import { addMonths, monthString } from "@/features/transactions/lib/data";
+import { addMonths, formatDate, monthString } from "@/shared/lib/date";
 import { cn } from "@/shared/lib/utils";
 
 const monthOffsets = Array.from({ length: 9 }, (_, index) => index - 4);
@@ -268,9 +268,7 @@ export function MonthSelector({
       >
         {monthOffsets.map((relativeMonth) => {
           const date = addMonths(displayedMonth, relativeMonth);
-          const label = date
-            .toLocaleDateString("pt-BR", { month: "long" })
-            .slice(0, 3);
+          const label = formatDate(date, { month: "long" }).slice(0, 3);
           const key = monthString(date);
 
           if (masked) {
@@ -287,7 +285,7 @@ export function MonthSelector({
           return (
             <Button
               aria-current={relativeMonth === 0 ? "date" : undefined}
-              aria-label={date.toLocaleDateString("pt-BR", {
+              aria-label={formatDate(date, {
                 month: "long",
                 year: "numeric",
               })}

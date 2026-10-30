@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { ResponsiveContainer, Tooltip } from "recharts";
 import { FinancialValue } from "@/shared/components/financial-values";
+import { formatCurrency } from "@/shared/lib/currency";
 
 export type ChartConfig = Record<string, { label: string; color: string }>;
 
@@ -78,10 +79,7 @@ export function ChartTooltipContent({
               <span className="text-xs text-muted">{point.name}</span>
               <span className="ml-auto text-sm font-semibold tabular-nums text-ink">
                 <FinancialValue>
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(Number(value))}
+                  {formatCurrency(Number(value))}
                 </FinancialValue>
               </span>
             </div>

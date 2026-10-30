@@ -16,11 +16,8 @@ import {
 } from "@/components/ui/select";
 import { getHistoricalData } from "@/features/history/lib/data";
 import { queryKeys } from "@/shared/lib/query-keys";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
+import { formatCurrency } from "@/shared/lib/currency";
+import { formatDate } from "@/shared/lib/date";
 
 export function HistoryList({ householdId }: { householdId: string }) {
   const historyQuery = useQuery({
@@ -157,7 +154,7 @@ export function HistoryList({ householdId }: { householdId: string }) {
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-semibold tabular-nums text-ink">
                       <FinancialValue>
-                        {currency.format(Number(entry.amount))}
+                        {formatCurrency(Number(entry.amount))}
                       </FinancialValue>
                     </td>
                     <td className="px-4 py-3 text-[10px] text-muted">
@@ -208,7 +205,7 @@ export function HistoryList({ householdId }: { householdId: string }) {
                   className="text-xs text-muted"
                   dateTime={batch.created_at}
                 >
-                  {new Date(batch.created_at).toLocaleDateString("pt-BR")}
+                  {formatDate(batch.created_at)}
                 </time>
               </li>
             ))}

@@ -9,12 +9,7 @@ export type FinancialEntry = {
   due_date: string | null;
   status: "planned" | "settled" | "cancelled";
   settled_at: string | null;
-  source_kind:
-    | "manual"
-    | "recurrence"
-    | "installment"
-    | "card_statement"
-    | "historical_import";
+  source_kind: "manual" | "recurrence" | "installment" | "card_statement";
   recurring_item_id: string | null;
   installment_plan_id: string | null;
   installment_number: number | null;
@@ -44,4 +39,3 @@ export type InstallmentPlan = {
   category: string | null;
   is_active: boolean;
 };
-

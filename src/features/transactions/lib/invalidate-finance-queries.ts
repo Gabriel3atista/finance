@@ -19,8 +19,5 @@ export async function invalidateFinanceQueries(
     queryClient.invalidateQueries({
       queryKey: queryKeys.dashboard(spaceId),
     }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.history(spaceId),
-    }),
   ]);
 }

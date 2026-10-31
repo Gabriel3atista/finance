@@ -5,7 +5,6 @@ import { getSupabaseConfig } from "@/features/auth/lib/config";
 const protectedPaths = [
   "/dashboard",
   "/mes",
-  "/historico",
   "/cadastros",
   "/space",
   "/update-password",

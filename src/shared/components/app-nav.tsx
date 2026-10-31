@@ -8,7 +8,6 @@ import { cn } from "@/shared/lib/utils";
 const items = [
   { href: "/dashboard", label: "Painel", icon: "DashboardOutline" },
   { href: "/mes", label: "Meu mês", icon: "CalendarOutline" },
-  { href: "/historico", label: "Histórico", icon: "HistoryOutline" },
   { href: "/cadastros", label: "Cadastros", icon: "RecordsOutline" },
 ] as const;
 

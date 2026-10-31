@@ -39,7 +39,6 @@ const PREVIOUS_BALANCE = 4390.2;
 const routes = [
   { href: "/dashboard", label: "Painel", icon: "DashboardOutline" },
   { href: "/mes", label: "Meu mês", icon: "CalendarOutline" },
-  { href: "/historico", label: "Histórico", icon: "HistoryOutline" },
   { href: "/cadastros", label: "Cadastros", icon: "RecordsOutline" },
   {
     href: "/design-system/balance-card",

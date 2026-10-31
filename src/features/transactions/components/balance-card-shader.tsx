@@ -17,6 +17,7 @@ const fragmentShaderSource = `
 
   uniform vec2 u_resolution;
   uniform vec2 u_textureSize;
+  uniform float u_centerOffsetX;
   uniform float u_time;
   uniform sampler2D u_background;
   varying vec2 v_uv;
@@ -40,6 +41,7 @@ const fragmentShaderSource = `
 
   void main() {
     vec2 p = v_uv - 0.5;
+    p.x -= u_centerOffsetX;
     float aspect = u_resolution.x / u_resolution.y;
     p.x *= aspect;
 
@@ -55,7 +57,7 @@ const fragmentShaderSource = `
     float secondaryRipple = sin(wavePhase * 2.1 + 1.1) * 0.18;
 
     // Keep the wave axis fixed at -22 degrees and move the refraction along it.
-    float lensDistortion = waveEnvelope * (ripple * 0.82 + secondaryRipple) * 0.018;
+    float lensDistortion = waveEnvelope * (ripple * 0.82 + secondaryRipple) * 0.036;
     vec2 refractionDirection = vec2(waveNormal.x / aspect, waveNormal.y);
     vec2 distortedUv = clamp(
       coverUv(v_uv + refractionDirection * lensDistortion),
@@ -158,6 +160,7 @@ export function BalanceCardShader() {
     const positionLocation = gl.getAttribLocation(program, "a_position");
     const resolutionLocation = gl.getUniformLocation(program, "u_resolution");
     const textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
+    const centerOffsetLocation = gl.getUniformLocation(program, "u_centerOffsetX");
     const backgroundLocation = gl.getUniformLocation(program, "u_background");
     const timeLocation = gl.getUniformLocation(program, "u_time");
     gl.enableVertexAttribArray(positionLocation);
@@ -226,6 +229,12 @@ export function BalanceCardShader() {
       gl.clear(gl.COLOR_BUFFER_BIT);
       if (resolutionLocation) {
         gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+      }
+      if (centerOffsetLocation) {
+        gl.uniform1f(
+          centerOffsetLocation,
+          (100 * getPixelRatio()) / canvas.width,
+        );
       }
       if (timeLocation) {
         gl.uniform1f(

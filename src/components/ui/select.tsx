@@ -94,7 +94,7 @@ export function Select({
         )}
       >
         <label
-          className={cn("text-xs font-medium text-muted", !label && "sr-only")}
+          className={cn("text-sm font-medium text-muted", !label && "sr-only")}
           htmlFor={controlId}
         >
           {label || "Campo de seleção"}

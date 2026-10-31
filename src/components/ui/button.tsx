@@ -19,6 +19,8 @@ export const buttonVariants = cva(
       variant: {
         primary:
           "bg-yellow-500 text-graphite-900 hover:bg-yellow-500/90 active:bg-yellow-500/80",
+        "primary-subtle":
+          "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 active:bg-yellow-500/30",
         default:
           "bg-moon-200 text-graphite-900 hover:bg-moon-200/90 active:bg-moon-200/80",
         white:

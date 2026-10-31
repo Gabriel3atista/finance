@@ -42,7 +42,7 @@ export function Input({
       )}
     >
       <label
-        className={cn("text-xs font-medium text-muted", !label && "sr-only")}
+        className={cn("text-sm font-medium text-muted", !label && "sr-only")}
         htmlFor={inputId}
       >
         {label || "Campo de entrada"}

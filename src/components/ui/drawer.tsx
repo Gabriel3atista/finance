@@ -67,13 +67,26 @@ export function useDrawer(options: DrawerControllerOptions = {}) {
   const optionsRef = React.useRef(options);
   optionsRef.current = options;
 
-  const onOpenChange = React.useCallback((nextOpen: boolean) => {
-    if (!nextOpen && optionsRef.current.canClose?.() === false) return;
+  const updateOpen = React.useCallback(
+    (nextOpen: boolean, forceClose = false) => {
+      if (
+        !nextOpen &&
+        !forceClose &&
+        optionsRef.current.canClose?.() === false
+      ) {
+        return;
+      }
 
-    openRef.current = nextOpen;
-    setOpen(nextOpen);
-    optionsRef.current.onOpenChange?.(nextOpen);
-  }, []);
+      openRef.current = nextOpen;
+      setOpen(nextOpen);
+      optionsRef.current.onOpenChange?.(nextOpen);
+    },
+    [],
+  );
+  const onOpenChange = React.useCallback(
+    (nextOpen: boolean) => updateOpen(nextOpen),
+    [updateOpen],
+  );
 
   const onCloseComplete = React.useCallback(() => {
     if (!openRef.current) optionsRef.current.onCloseComplete?.();
@@ -83,9 +96,10 @@ export function useDrawer(options: DrawerControllerOptions = {}) {
     () => onOpenChange(true),
     [onOpenChange],
   );
-  const closeDrawer = React.useCallback(
-    () => onOpenChange(false),
-    [onOpenChange],
+  const closeDrawer = React.useCallback(() => updateOpen(false), [updateOpen]);
+  const forceCloseDrawer = React.useCallback(
+    () => updateOpen(false, true),
+    [updateOpen],
   );
 
   return {
@@ -93,6 +107,7 @@ export function useDrawer(options: DrawerControllerOptions = {}) {
     props: { open, onOpenChange, onCloseComplete },
     openDrawer,
     closeDrawer,
+    forceCloseDrawer,
     toggleDrawer: open ? closeDrawer : openDrawer,
   };
 }

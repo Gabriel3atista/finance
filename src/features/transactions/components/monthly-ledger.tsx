@@ -66,7 +66,7 @@ const errorMessages: Record<string, string> = {
 const successMessages: Record<string, string> = {
   "month-copied": "Dados do mês anterior copiados.",
   "month-copy-empty": "Não havia novos lançamentos para copiar.",
-  "month-deleted": "Todos os lançamentos deste mês foram apagados.",
+  "month-deleted": "Lançamentos avulsos deste mês foram apagados.",
 };
 
 function isSuccessMutationMessage(message: string) {
@@ -177,9 +177,9 @@ export function MonthlyLedger({
       const result = await deleteFinancialEntry(form);
       if (result.error) throw new Error(result.error);
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setMutationMessage("saved");
-      await invalidateFinance();
+      void invalidateFinance();
     },
     onError: (caught) =>
       setMutationMessage(
@@ -210,9 +210,9 @@ export function MonthlyLedger({
       if (result.error) throw new Error(result.error);
       return result.count;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setMutationMessage("month-deleted");
-      await invalidateFinance();
+      void invalidateFinance();
     },
     onError: (caught) =>
       setMutationMessage(
@@ -489,7 +489,9 @@ export function MonthlyLedger({
             value={formatCurrency(expenses)}
             detail={
               <>
-                <FinancialValue>{formatCurrency(settledExpenses)}</FinancialValue>{" "}
+                <FinancialValue>
+                  {formatCurrency(settledExpenses)}
+                </FinancialValue>{" "}
                 pagas
               </>
             }
@@ -522,9 +524,7 @@ export function MonthlyLedger({
             onCopyPreviousMonth={copyPreviousMonth}
             onDeleteMonth={clearMonth}
             monthActionsPending={monthActionsPending}
-            rowMutationPending={
-              updateEntry.isPending || deleteEntry.isPending
-            }
+            rowMutationPending={updateEntry.isPending || deleteEntry.isPending}
             headerContent={
               <p className="px-3 text-sm text-muted">
                 Valores cadastrados neste mês.

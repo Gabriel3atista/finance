@@ -71,37 +71,6 @@ export function EntryFields({
   );
 }
 
-export function SeriesFields({ month }: { month: string }) {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <Input
-        label="Descrição"
-        containerClassName="sm:col-span-2"
-        name="title"
-        maxLength={160}
-        required
-      />
-      <Input
-        label="Valor (R$)"
-        name="amount"
-        inputMode="decimal"
-        placeholder="0,00"
-        required
-      />
-      <CategorySelect label="Categoria" />
-      <Input
-        label="Dia de vencimento"
-        name="due_day"
-        type="number"
-        min={1}
-        max={31}
-        placeholder="Opcional"
-      />
-      <Input type="hidden" name="starts_on" value={month} />
-    </div>
-  );
-}
-
 export function CategorySelect({
   defaultValue,
   label,

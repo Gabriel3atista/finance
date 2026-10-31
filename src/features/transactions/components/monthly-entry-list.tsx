@@ -132,7 +132,10 @@ export function MonthlyEntryList({
     onOpenChange: (open) => {
       if (!open && !monthActionsPending) setMonthActionError("");
     },
-    onCloseComplete: () => setMonthAction(null),
+    onCloseComplete: () => {
+      setMonthAction(null);
+      setMonthActionError("");
+    },
   });
   const closeEntryDrawer = entryDrawer.closeDrawer;
   const closeDeleteDrawer = deleteDrawer.closeDrawer;
@@ -198,7 +201,7 @@ export function MonthlyEntryList({
     try {
       await onDelete(form);
       closeEntryAfterDeleteRef.current = true;
-      deleteDrawer.closeDrawer();
+      deleteDrawer.forceCloseDrawer();
     } catch {
       setDeleteError("Falha ao excluir. Tente novamente.");
     }
@@ -210,7 +213,7 @@ export function MonthlyEntryList({
     try {
       if (monthAction === "copy") await onCopyPreviousMonth();
       else await onDeleteMonth();
-      monthActionDrawer.closeDrawer();
+      monthActionDrawer.forceCloseDrawer();
     } catch {
       setMonthActionError(
         monthAction === "copy"
@@ -386,7 +389,7 @@ export function MonthlyEntryList({
           ) : (
             <div
               className={cn(
-                "flex min-h-44 flex-col items-center justify-center px-4 text-center",
+                "flex min-h-64 flex-col items-center justify-center px-4 text-center",
                 entries.length === 0 &&
                   "h-full rounded-xl border border-dashed border-line bg-graphite-800",
               )}
@@ -401,15 +404,15 @@ export function MonthlyEntryList({
               )}
               <h3
                 className={cn(
-                  "text-sm font-semibold text-ink",
-                  entries.length === 0 && "mt-4",
+                  "font-semibold text-ink",
+                  entries.length === 0 && "mt-3",
                 )}
               >
                 {entries.length
                   ? "Nenhum lançamento nesta categoria"
                   : "Nenhum lançamento neste mês"}
               </h3>
-              <p className="mt-1 max-w-xs text-xs leading-5 text-muted">
+              <p className="mt-3 max-w-xs text-sm leading-5 text-muted">
                 {entries.length
                   ? "Selecione outra categoria para ver mais lançamentos."
                   : "Cadastre uma receita ou despesa. Recorrências e parcelas aparecem automaticamente."}
@@ -586,7 +589,7 @@ export function MonthlyEntryList({
                 <DrawerDescription className="text-muted">
                   {monthAction === "copy"
                     ? "Todos os lançamentos ativos do mês anterior serão copiados como pendentes."
-                    : "Todos os lançamentos desta competência serão removidos, inclusive os realizados e importados. Esta ação não pode ser desfeita."}
+                    : "Os lançamentos avulsos desta competência serão removidos. Recorrências e parcelas permanecem; para excluí-las, use Cadastros."}
                 </DrawerDescription>
               </DrawerHeader>
               <DrawerBody className="px-3 pb-5">
@@ -946,4 +949,3 @@ function CategoryFilter({
     </div>
   );
 }
-

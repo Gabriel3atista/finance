@@ -74,88 +74,90 @@ export async function createFinancialEntry(
   return { success: "created" };
 }
 
-export async function createRecurringItem(
+const seriesTypes = {
+  salary: { entryType: "income", category: "Salário" },
+  service: { entryType: "expense", category: "Fixos" },
+  financing: { entryType: "expense", category: "Dívidas e parcelas" },
+  purchase: { entryType: "expense", category: "Dívidas e parcelas" },
+  other_income: { entryType: "income", category: "Outras entradas" },
+  other_expense: { entryType: "expense", category: "Fixos" },
+} as const;
+
+export async function createFinancialSeries(
   formData: FormData,
 ): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
-  const category = categoryValue(formData);
+  const seriesTypeKey = String(formData.get("series_type"));
+  const seriesType =
+    seriesTypes[seriesTypeKey as keyof typeof seriesTypes] ?? null;
   const amount = parseCurrencyInput(formData.get("amount"));
   const startsOn = parseMonthInput(formData.get("starts_on"));
   const endsOnValue = String(formData.get("ends_on") ?? "");
   const endsOn = endsOnValue ? parseMonthInput(endsOnValue) : null;
+  const hasInstallments = formData.get("has_installments") === "true";
+  const indefinite = formData.get("indefinite") === "true";
   const dueDayValue = String(formData.get("due_day") ?? "");
   const dueDay = dueDayValue ? Number(dueDayValue) : null;
-  const entryType = String(formData.get("entry_type"));
+  const invalidEnd =
+    (hasInstallments || !indefinite) &&
+    (!endsOn || (startsOn !== null && endsOn < startsOn));
+
   if (
     !title ||
     title.length < 1 ||
-    category === null ||
+    !seriesType ||
     !Number.isFinite(amount) ||
     amount <= 0 ||
     amount > 999999999999.99 ||
     !startsOn ||
-    (endsOnValue && !endsOn) ||
-    (endsOn && endsOn < startsOn) ||
+    invalidEnd ||
     (dueDay !== null &&
       (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31)) ||
-    (entryType !== "income" && entryType !== "expense")
-  )
-    return { error: "invalid-recurrence" };
+    (hasInstallments && (indefinite || seriesType.entryType !== "expense"))
+  ) {
+    return { error: "invalid-series" };
+  }
 
   const context = await getUserContext();
+  if (hasInstallments) {
+    const first = new Date(`${startsOn}T00:00:00`);
+    const last = new Date(`${endsOn}T00:00:00`);
+    const installmentCount =
+      (last.getFullYear() - first.getFullYear()) * 12 +
+      last.getMonth() -
+      first.getMonth() +
+      1;
+    if (installmentCount < 1 || installmentCount > 600) {
+      return { error: "invalid-series" };
+    }
+
+    const { error } = await context.supabase.from("installment_plans").insert({
+      space_id: context.spaceId,
+      title,
+      total_amount: amount,
+      installment_count: installmentCount,
+      first_month: startsOn,
+      due_day: dueDay,
+      category: seriesType.category,
+      created_by: context.user.id,
+    });
+    if (error) return { error: "save-series" };
+    return { success: "series" };
+  }
+
   const { error } = await context.supabase.from("recurring_items").insert({
     space_id: context.spaceId,
     title,
-    entry_type: entryType,
+    entry_type: seriesType.entryType,
     planned_amount: amount,
-    category,
+    category: seriesType.category,
     due_day: dueDay,
     starts_on: startsOn,
-    ends_on: endsOn,
+    ends_on: indefinite ? null : endsOn,
     created_by: context.user.id,
   });
-  if (error) return { error: "save-recurrence" };
-  return { success: "recurrence" };
-}
-
-export async function createInstallmentPlan(
-  formData: FormData,
-): Promise<MutationResult> {
-  const title = textValue(formData, "title", 160);
-  const category = "Dívidas e parcelas";
-  const totalAmount = parseCurrencyInput(formData.get("total_amount"));
-  const installmentCount = Number(formData.get("installment_count"));
-  const firstMonth = parseMonthInput(formData.get("first_month"));
-  const dueDayValue = String(formData.get("due_day") ?? "");
-  const dueDay = dueDayValue ? Number(dueDayValue) : null;
-  if (
-    !title ||
-    title.length < 1 ||
-    !Number.isFinite(totalAmount) ||
-    totalAmount <= 0 ||
-    totalAmount > 999999999999.99 ||
-    !Number.isInteger(installmentCount) ||
-    installmentCount < 1 ||
-    installmentCount > 600 ||
-    !firstMonth ||
-    (dueDay !== null &&
-      (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31))
-  )
-    return { error: "invalid-installment" };
-
-  const context = await getUserContext();
-  const { error } = await context.supabase.from("installment_plans").insert({
-    space_id: context.spaceId,
-    title,
-    total_amount: totalAmount,
-    installment_count: installmentCount,
-    first_month: firstMonth,
-    due_day: dueDay,
-    category,
-    created_by: context.user.id,
-  });
-  if (error) return { error: "save-installment" };
-  return { success: "installment" };
+  if (error) return { error: "save-series" };
+  return { success: "series" };
 }
 
 export async function updateFinancialEntry(
@@ -316,4 +318,25 @@ export async function deactivateSeries(
     .eq("space_id", context.spaceId);
   if (error) return { error: "deactivate-series" };
   return { success: "deactivated" };
+}
+
+export async function deleteFinancialSeries(
+  id: string,
+  kind: string,
+): Promise<MutationResult> {
+  if (!id || (kind !== "recurrence" && kind !== "installment")) {
+    return { error: "invalid-series" };
+  }
+
+  const context = await getUserContext();
+  const { data, error } = await context.supabase.rpc(
+    "delete_financial_series",
+    {
+      p_household_id: context.spaceId,
+      p_series_id: id,
+      p_kind: kind,
+    },
+  );
+  if (error || !data) return { error: "delete-series" };
+  return { success: "series-deleted" };
 }

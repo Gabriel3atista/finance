@@ -1,51 +1,69 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { NextIcon } from "@/components/atoms/next-icon";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardSection } from "@/components/ui/card";
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  useDrawer,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  createInstallmentPlan,
-  createRecurringItem,
+  createFinancialSeries,
   deactivateSeries,
+  deleteFinancialSeries,
 } from "@/features/transactions/actions";
-import { SeriesFields } from "@/features/transactions/components/entry-fields";
-import { FinancialValue } from "@/shared/components/financial-values";
-import { Eyebrow } from "@/shared/components/eyebrow";
-import { cn } from "@/shared/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  formatCurrency,
-  installmentAmount,
-} from "@/shared/lib/currency";
-import { monthString } from "@/shared/lib/date";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { queryKeys } from "@/shared/lib/query-keys";
+import { SeriesFormDrawer } from "@/features/transactions/components/series-form";
+import type {
+  InstallmentPlan,
+  RecurringItem,
+} from "@/features/transactions/lib/data";
 import {
   fetchInstallmentPlans,
   fetchRecurringItems,
 } from "@/features/transactions/lib/queries";
 import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
+import { formatCurrency, installmentAmount } from "@/shared/lib/currency";
+import { FinancialValue } from "@/shared/components/financial-values";
+import {
+  addMonths,
+  formatMonth,
+  monthString,
+  parseMonth,
+} from "@/shared/lib/date";
+import { queryKeys } from "@/shared/lib/query-keys";
+import { cn } from "@/shared/lib/utils";
 
 const errors: Record<string, string> = {
-  "invalid-recurrence": "Confira os dados da recorrência.",
-  "save-recurrence": "Não foi possível salvar a recorrência.",
-  "invalid-installment": "Confira os dados do parcelamento.",
-  "save-installment": "Não foi possível salvar o parcelamento.",
+  "invalid-series": "Confira a descrição, o valor e o período do cadastro.",
+  "save-series": "Não foi possível salvar o cadastro.",
   "deactivate-series": "Não foi possível encerrar este cadastro.",
+  "delete-series": "Não foi possível excluir este cadastro.",
+};
+
+type SeriesListItem = {
+  id: string;
+  kind: "recurrence" | "installment";
+  title: string;
+  detail: string;
+  amount: string;
+  active: boolean;
 };
 
 export function RecordsScreen({ spaceId }: { spaceId: string }) {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const urlError = searchParams.get("error");
   const saved = searchParams.get("saved");
   const deactivated = searchParams.get("deactivated");
   const recurringQuery = useQuery({
@@ -58,9 +76,15 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
   });
   const recurring = recurringQuery.data ?? [];
   const plans = plansQuery.data ?? [];
+  const isLoading = recurringQuery.isPending || plansQuery.isPending;
   const currentMonth = monthString(new Date());
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
+  const [formKey, setFormKey] = useState(0);
+  const [seriesToDelete, setSeriesToDelete] = useState<SeriesListItem | null>(
+    null,
+  );
+
   const invalidateRecords = async () => {
     await Promise.all([
       invalidateFinanceQueries(queryClient, spaceId, {
@@ -74,33 +98,30 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       }),
     ]);
   };
-  const createRecurring = useMutation({
+
+  const createSeries = useMutation({
     mutationFn: async (form: FormData) => {
-      const result = await createRecurringItem(form);
+      const result = await createFinancialSeries(form);
       if (result.error) throw new Error(result.error);
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setMutationMessage("saved");
-      await invalidateRecords();
+      void invalidateRecords();
     },
     onError: (caught) =>
       setMutationMessage(
-        caught instanceof Error ? caught.message : "save-recurrence",
+        caught instanceof Error ? caught.message : "save-series",
       ),
   });
-  const createInstallment = useMutation({
-    mutationFn: async (form: FormData) => {
-      const result = await createInstallmentPlan(form);
-      if (result.error) throw new Error(result.error);
+  const seriesDrawer = useDrawer({
+    canClose: () => !createSeries.isPending,
+    onOpenChange: (open) => {
+      if (open) {
+        createSeries.reset();
+        setMutationMessage("");
+      }
     },
-    onSuccess: async () => {
-      setMutationMessage("saved");
-      await invalidateRecords();
-    },
-    onError: (caught) =>
-      setMutationMessage(
-        caught instanceof Error ? caught.message : "save-installment",
-      ),
+    onCloseComplete: () => setFormKey((key) => key + 1),
   });
   const deactivate = useMutation({
     mutationFn: async (form: FormData) => {
@@ -113,337 +134,372 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     },
     onError: () => setMutationMessage("deactivate-series"),
   });
+  const deleteSeries = useMutation({
+    mutationFn: async () => {
+      if (!seriesToDelete) throw new Error("delete-series");
+      const result = await deleteFinancialSeries(
+        seriesToDelete.id,
+        seriesToDelete.kind,
+      );
+      if (result.error) throw new Error(result.error);
+    },
+    onSuccess: () => {
+      setMutationMessage("series-deleted");
+      void invalidateRecords();
+    },
+  });
+  const deleteDrawer = useDrawer({
+    canClose: () => !deleteSeries.isPending,
+    onOpenChange: (open) => {
+      if (open) deleteSeries.reset();
+    },
+    onCloseComplete: () => setSeriesToDelete(null),
+  });
 
-  if (recurringQuery.isPending || plansQuery.isPending) {
-    return (
-      <section
-        className="mx-auto max-w-5xl"
-        aria-live="polite"
-        aria-busy="true"
-      >
-        <Eyebrow>Organização</Eyebrow>
-        <h1 className="mt-2 text-3xl font-semibold text-ink">Cadastros</h1>
-        <p className="mt-2 text-sm text-muted">Carregando seus cadastros…</p>
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
-          {[0, 1].map((item) => (
-            <Skeleton
-              key={item}
-              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-56"
-            />
-          ))}
-        </div>
-      </section>
-    );
+  function submitSeries(form: FormData) {
+    setMutationMessage("");
+    createSeries.mutate(form, {
+      onSuccess: () => seriesDrawer.forceCloseDrawer(),
+    });
   }
+
+  function requestDeleteSeries(item: SeriesListItem) {
+    setSeriesToDelete(item);
+    setMutationMessage("");
+    deleteDrawer.openDrawer();
+  }
+
+  function confirmDeleteSeries() {
+    deleteSeries.mutate(undefined, {
+      onSuccess: () => deleteDrawer.forceCloseDrawer(),
+    });
+  }
+
+  const series: SeriesListItem[] = [
+    ...recurring.map((item) => toRecurringListItem(item)),
+    ...plans.map((plan) => toInstallmentListItem(plan)),
+  ].sort((left, right) => Number(right.active) - Number(left.active));
+
   if (recurringQuery.isError || plansQuery.isError) {
     return (
       <div
         role="alert"
-        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-200"
+        className="mx-auto max-w-5xl rounded-2xl border border-rose-500/30 bg-graphite-800 p-6 text-sm text-rose-500"
       >
         Não foi possível carregar seus cadastros. Tente novamente.
       </div>
     );
   }
 
+  const message =
+    mutationMessage === "saved"
+      ? "Cadastro salvo. As ocorrências serão criadas ao abrir cada mês."
+      : mutationMessage === "deactivated"
+        ? "Cadastro encerrado. Os lançamentos já criados continuam no mês."
+        : mutationMessage === "series-deleted"
+          ? "Cadastro excluído. Os lançamentos já criados foram mantidos."
+          : mutationMessage
+            ? (errors[mutationMessage] ?? "Não foi possível concluir a ação.")
+            : urlError
+              ? (errors[urlError] ?? "Não foi possível concluir a ação.")
+              : saved
+                ? "Cadastro salvo. As ocorrências serão criadas ao abrir cada mês."
+                : deactivated
+                  ? "Cadastro encerrado. Os lançamentos já criados continuam no mês."
+                  : "";
+  const messageIsError = Boolean(
+    (mutationMessage &&
+      !["saved", "deactivated", "series-deleted"].includes(mutationMessage)) ||
+    urlError,
+  );
+
   return (
-    <section className="mx-auto max-w-5xl">
-      <header className="mb-7">
-        <Eyebrow>Organização</Eyebrow>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
-          Cadastros
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-[15px]">
-          Configure entradas e compromissos que se repetem. Cada ocorrência
-          mensal pode ser ajustada sem alterar o histórico.
-        </p>
+    <section
+      className="mx-auto max-w-5xl"
+      aria-busy={isLoading || undefined}
+    >
+      <header className="mb-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
+            Recorrências
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-[15px]">
+            Organize receitas e despesas que se repetem ou têm parcelas.
+          </p>
+        </div>
+        <Button
+          className="w-full sm:w-auto"
+          leadingIcon="PlusOutline"
+          onClick={seriesDrawer.openDrawer}
+          rounded
+          size="sm"
+          type="button"
+          variant="primary"
+        >
+          Nova recorrência
+        </Button>
       </header>
 
-      {error && (
+      {message && (
         <p
-          role="alert"
-          className="mb-5 rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
+          className={cn(
+            "mb-5 rounded-xl px-4 py-3 text-sm",
+            messageIsError
+              ? "border border-rose-500/30 bg-graphite-800 text-rose-500"
+              : "border border-mint-500/30 bg-graphite-800 text-mint-300",
+          )}
+          role={messageIsError ? "alert" : "status"}
         >
-          {errors[error] ?? "Não foi possível concluir a ação."}
-        </p>
-      )}
-      {saved && (
-        <p
-          role="status"
-          className="mb-5 rounded-xl border border-mint-800 bg-mint-900 px-4 py-3 text-sm text-mint-100"
-        >
-          Cadastro salvo. As ocorrências serão criadas quando cada mês for
-          aberto.
-        </p>
-      )}
-      {deactivated && (
-        <p
-          role="status"
-          className="mb-5 rounded-xl border border-mint-800 bg-mint-900 px-4 py-3 text-sm text-mint-100"
-        >
-          Cadastro encerrado. Lançamentos já criados continuam no histórico.
-        </p>
-      )}
-      {mutationMessage && (
-        <p
-          role={
-            mutationMessage === "saved" || mutationMessage === "deactivated"
-              ? "status"
-              : "alert"
-          }
-          className={`mb-5 rounded-xl px-4 py-3 text-sm ${mutationMessage === "saved" || mutationMessage === "deactivated" ? "border border-mint-800 bg-mint-900 text-mint-100" : "border border-rose-800 bg-rose-900 text-rose-100"}`}
-        >
-          {mutationMessage === "saved"
-            ? "Cadastro salvo. As ocorrências serão criadas quando cada mês for aberto."
-            : mutationMessage === "deactivated"
-              ? "Cadastro encerrado. Lançamentos já criados continuam no histórico."
-              : (errors[mutationMessage] ??
-                "Não foi possível concluir a ação.")}
+          {message}
         </p>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <details className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-fit p-5 sm:p-6">
-          <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none text-[15px] font-semibold text-ink">
-            Nova recorrência <span className="ml-1 text-accent">＋</span>
-            <span className="mt-1 block text-sm font-normal text-muted">
-              Salário, financiamento, serviços e outros valores mensais
-            </span>
-          </summary>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              setMutationMessage("");
-              createRecurring.mutate(new FormData(event.currentTarget));
-            }}
-            className="mt-5 space-y-4"
-          >
-            <Select label="Tipo" name="entry_type" defaultValue="expense">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="expense">Despesa</SelectItem>
-                <SelectItem value="income">Receita</SelectItem>
-              </SelectContent>
-            </Select>
-            <SeriesFields month={currentMonth} />
-            <Input
-              label="Última competência (opcional)"
-              type="month"
-              name="ends_on"
-            />
-            <Button
-              className="w-full"
-              disabled={createRecurring.isPending}
-              type="submit"
-            >
-              Salvar recorrência
-            </Button>
-          </form>
-        </details>
+      <SeriesList
+        items={series}
+        loading={isLoading}
+        onDeactivate={(form) => {
+          setMutationMessage("");
+          deactivate.mutate(form);
+        }}
+        deactivatePending={deactivate.isPending}
+        onDelete={requestDeleteSeries}
+        deletePending={deleteSeries.isPending}
+      />
 
-        <details className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-fit p-5 sm:p-6">
-          <summary className="[&::-webkit-details-marker]:hidden cursor-pointer list-none text-[15px] font-semibold text-ink">
-            Novo parcelamento <span className="ml-1 text-accent">＋</span>
-            <span className="mt-1 block text-sm font-normal text-muted">
-              Uma obrigação total distribuída em parcelas mensais
-            </span>
-          </summary>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              setMutationMessage("");
-              createInstallment.mutate(new FormData(event.currentTarget));
-            }}
-            className="mt-5 space-y-4"
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input
-                label="Descrição"
-                containerClassName="sm:col-span-2"
-                name="title"
-                maxLength={160}
-                required
-                placeholder="Ex.: Móveis da sala"
-              />
-              <Input
-                label="Valor total (R$)"
-                name="total_amount"
-                inputMode="decimal"
-                placeholder="0,00"
-                required
-              />
-              <Input
-                label="Número de parcelas"
-                name="installment_count"
-                type="number"
-                min={1}
-                max={600}
-                step={1}
-                required
-              />
-              <Input
-                label="Primeira competência"
-                name="first_month"
-                type="month"
-                defaultValue={currentMonth}
-                required
-              />
-              <Input
-                label="Dia de vencimento"
-                name="due_day"
-                type="number"
-                min={1}
-                max={31}
-                placeholder="Opcional"
-              />
-              <div className="flex flex-col gap-1.5 text-xs font-medium text-muted">
-                <span>Categoria</span>
-                <Input
-                  type="hidden"
-                  name="category"
-                  value="Dívidas e parcelas"
-                />
-                <Badge className="w-fit" size="sm" variant="secondary">
-                  Dívidas e parcelas
-                </Badge>
-              </div>
-            </div>
-            <p className="text-xs leading-5 text-muted">
-              Os centavos restantes são distribuídos entre as primeiras parcelas
-              para que a soma feche exatamente com o total.
-            </p>
-            <Button
-              className="w-full"
-              disabled={createInstallment.isPending}
-              type="submit"
-            >
-              Salvar parcelamento
-            </Button>
-          </form>
-        </details>
-      </div>
+      <SeriesFormDrawer
+        key={formKey}
+        drawer={seriesDrawer}
+        currentMonth={currentMonth}
+        error={
+          createSeries.isError
+            ? (errors[createSeries.error.message] ?? errors["save-series"])
+            : undefined
+        }
+        pending={createSeries.isPending}
+        onSubmit={submitSeries}
+      />
 
-      <div className="mt-7 grid gap-5 lg:grid-cols-2">
-        <SeriesList
-          title="Recorrências"
-          empty="Nenhuma recorrência cadastrada."
-          kind="recurrence"
-          onDeactivate={(form) => {
-            setMutationMessage("");
-            deactivate.mutate(form);
-          }}
-          deactivatePending={deactivate.isPending}
-          items={recurring.map((item) => ({
-            id: item.id,
-            title: item.title,
-            detail: `${item.entry_type === "income" ? "Receita" : "Despesa"} · ${item.due_day ? `dia ${item.due_day}` : "sem vencimento"}${item.ends_on ? ` · até ${item.ends_on.slice(0, 7)}` : " · sem data final"}`,
-            amount: formatCurrency(Number(item.planned_amount)),
-            active: item.is_active,
-          }))}
-        />
-        <SeriesList
-          title="Parcelamentos"
-          empty="Nenhum parcelamento cadastrado."
-          kind="installment"
-          onDeactivate={(form) => {
-            setMutationMessage("");
-            deactivate.mutate(form);
-          }}
-          deactivatePending={deactivate.isPending}
-          items={plans.map((plan) => ({
-            id: plan.id,
-            title: plan.title,
-            detail: `${plan.installment_count} parcelas · início ${plan.first_month.slice(0, 7)}${plan.due_day ? ` · vence dia ${plan.due_day}` : ""}`,
-            amount: `${formatCurrency(installmentAmount(Number(plan.total_amount), plan.installment_count, 1))} / parcela`,
-            active: plan.is_active,
-          }))}
-        />
-      </div>
+      <Drawer {...deleteDrawer.props}>
+        <DrawerContent>
+          {seriesToDelete && (
+            <>
+              <DrawerHeader className="px-3 pb-3 pt-4 text-left">
+                <DrawerTitle className="text-base">
+                  Excluir cadastro?
+                </DrawerTitle>
+                <DrawerDescription>
+                  “{seriesToDelete.title}” será removido. Os lançamentos já
+                  criados serão mantidos como avulsos e deixarão de ser
+                  atualizados por este cadastro.
+                </DrawerDescription>
+              </DrawerHeader>
+              <DrawerBody className="px-3 pb-5">
+                {deleteSeries.isError && (
+                  <p
+                    className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                    role="alert"
+                  >
+                    {errors[deleteSeries.error.message] ??
+                      errors["delete-series"]}
+                  </p>
+                )}
+              </DrawerBody>
+              <DrawerFooter className="border-t border-line/30 px-3 pb-3 pt-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    disabled={deleteSeries.isPending}
+                    onClick={deleteDrawer.closeDrawer}
+                    rounded
+                    type="button"
+                    variant="secondary"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    disabled={deleteSeries.isPending}
+                    leadingIcon="TrashOutline"
+                    loading={deleteSeries.isPending}
+                    onClick={confirmDeleteSeries}
+                    rounded
+                    type="button"
+                    variant="destructive"
+                  >
+                    Excluir
+                  </Button>
+                </div>
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
     </section>
   );
 }
 
+function toRecurringListItem(item: RecurringItem): SeriesListItem {
+  const startsOn = parseMonth(item.starts_on.slice(0, 7));
+  return {
+    id: item.id,
+    kind: "recurrence",
+    title: item.title,
+    detail: `${item.entry_type === "income" ? "Receita" : "Despesa"} · ${item.due_day ? `vence dia ${item.due_day}` : "sem vencimento"} · desde ${formatMonth(startsOn)}${item.ends_on ? ` · até ${formatMonth(parseMonth(item.ends_on.slice(0, 7)))}` : " · sem data final"}`,
+    amount: `${formatCurrency(Number(item.planned_amount))} / mês`,
+    active: item.is_active,
+  };
+}
+
+function toInstallmentListItem(plan: InstallmentPlan): SeriesListItem {
+  const firstMonth = parseMonth(plan.first_month.slice(0, 7));
+  const lastMonth = addMonths(firstMonth, plan.installment_count - 1);
+  return {
+    id: plan.id,
+    kind: "installment",
+    title: plan.title,
+    detail: `${plan.installment_count} parcelas · ${formatMonth(firstMonth)} a ${formatMonth(lastMonth)}${plan.due_day ? ` · vence dia ${plan.due_day}` : ""}`,
+    amount: `${formatCurrency(installmentAmount(Number(plan.total_amount), plan.installment_count, 1))} / parcela`,
+    active: plan.is_active,
+  };
+}
+
 function SeriesList({
-  title,
-  empty,
-  kind,
+  items,
+  loading,
   onDeactivate,
   deactivatePending,
-  items,
+  onDelete,
+  deletePending,
 }: {
-  title: string;
-  empty: string;
-  kind: "recurrence" | "installment";
+  items: SeriesListItem[];
+  loading: boolean;
   onDeactivate: (form: FormData) => void;
   deactivatePending: boolean;
-  items: Array<{
-    id: string;
-    title: string;
-    detail: string;
-    amount: string;
-    active: boolean;
-  }>;
+  onDelete: (item: SeriesListItem) => void;
+  deletePending: boolean;
 }) {
-  return (
-    <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
-        <span className="text-xs text-muted">
-          {items.filter((item) => item.active).length} ativos
+  const activeCount = items.filter((item) => item.active).length;
+
+  if (!loading && items.length === 0) {
+    return (
+      <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-line bg-graphite-800 px-4 text-center">
+        <span
+          className="grid size-11 place-items-center rounded-full bg-accent-soft text-accent"
+          aria-hidden="true"
+        >
+          <NextIcon name="RecordsOutline" />
         </span>
+        <h3 className="mt-3 font-semibold text-ink">
+          Nenhuma recorrência ainda
+        </h3>
+        <p className="mt-3 max-w-xs text-sm leading-5 text-muted">
+          Cadastre salários, serviços, financiamentos ou compras parceladas.
+        </p>
       </div>
-      {!items.length ? (
-        <p className="mt-5 text-sm text-muted">{empty}</p>
-      ) : (
-        <div className="mt-4 divide-y divide-line">
-          {items.map((item) => (
-            <article
-              className="flex items-start justify-between gap-4 py-4 first:pt-1 last:pb-1"
-              key={item.id}
-            >
-              <div className="min-w-0">
-                <h3
-                  className={cn(
-                    "truncate text-sm font-medium",
-                    item.active ? "text-ink" : "text-muted",
-                  )}
-                >
-                  {item.title}
-                </h3>
-                <p className="mt-1 text-xs text-muted">{item.detail}</p>
-                <p className="mt-1 text-xs font-medium text-ink">
-                  <FinancialValue>{item.amount}</FinancialValue>
-                </p>
-              </div>
-              {item.active ? (
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    onDeactivate(new FormData(event.currentTarget));
-                  }}
-                >
-                  <Input type="hidden" name="id" value={item.id} />
-                  <Input type="hidden" name="kind" value={kind} />
-                  <Button
-                    disabled={deactivatePending}
-                    size="sm"
-                    type="submit"
-                    variant="outline"
-                  >
-                    {deactivatePending ? "Encerrando…" : "Encerrar"}
-                  </Button>
-                </form>
+    );
+  }
+
+  return (
+    <Card asChild sections className="overflow-hidden">
+      <section aria-label="Cadastros automáticos">
+        <CardSection className="flex items-center justify-between gap-3 bg-graphite-600">
+          <div className="w-full">
+            <div className="flex items-center justify-between w-full">
+              <h2 className="text-[15px] font-semibold text-ink">
+                Cadastros automáticos
+              </h2>
+              {loading ? (
+                <Skeleton className="h-5 w-16 rounded-full" />
               ) : (
-                <span className="rounded-full bg-canvas px-2.5 py-1 text-[10px] text-muted">
-                  Encerrado
-                </span>
+                <Badge size="sm" variant="secondary">
+                  {activeCount} ativos
+                </Badge>
               )}
-            </article>
-          ))}
-        </div>
-      )}
-    </section>
+            </div>
+            <p className="mt-1 text-xs text-muted">
+              Recorrências e parcelamentos em um só lugar.
+            </p>
+          </div>
+        </CardSection>
+        {loading ? (
+          <div aria-label="Carregando cadastros" className="divide-y divide-line">
+            {Array.from({ length: 6 }, (_, index) => (
+              <CardSection
+                className="flex items-center justify-between gap-4"
+                key={index}
+              >
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-2/5 rounded-md" />
+                  <Skeleton className="h-3 w-3/5 rounded-md" />
+                  <Skeleton className="h-3 w-1/4 rounded-md" />
+                </div>
+                <Skeleton className="h-8 w-20 shrink-0 rounded-full" />
+              </CardSection>
+            ))}
+          </div>
+        ) : (
+          <div className="divide-y divide-line">
+            {items.map((item) => (
+              <CardSection
+                className="flex items-start justify-between gap-4"
+                key={`${item.kind}-${item.id}`}
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3
+                      className={cn(
+                        "truncate text-sm font-medium",
+                        item.active ? "text-ink" : "text-muted",
+                      )}
+                    >
+                      {item.title}
+                    </h3>
+                    <Badge size="sm" variant="outline">
+                      {item.kind === "recurrence" ? "Recorrência" : "Parcelado"}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-muted">{item.detail}</p>
+                  <p className="mt-1 text-xs font-medium text-ink">
+                    <FinancialValue>{item.amount}</FinancialValue>
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {item.active ? (
+                    <form
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        onDeactivate(new FormData(event.currentTarget));
+                      }}
+                    >
+                      <Input type="hidden" name="id" value={item.id} />
+                      <Input type="hidden" name="kind" value={item.kind} />
+                      <Button
+                        disabled={deactivatePending}
+                        size="sm"
+                        type="submit"
+                        variant="outline"
+                      >
+                        {deactivatePending ? "Encerrando…" : "Encerrar"}
+                      </Button>
+                    </form>
+                  ) : (
+                    <Badge size="sm" variant="ghost">
+                      Encerrado
+                    </Badge>
+                  )}
+                  <Button
+                    aria-label={`Excluir cadastro ${item.title}`}
+                    disabled={deletePending}
+                    icon="TrashOutline"
+                    onClick={() => onDelete(item)}
+                    size="icon-sm"
+                    type="button"
+                    variant="destructive-ghost"
+                  />
+                </div>
+              </CardSection>
+            ))}
+          </div>
+        )}
+      </section>
+    </Card>
   );
 }

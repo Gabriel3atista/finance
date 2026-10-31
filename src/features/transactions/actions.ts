@@ -1,10 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import {
-  installmentAmount,
-  parseCurrencyInput,
-} from "@/shared/lib/currency";
+import { parseCurrencyInput } from "@/shared/lib/currency";
 import {
   dateForDay,
   isValidDateString,

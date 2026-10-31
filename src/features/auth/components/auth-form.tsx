@@ -48,9 +48,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     "update-password": "Defina uma nova senha",
   };
   const descriptions: Record<AuthMode, string> = {
-    login: "Entre para acompanhar as finanças da família.",
+    login: "Entre para acompanhar suas finanças.",
     signup:
-      "Depois de confirmar o e-mail, você poderá criar ou acessar um núcleo familiar.",
+      "Depois de confirmar o e-mail, você poderá criar um espaço ou aceitar um convite.",
     forgot:
       "Enviaremos um link para o e-mail informado, se houver uma conta associada.",
     "update-password": "Escolha uma senha nova para sua conta.",
@@ -86,7 +86,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/household`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/space`,
           },
         });
         if (authError) throw authError;
@@ -114,7 +114,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       if (authError) throw authError;
       setNotice("Senha atualizada. Você já pode continuar.");
       window.setTimeout(() => {
-        router.replace("/household");
+        router.replace("/space");
         router.refresh();
       }, 700);
     } catch (caught) {

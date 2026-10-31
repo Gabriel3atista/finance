@@ -5,23 +5,11 @@ import type { ComponentProps } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { NextIcon } from "@/components/atoms/next-icon";
 import type { Icons } from "@/components/icons";
+import {
+  menuContentVariants,
+  type MenuContentVariant,
+} from "@/components/ui/menu-content-variants";
 import { cn } from "@/shared/lib/utils";
-
-const dropdownMenuContentVariants = cva(
-  "dropdown-menu-content z-[110] rounded-xl border outline-none backdrop-blur-lg",
-  {
-    variants: {
-      variant: {
-        default:
-          "border-line/30 bg-graphite-800/60 p-1 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)]",
-        solid: "border-line bg-graphite-800 p-1 text-ink shadow-xl",
-        unstyled:
-          "border-transparent bg-transparent p-0 text-inherit shadow-none backdrop-blur-none",
-      },
-    },
-    defaultVariants: { variant: "default" },
-  },
-);
 
 const dropdownMenuItemVariants = cva(
   "flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:shrink-0",
@@ -40,10 +28,6 @@ const dropdownMenuItemVariants = cva(
     defaultVariants: { variant: "default" },
   },
 );
-
-type DropdownMenuContentVariantProps = VariantProps<
-  typeof dropdownMenuContentVariants
->;
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
@@ -86,11 +70,12 @@ function DropdownMenuSubContent({
   variant,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.SubContent> &
-  DropdownMenuContentVariantProps) {
+  { variant?: MenuContentVariant }) {
   return (
     <DropdownMenuPrimitive.SubContent
       className={cn(
-        dropdownMenuContentVariants({ variant }),
+        menuContentVariants({ variant }),
+        "dropdown-menu-content z-[110]",
         "min-w-40",
         className,
       )}
@@ -105,12 +90,13 @@ function DropdownMenuContent({
   variant,
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Content> &
-  DropdownMenuContentVariantProps) {
+  { variant?: MenuContentVariant }) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         className={cn(
-          dropdownMenuContentVariants({ variant }),
+          menuContentVariants({ variant }),
+          "dropdown-menu-content z-[110]",
           "min-w-48",
           className,
         )}

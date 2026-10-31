@@ -23,7 +23,7 @@ export function MonthOverview() {
             className="size-1.5 rounded-full bg-mint-400"
             aria-hidden="true"
           />
-          Núcleo familiar
+          Espaço financeiro
         </div>
       </div>
 

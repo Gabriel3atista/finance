@@ -2,7 +2,7 @@ const INTERNAL_ORIGIN = "https://finance.invalid";
 
 export function safeInternalPath(
   value: string | null,
-  fallback = "/household",
+  fallback = "/space",
 ) {
   if (!value?.startsWith("/") || value.startsWith("//")) return fallback;
 

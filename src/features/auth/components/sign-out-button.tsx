@@ -18,12 +18,12 @@ export function SignOutButton({ className = "" }: { className?: string }) {
 
   return (
     <Button
-      className={`text-muted ${className}`}
+      className={`rounded-b-[20px] ${className}`}
       disabled={busy}
       onClick={signOut}
-      size="sm"
+      size="lg"
       type="button"
-      variant="ghost"
+      variant="destructive-ghost"
     >
       {busy ? "Saindo…" : "Sair"}
     </Button>

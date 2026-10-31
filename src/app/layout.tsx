@@ -15,8 +15,8 @@ const kantumruyPro = Kantumruy_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Finance — finanças da família",
-  description: "Uma visão simples e compartilhada das finanças da família.",
+  title: "Finance — suas finanças",
+  description: "Uma visão simples das suas finanças, com opção de compartilhar.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/icons/finance-192.png",

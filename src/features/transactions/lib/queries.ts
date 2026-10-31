@@ -10,28 +10,28 @@ import { addMonths, dateForDay, monthDate } from "@/shared/lib/date";
 import { installmentAmount } from "@/shared/lib/currency";
 
 const entryColumns =
-  "id, household_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number";
+  "id, space_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number";
 const recurringColumns =
-  "id, household_id, title, entry_type, planned_amount, category, due_day, starts_on, ends_on, is_active";
+  "id, space_id, title, entry_type, planned_amount, category, due_day, starts_on, ends_on, is_active";
 const installmentColumns =
-  "id, household_id, title, total_amount, installment_count, first_month, due_day, category, is_active";
+  "id, space_id, title, total_amount, installment_count, first_month, due_day, category, is_active";
 
-export async function fetchRecurringItems(householdId: string) {
+export async function fetchRecurringItems(spaceId: string) {
   const { data, error } = await createClient()
     .from("recurring_items")
     .select(recurringColumns)
-    .eq("household_id", householdId)
+    .eq("space_id", spaceId)
     .order("is_active", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as RecurringItem[];
 }
 
-export async function fetchInstallmentPlans(householdId: string) {
+export async function fetchInstallmentPlans(spaceId: string) {
   const { data, error } = await createClient()
     .from("installment_plans")
     .select(installmentColumns)
-    .eq("household_id", householdId)
+    .eq("space_id", spaceId)
     .order("is_active", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -39,7 +39,7 @@ export async function fetchInstallmentPlans(householdId: string) {
 }
 
 export async function ensureMonthEntries(
-  householdId: string,
+  spaceId: string,
   userId: string,
   month: Date,
 ) {
@@ -50,25 +50,25 @@ export async function ensureMonthEntries(
       supabase
         .from("recurring_items")
         .select(recurringColumns)
-        .eq("household_id", householdId)
+        .eq("space_id", spaceId)
         .eq("is_active", true)
         .lte("starts_on", monthValue)
         .or(`ends_on.is.null,ends_on.gte.${monthValue}`),
       supabase
         .from("installment_plans")
         .select(installmentColumns)
-        .eq("household_id", householdId)
+        .eq("space_id", spaceId)
         .eq("is_active", true)
         .lte("first_month", monthValue),
       supabase
         .from("financial_entries")
         .select("recurring_item_id, installment_plan_id, installment_number")
-        .eq("household_id", householdId)
+        .eq("space_id", spaceId)
         .eq("competence_month", monthValue),
       supabase
         .from("financial_entry_exclusions")
         .select("recurring_item_id, installment_plan_id, installment_number")
-        .eq("household_id", householdId)
+        .eq("space_id", spaceId)
         .eq("competence_month", monthValue),
     ]);
   if (
@@ -99,7 +99,7 @@ export async function ensureMonthEntries(
   for (const item of (recurringResult.data ?? []) as RecurringItem[]) {
     if (recurringIds.has(item.id)) continue;
     rows.push({
-      household_id: householdId,
+      space_id: spaceId,
       title: item.title,
       entry_type: item.entry_type,
       amount: item.planned_amount,
@@ -126,7 +126,7 @@ export async function ensureMonthEntries(
     )
       continue;
     rows.push({
-      household_id: householdId,
+      space_id: spaceId,
       title: `${plan.title} (${number}/${plan.installment_count})`,
       entry_type: "expense",
       amount: installmentAmount(
@@ -153,13 +153,13 @@ export async function ensureMonthEntries(
   }
 }
 
-export async function fetchMonthEntries(householdId: string, month: Date) {
+export async function fetchMonthEntries(spaceId: string, month: Date) {
   const start = monthDate(month);
   const end = monthDate(addMonths(month, 1));
   const { data, error } = await createClient()
     .from("financial_entries")
     .select(entryColumns)
-    .eq("household_id", householdId)
+    .eq("space_id", spaceId)
     .gte("competence_month", start)
     .lt("competence_month", end)
     .neq("status", "cancelled")

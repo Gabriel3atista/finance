@@ -19,6 +19,10 @@ import {
   type ButtonTextSize,
   type ButtonVariant,
 } from "@/components/ui/button";
+import {
+  menuContentVariants,
+  type MenuContentVariant,
+} from "@/components/ui/menu-content-variants";
 import { cn } from "@/shared/lib/utils";
 
 type SelectVisuals = {
@@ -72,13 +76,14 @@ export function Select({
   const selectedValue = value ?? uncontrolledValue;
   const { options, placeholder, triggerProps } = readSelectChildren(children);
   const controlId = id ?? triggerProps.id ?? generatedId;
+  const triggerSize = triggerProps.size ?? size;
 
   function changeValue(nextValue: string) {
     if (value === undefined) setUncontrolledValue(nextValue);
     onValueChange?.(nextValue);
   }
 
-  const visuals = { variant, size, rounded, loading, controlId };
+  const visuals = { variant, size: triggerSize, rounded, loading, controlId };
 
   return (
     <SelectVisualContext.Provider value={visuals}>
@@ -116,7 +121,7 @@ export function Select({
               required={isCoarsePointer && required}
               selectedValue={selectedValue}
               rounded={rounded}
-              size={size}
+              size={triggerSize}
               triggerProps={triggerProps}
               variant={variant}
               loading={loading}
@@ -149,14 +154,21 @@ export function SelectTrigger({
   className = "",
   children,
   id,
+  size,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Trigger>) {
-  const { controlId, loading, rounded, size, variant } =
+}: Omit<ComponentProps<typeof SelectPrimitive.Trigger>, "size"> & {
+  size?: ButtonTextSize;
+}) {
+  const { controlId, loading, rounded, size: contextSize, variant } =
     useContext(SelectVisualContext);
+  const triggerSize = size ?? contextSize;
   const variantClasses =
     variant === "unstyled"
       ? ""
-      : cn(buttonVariants({ variant, size }), rounded && "rounded-full");
+      : cn(
+          buttonVariants({ variant, size: triggerSize }),
+          rounded && "rounded-full",
+        );
 
   return (
     <SelectPrimitive.Trigger
@@ -195,13 +207,17 @@ export function SelectContent({
   className = "",
   position = "popper",
   style,
+  variant = "default",
   ...props
-}: ComponentProps<typeof SelectPrimitive.Content>) {
+}: ComponentProps<typeof SelectPrimitive.Content> & {
+  variant?: MenuContentVariant;
+}) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "ui-select-content z-[120] max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] translate-y-0 rounded-xl border border-line bg-graphite-900 p-1 text-ink opacity-100 shadow-xl transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:!transform-none motion-reduce:transition-opacity motion-reduce:duration-100",
+          menuContentVariants({ variant }),
+          "ui-select-content z-[120] max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] translate-y-0 opacity-100 transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:!transform-none motion-reduce:transition-opacity motion-reduce:duration-100",
           className,
         )}
         position={position}
@@ -238,7 +254,7 @@ export function SelectItem({
   return (
     <SelectPrimitive.Item
       className={cn(
-        "relative flex min-h-9 w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm text-ink outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 focus:bg-graphite-800 focus:text-ink mobile-app:focus:!bg-transparent mobile-app:focus:!text-inherit data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex min-h-9 w-full cursor-default select-none items-center rounded-lg py-1.5 pl-2 pr-8 text-sm text-ink outline-none transition-[color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:duration-100 hover:bg-graphite-600 hover:text-ink focus:bg-graphite-600 focus:text-ink data-[highlighted]:bg-graphite-600 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}
@@ -254,6 +270,7 @@ export function SelectItem({
 type NativeOption = { value: string; label: string; disabled?: boolean };
 type NativeTriggerProps = {
   id?: string;
+  size?: ButtonTextSize;
   "aria-label"?: string;
   "aria-labelledby"?: string;
   "aria-describedby"?: string;
@@ -298,8 +315,10 @@ function NativeSelect({
   return (
     <div className="relative hidden w-full shrink-0 [@media(pointer:coarse)]:block">
       <select
-        {...triggerProps}
         aria-busy={loading || undefined}
+        aria-label={triggerProps["aria-label"]}
+        aria-labelledby={triggerProps["aria-labelledby"]}
+        aria-describedby={triggerProps["aria-describedby"]}
         autoComplete={autoComplete}
         className={cn(
           variantClasses,
@@ -391,6 +410,7 @@ function readSelectChildren(children: ReactNode) {
         const props = child.props as NativeTriggerProps;
         triggerProps = {
           id: props.id,
+          size: props.size,
           "aria-label": props["aria-label"],
           "aria-labelledby": props["aria-labelledby"],
           "aria-describedby": props["aria-describedby"],

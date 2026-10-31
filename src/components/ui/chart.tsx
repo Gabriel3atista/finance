@@ -55,8 +55,8 @@ export function ChartTooltipContent({
   }
 
   return (
-    <div className="rounded-xl border border-line bg-graphite-900 px-3 py-2.5 shadow-xl">
-      <p className="text-xs font-medium text-muted">
+    <div className="rounded-xl border border-line/30 bg-graphite-800/60 px-3 py-2.5 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-lg">
+      <p className="text-xs font-medium text-ink">
         {points[0].payload?.fullMonth}
       </p>
       <div className="mt-1.5 grid gap-1.5">
@@ -78,9 +78,7 @@ export function ChartTooltipContent({
               />
               <span className="text-xs text-muted">{point.name}</span>
               <span className="ml-auto text-sm font-semibold tabular-nums text-ink">
-                <FinancialValue>
-                  {formatCurrency(Number(value))}
-                </FinancialValue>
+                <FinancialValue>{formatCurrency(Number(value))}</FinancialValue>
               </span>
             </div>
           );

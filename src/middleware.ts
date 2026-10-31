@@ -7,7 +7,7 @@ const protectedPaths = [
   "/mes",
   "/historico",
   "/cadastros",
-  "/household",
+  "/space",
   "/update-password",
 ];
 

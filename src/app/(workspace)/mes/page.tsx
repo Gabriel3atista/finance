@@ -12,11 +12,11 @@ export default async function MonthPage({
     searchParams,
     getSignedInContext(),
   ]);
-  if (!context) redirect("/household");
+  if (!context) redirect("/space");
   return (
     <MonthlyLedger
       month={parseMonth(monthQuery)}
-      householdId={context.householdId}
+      spaceId={context.spaceId}
       userId={context.user.id}
       error={error}
       saved={saved}

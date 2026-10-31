@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { NextIcon } from "@/components/atoms/next-icon";
+import { Card, CardSection } from "@/components/ui/card";
 import {
   FinancialValue,
   ValuesVisibilityToggle,
@@ -127,50 +128,60 @@ export function MobileMonthView({
           ) : null}
         </div>
       </article>
-      <article className="rounded-2xl border border-graphite-600 bg-graphite-700 p-4 shadow-card">
-        <dl aria-busy={isBalancePending} className="divide-y divide-line">
-          <div className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-            <dt className="flex items-center gap-2 text-sm text-muted">
-              <span
-                aria-hidden="true"
-                className="size-2 rounded-full bg-mint-300"
-              />
-              <span className="text-moon-100">Receitas</span>
-            </dt>
-            <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold tabular-nums text-ink">
-              <span className="min-w-0 truncate">
-                <FinancialValue size="sm">{formatCurrency(income)}</FinancialValue>
-              </span>
-              <CircularProgress
-                label="das receitas recebidas"
-                total={income}
-                value={settledIncome}
-              />
-            </dd>
-          </div>
-          <div className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-            <dt className="flex items-center gap-2 text-sm text-muted">
-              <span
-                aria-hidden="true"
-                className="size-2 rounded-full bg-rose-500"
-              />
-              <span className="text-moon-100">Despesas</span>
-            </dt>
-            <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold tabular-nums text-ink">
-              <span className="min-w-0 truncate">
-                <FinancialValue size="sm">
-                  {formatCurrency(expenses)}
-                </FinancialValue>
-              </span>
-              <CircularProgress
-                label="das despesas pagas"
-                total={expenses}
-                value={settledExpenses}
-              />
-            </dd>
-          </div>
-        </dl>
-      </article>
+      <Card asChild sections className="overflow-hidden">
+        <article aria-busy={isBalancePending}>
+          <CardSection>
+            <dl>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="flex items-center gap-2 text-sm text-muted">
+                  <span
+                    aria-hidden="true"
+                    className="size-2 rounded-full bg-mint-300"
+                  />
+                  <span className="text-moon-100">Receitas</span>
+                </dt>
+                <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold tabular-nums text-ink">
+                  <span className="min-w-0 truncate">
+                    <FinancialValue size="sm">
+                      {formatCurrency(income)}
+                    </FinancialValue>
+                  </span>
+                  <CircularProgress
+                    label="das receitas recebidas"
+                    total={income}
+                    value={settledIncome}
+                  />
+                </dd>
+              </div>
+            </dl>
+          </CardSection>
+          <CardSection>
+            <dl>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="flex items-center gap-2 text-sm text-muted">
+                  <span
+                    aria-hidden="true"
+                    className="size-2 rounded-full bg-rose-500"
+                  />
+                  <span className="text-moon-100">Despesas</span>
+                </dt>
+                <dd className="flex min-w-0 items-center gap-2 text-sm font-semibold tabular-nums text-ink">
+                  <span className="min-w-0 truncate">
+                    <FinancialValue size="sm">
+                      {formatCurrency(expenses)}
+                    </FinancialValue>
+                  </span>
+                  <CircularProgress
+                    label="das despesas pagas"
+                    total={expenses}
+                    value={settledExpenses}
+                  />
+                </dd>
+              </div>
+            </dl>
+          </CardSection>
+        </article>
+      </Card>
       <section className="mt-6 flex min-h-0 flex-1 flex-col">
         <MonthlyEntryList
           entries={entries}

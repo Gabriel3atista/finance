@@ -19,10 +19,10 @@ import { queryKeys } from "@/shared/lib/query-keys";
 import { formatCurrency } from "@/shared/lib/currency";
 import { formatDate } from "@/shared/lib/date";
 
-export function HistoryList({ householdId }: { householdId: string }) {
+export function HistoryList({ spaceId }: { spaceId: string }) {
   const historyQuery = useQuery({
-    queryKey: queryKeys.history(householdId),
-    queryFn: () => getHistoricalData(householdId),
+    queryKey: queryKeys.history(spaceId),
+    queryFn: () => getHistoricalData(spaceId),
   });
   const [year, setYear] = useState("all");
   const batches = historyQuery.data?.batches ?? [];

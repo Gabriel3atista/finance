@@ -1,14 +1,15 @@
-# Auth e acesso familiar
+# Auth e acesso ao espaço financeiro
 
 ## Rotas implementadas
 
-- `/dashboard`: resumo e histórico financeiro, protegido por sessão e vínculo familiar.
+- `/dashboard`: resumo e histórico financeiro, protegido por sessão e vínculo ao espaço.
 - `/login`: e-mail/senha ou Google.
 - `/signup`: cadastro com e-mail de confirmação.
 - `/forgot-password` e `/update-password`: recuperação e troca da senha.
 - `/auth/callback`: troca do código PKCE por sessão.
-- `/household`: criação do núcleo, visualização e aceite de convites.
-- `/mes`, `/historico` e `/cadastros`: exigem sessão autenticada e vínculo familiar.
+- `/space`: criação e gerenciamento do espaço, visualização e aceite de convites.
+- `/household`: rota antiga que redireciona para `/space`.
+- `/mes`, `/historico` e `/cadastros`: exigem sessão autenticada e vínculo ao espaço.
 
 As sessões são guardadas em cookies pelo `@supabase/ssr`. O middleware renova a sessão e valida os claims; as consultas financeiras continuam protegidas por RLS.
 
@@ -29,7 +30,7 @@ Confirme também que o provedor Email está habilitado e que a confirmação de 
 
 ## Aplicar banco e publicar Edge Function
 
-A fase 4 requer as migrations do esquema familiar e a migration que restringe a criação de convites ao proprietário. Depois de autenticar a CLI e vincular o projeto de produção, revise a prévia:
+O banco usa `spaces`, `space_members` e `space_invitations`; os registros financeiros referenciam `space_id`. A migration `20261031120000_rename_households_to_spaces.sql` renomeia o esquema existente preservando dados, políticas e convites. Depois de autenticar a CLI e vincular o projeto de produção, revise a prévia:
 
 ```powershell
 npx supabase login

@@ -9,22 +9,22 @@ import { useEnsurePeriodEntries } from "@/features/transactions/hooks/use-ensure
 import type { FinancialEntry } from "@/features/transactions/lib/data";
 
 export function useMonthData({
-  householdId,
+  spaceId,
   userId,
   month,
 }: {
-  householdId: string;
+  spaceId: string;
   userId: string;
   month: string;
 }) {
   const queryClient = useQueryClient();
-  const entriesKey = queryKeys.monthEntries(householdId, month);
-  const ensureEntries = useEnsurePeriodEntries(householdId, userId, [month]);
+  const entriesKey = queryKeys.monthEntries(spaceId, month);
+  const ensureEntries = useEnsurePeriodEntries(spaceId, userId, [month]);
   const entries = useQuery({
     queryKey: entriesKey,
     queryFn: () =>
-      fetchMonthEntries(householdId, new Date(`${month}-01T00:00:00`)),
-    enabled: Boolean(householdId && month && ensureEntries.isReady),
+      fetchMonthEntries(spaceId, new Date(`${month}-01T00:00:00`)),
+    enabled: Boolean(spaceId && month && ensureEntries.isReady),
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   });
@@ -42,7 +42,7 @@ export function useMonthData({
         .from("financial_entries")
         .update({ status: nextStatus, settled_at: settledAt })
         .eq("id", id)
-        .eq("household_id", householdId)
+        .eq("space_id", spaceId)
         .in("status", ["planned", "settled"]);
       if (error) throw error;
       return { id, nextStatus, settledAt };
@@ -65,7 +65,7 @@ export function useMonthData({
       if (context?.previous)
         queryClient.setQueryData(entriesKey, context.previous);
     },
-    onSettled: () => invalidateFinanceQueries(queryClient, householdId),
+    onSettled: () => invalidateFinanceQueries(queryClient, spaceId),
   });
 
   return { entries, setStatus, ensureEntries };

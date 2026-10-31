@@ -1,6 +1,6 @@
 export type FinancialEntry = {
   id: string;
-  household_id: string;
+  space_id: string;
   title: string;
   entry_type: "income" | "expense";
   amount: number;
@@ -22,7 +22,7 @@ export type FinancialEntry = {
 
 export type RecurringItem = {
   id: string;
-  household_id: string;
+  space_id: string;
   title: string;
   entry_type: "income" | "expense";
   planned_amount: number;
@@ -35,7 +35,7 @@ export type RecurringItem = {
 
 export type InstallmentPlan = {
   id: string;
-  household_id: string;
+  space_id: string;
   title: string;
   total_amount: number;
   installment_count: number;

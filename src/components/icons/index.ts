@@ -24,6 +24,7 @@ import RecordsOutline from "./layout/records-outline";
 import VerticalDots from "./layout/vertical-dots";
 // Notifications
 import BellOutline from "./notifications/bell-outline";
+import ShieldWarningOutline from "./notifications/shield-warning-outline";
 // Actions
 import CopyOutline from "./actions/copy-outline";
 import TrashOutline from "./actions/trash-outline";
@@ -64,6 +65,7 @@ export const iconsMap = {
   LoadingOutline,
   PlusOutline,
   RecordsOutline,
+  ShieldWarningOutline,
   TrashOutline,
   VerticalDots,
 } as const;

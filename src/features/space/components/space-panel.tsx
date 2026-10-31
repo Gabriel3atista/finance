@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { Eyebrow } from "@/shared/components/eyebrow";
-import { fetchHouseholdPage } from "@/features/household/lib/queries";
+import { fetchSpacePage } from "@/features/space/lib/queries";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { formatDate } from "@/shared/lib/date";
 
-export function HouseholdPanel({
+export function SpacePanel({
   userId,
   email,
 }: {
@@ -21,17 +21,17 @@ export function HouseholdPanel({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const householdQuery = useQuery({
-    queryKey: queryKeys.household(userId),
-    queryFn: () => fetchHouseholdPage(userId, email),
+  const spaceQuery = useQuery({
+    queryKey: queryKeys.space(userId),
+    queryFn: () => fetchSpacePage(userId, email),
   });
   const [createError, setCreateError] = useState("");
   const [acceptError, setAcceptError] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteState, setInviteState] = useState("");
   const [inviteError, setInviteError] = useState("");
-  const household = householdQuery.data?.household ?? null;
-  const invitations = householdQuery.data?.invitations ?? [];
+  const space = spaceQuery.data?.space ?? null;
+  const invitations = spaceQuery.data?.invitations ?? [];
   const createMutation = useMutation({
     mutationFn: async (name: string) => {
       const supabase = createClient();
@@ -41,31 +41,31 @@ export function HouseholdPanel({
       } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("login");
       const { error } = await supabase
-        .from("households")
+        .from("spaces")
         .insert({ name, created_by: user.id });
       if (error) throw error;
     },
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.household(userId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.space(userId) }),
     onError: () =>
       setCreateError(
-        "NÃ£o foi possÃ­vel criar o nÃºcleo familiar. Tente novamente.",
+        "Não foi possível criar o espaço. Tente novamente.",
       ),
   });
   const acceptMutation = useMutation({
     mutationFn: async (invitationId: string) => {
       const supabase = createClient();
       const { data: invitation, error: invitationError } = await supabase
-        .from("household_invitations")
-        .select("household_id")
+        .from("space_invitations")
+        .select("space_id")
         .eq("id", invitationId)
         .eq("status", "pending")
         .gt("expires_at", new Date().toISOString())
         .maybeSingle();
       if (invitationError || !invitation)
         throw new Error("invitation-unavailable");
-      const { error } = await supabase.from("household_members").insert({
-        household_id: invitation.household_id,
+      const { error } = await supabase.from("space_members").insert({
+        space_id: invitation.space_id,
         user_id: userId,
         member_role: "member",
       });
@@ -82,7 +82,11 @@ export function HouseholdPanel({
       const { error } = await createClient().functions.invoke(
         "household-invite",
         {
-          body: { householdId: household?.id, email: targetEmail },
+          body: {
+            spaceId: space?.id,
+            householdId: space?.id,
+            email: targetEmail,
+          },
         },
       );
       if (error) {
@@ -98,12 +102,12 @@ export function HouseholdPanel({
       setInviteEmail("");
       setInviteState("Convite enviado. Ele expira em sete dias.");
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.household(userId),
+        queryKey: queryKeys.space(userId),
       });
     },
   });
 
-  if (householdQuery.isPending) {
+  if (spaceQuery.isPending) {
     return (
       <div
         className="grid gap-8 lg:grid-cols-[1fr_0.9fr]"
@@ -115,14 +119,13 @@ export function HouseholdPanel({
       </div>
     );
   }
-  if (householdQuery.isError) {
+  if (spaceQuery.isError) {
     return (
       <div
         role="alert"
-        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-200"
+        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-500"
       >
-        NÃ£o foi possÃ­vel carregar as informaÃ§Ãµes do nÃºcleo familiar. Tente
-        novamente.
+        Não foi possível carregar as informações do espaço. Tente novamente.
       </div>
     );
   }
@@ -146,16 +149,16 @@ export function HouseholdPanel({
     }
   }
 
-  if (!household) {
+  if (!space) {
     return (
       <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
         <section className="rounded-2xl border border-line bg-graphite-900 p-5 sm:p-7">
           <Eyebrow tone="accent">Comece por aqui</Eyebrow>
           <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
-            Crie o núcleo da família
+            Crie seu espaço
           </h2>
           <p className="mt-2 max-w-md text-sm leading-6 text-muted">
-            Você será a pessoa responsável e poderá convidar sua esposa para
+            Você poderá organizar suas finanças e convidar outras pessoas para
             compartilhar os mesmos dados.
           </p>
           <form
@@ -174,21 +177,21 @@ export function HouseholdPanel({
             className="mt-6 space-y-4"
           >
             <Input
-              label="Nome do núcleo"
+              label="Nome do espaço"
               containerClassName="gap-2"
               className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
               name="name"
               maxLength={100}
-              placeholder="Ex.: Família Silva"
+              placeholder="Ex.: Pessoal"
               required
             />
             {createError && (
-              <p role="alert" className="text-sm text-rose-300">
+              <p role="alert" className="text-sm text-rose-500">
                 {createError}
               </p>
             )}
             <Button disabled={createMutation.isPending} type="submit">
-              {createMutation.isPending ? "Criando…" : "Criar núcleo familiar"}
+              {createMutation.isPending ? "Criando…" : "Criar espaço"}
             </Button>
           </form>
         </section>
@@ -196,7 +199,7 @@ export function HouseholdPanel({
         <section className="rounded-2xl border border-line bg-graphite-900 p-5 sm:p-7">
           <Eyebrow tone="accent">Convites recebidos</Eyebrow>
           <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
-            Acesse um núcleo existente
+            Acesse um espaço existente
           </h2>
           {invitations.length ? (
             <div className="mt-5 space-y-3">
@@ -232,7 +235,7 @@ export function HouseholdPanel({
                 </div>
               ))}
               {acceptError && (
-                <p role="alert" className="text-sm text-rose-300">
+                <p role="alert" className="text-sm text-rose-500">
                   {acceptError}
                 </p>
               )}
@@ -250,15 +253,15 @@ export function HouseholdPanel({
 
   return (
     <div className="mx-auto max-w-[640px] rounded-2xl border border-line bg-graphite-900 p-5 sm:p-8">
-      <Eyebrow tone="accent">Núcleo familiar</Eyebrow>
+      <Eyebrow tone="accent">Espaço financeiro</Eyebrow>
       <h2 className="mt-3 text-2xl font-semibold tracking-tight text-ink">
-        {household.name}
+        {space.name}
       </h2>
       <p className="mt-2 text-sm leading-6 text-muted">
-        Convide sua esposa para ver e atualizar as finanças junto com você.
+        Convide outras pessoas para acompanhar e atualizar as finanças junto com você.
       </p>
 
-      {household.member_role === "owner" ? (
+      {space.member_role === "owner" ? (
         <form onSubmit={sendInvitation} className="mt-6 space-y-4">
           <Input
             label="E-mail da pessoa convidada"
@@ -272,7 +275,7 @@ export function HouseholdPanel({
             placeholder="nome@exemplo.com"
           />
           {inviteError && (
-            <p role="alert" className="text-sm text-rose-300">
+            <p role="alert" className="text-sm text-rose-500">
               {inviteError}
             </p>
           )}
@@ -292,7 +295,7 @@ export function HouseholdPanel({
         </form>
       ) : (
         <p className="mt-5 rounded-xl bg-canvas px-4 py-3 text-sm text-muted">
-          Você já participa deste núcleo familiar.
+          Você já participa deste espaço.
         </p>
       )}
       <Button

@@ -26,14 +26,14 @@ export type HistoricalEntry = {
   source_cell: string;
 };
 
-export async function getHistoricalData(householdId: string) {
+export async function getHistoricalData(spaceId: string) {
   const supabase = createClient();
 
   const [batchesResult, entriesResult] = await Promise.all([
     supabase
       .from("import_batches")
       .select("id, source_file_name, source_file_sha256, status, created_at")
-      .eq("household_id", householdId)
+      .eq("space_id", spaceId)
       .eq("status", "committed")
       .order("created_at", { ascending: false }),
     supabase
@@ -41,7 +41,7 @@ export async function getHistoricalData(householdId: string) {
       .select(
         "id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, import_batch_id, source_sheet, source_row, source_cell",
       )
-      .eq("household_id", householdId)
+      .eq("space_id", spaceId)
       .eq("source_kind", "historical_import")
       .order("competence_month", { ascending: false })
       .order("source_sheet", { ascending: true })

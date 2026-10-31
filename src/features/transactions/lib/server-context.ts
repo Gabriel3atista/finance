@@ -8,12 +8,12 @@ export async function getSignedInContext() {
   if (!user) return null;
 
   const { data: member } = await supabase
-    .from("household_members")
-    .select("household_id")
+    .from("space_members")
+    .select("space_id")
     .eq("user_id", user.id)
     .limit(1)
     .maybeSingle();
 
   if (!member) return null;
-  return { supabase, user, householdId: member.household_id };
+  return { supabase, user, spaceId: member.space_id };
 }

@@ -75,13 +75,13 @@ function isSuccessMutationMessage(message: string) {
 
 export function MonthlyLedger({
   month: initialMonth,
-  householdId,
+  spaceId,
   userId,
   error,
   saved,
 }: {
   month: Date;
-  householdId: string;
+  spaceId: string;
   userId: string;
   error?: string;
   saved?: string;
@@ -121,9 +121,9 @@ export function MonthlyLedger({
   const previousMonth = addMonths(month, -1);
   const previousMonthValue = monthString(previousMonth);
   const previousMonthQuery = useQuery({
-    queryKey: queryKeys.monthEntries(householdId, previousMonthValue),
-    queryFn: () => fetchMonthEntries(householdId, previousMonth),
-    enabled: Boolean(isMobileApp && householdId),
+    queryKey: queryKeys.monthEntries(spaceId, previousMonthValue),
+    queryFn: () => fetchMonthEntries(spaceId, previousMonth),
+    enabled: Boolean(isMobileApp && spaceId),
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   });
@@ -132,7 +132,7 @@ export function MonthlyLedger({
     setStatus,
     ensureEntries,
   } = useMonthData({
-    householdId,
+    spaceId,
     userId,
     month: monthValue,
   });
@@ -140,7 +140,7 @@ export function MonthlyLedger({
   const [mutationMessage, setMutationMessage] = useState("");
   const createEntryDrawer = useDrawer();
   const invalidateFinance = () =>
-    invalidateFinanceQueries(queryClient, householdId, {
+    invalidateFinanceQueries(queryClient, spaceId, {
       revalidateOccurrences: true,
     });
   const createEntry = useMutation({

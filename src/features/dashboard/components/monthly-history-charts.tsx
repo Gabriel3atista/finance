@@ -14,17 +14,18 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { formatCompactCurrency, formatCurrency } from "@/shared/lib/currency";
+import { Card, CardSection } from "@/components/ui/card";
+import { formatCompactCurrency } from "@/shared/lib/currency";
 import { formatMonth, formatShortMonth } from "@/shared/lib/date";
 import {
-  FinancialValue,
   useValuesVisibility,
 } from "@/shared/components/financial-values";
+import { useMobileApp } from "@/shared/hooks/use-mobile-app";
 import type { DashboardMonth } from "@/features/dashboard/lib/data";
 
 const chartConfig = {
-  income: { label: "Receita", color: "hsl(207.69 27.66% 90.78%)" },
-  expenses: { label: "Despesa", color: "hsl(349.72 89.16% 60.2%)" },
+  income: { label: "Receita", color: "hsl(43.92 100% 50.98% " },
+  expenses: { label: "Despesa", color: "hsl(206.67 36% 95.1%)" },
 };
 
 const periodOptions = [
@@ -35,35 +36,29 @@ const periodOptions = [
 ];
 
 export function MonthlyHistoryCharts({ data }: { data: DashboardMonth[] }) {
-  const [period, setPeriod] = useState(12);
+  const isMobileApp = useMobileApp();
+  const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
+  const period = selectedPeriod ?? (isMobileApp ? 3 : 12);
   const filteredData = data.slice(-period);
 
   return (
-    <>
-      <div className="mb-3 flex justify-end">
-        <Select
-          containerClassName="w-auto flex-row items-center gap-2"
-          onValueChange={(value) => setPeriod(Number(value))}
-          value={String(period)}
-        >
-          <SelectTrigger className="w-auto min-w-[120px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {periodOptions.map((option) => (
-              <SelectItem key={option.months} value={String(option.months)}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <MonthlyBarChart data={filteredData} />
-    </>
+    <MonthlyBarChart
+      data={filteredData}
+      onPeriodChange={(value) => setSelectedPeriod(Number(value))}
+      period={period}
+    />
   );
 }
 
-function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
+function MonthlyBarChart({
+  data,
+  onPeriodChange,
+  period,
+}: {
+  data: DashboardMonth[];
+  onPeriodChange: (value: string) => void;
+  period: number;
+}) {
   const { hidden } = useValuesVisibility();
   const chartData = data.map((item) => ({
     month: formatShortMonth(item.month),
@@ -71,106 +66,99 @@ function MonthlyBarChart({ data }: { data: DashboardMonth[] }) {
     income: item.income,
     expenses: item.expenses,
   }));
-  const latest = data.at(-1);
 
   return (
-    <section className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-w-0 p-5 sm:p-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold text-ink">
-            Receitas e despesas da família
-          </h3>
-          <p className="mt-1 text-xs text-muted">
-            Valores recebidos e pagos, comparados por mês
-          </p>
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-            {Object.entries(chartConfig).map(([key, series]) => (
-              <span
-                className="inline-flex items-center gap-2 text-xs text-muted"
-                key={key}
+    <Card sections>
+      <CardSection>
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-3 min-w-0 w-full">
+            <div className="flex items-center justify-between w-full">
+              <h3 className="text-xl font-semibold text-ink ml-1">
+                Geral
+              </h3>
+              <Select
+                containerClassName="w-auto"
+                onValueChange={onPeriodChange}
+                value={String(period)}
+                variant="outline"
               >
-                <span
-                  className="size-2 rounded-sm"
-                  style={{ backgroundColor: series.color }}
-                />
-                {series.label}
-              </span>
-            ))}
+                <SelectTrigger className="w-auto min-w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {periodOptions.map((option) => (
+                    <SelectItem key={option.months} value={String(option.months)}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-4">
-          {Object.entries(chartConfig).map(([field, series]) => (
-            <p
-              className="text-right text-sm font-semibold tabular-nums text-ink"
-              key={field}
-            >
-              <FinancialValue>
-                {formatCurrency(latest?.[field as "income" | "expenses"] ?? 0)}
-              </FinancialValue>
-              <span className="mt-0.5 block text-[10px] font-normal text-muted">
-                {series.label} neste mês
-              </span>
-            </p>
-          ))}
-        </div>
-      </header>
-
-      <ChartContainer className="mt-4 h-[230px] w-full" config={chartConfig}>
-        <BarChart
-          accessibilityLayer
-          data={chartData}
-          margin={{ top: 10, right: 4, left: 0, bottom: 0 }}
-        >
-          <CartesianGrid
-            vertical={false}
-            stroke="hsl(225 7.69% 20.39%)"
-            strokeDasharray="3 5"
-          />
-          <XAxis
-            axisLine={false}
-            dataKey="fullMonth"
-            tickLine={false}
-            tickFormatter={(value: string) =>
-              chartData.find((item) => item.fullMonth === value)?.month ?? value
-            }
-            tick={{ fill: "hsl(227.14 5.69% 51.76%)", fontSize: 11 }}
-            tickMargin={10}
-          />
-          <YAxis
-            axisLine={false}
-            domain={[0, "auto"]}
-            tickLine={false}
-            tick={{ fill: "hsl(227.14 5.69% 51.76%)", fontSize: 10 }}
-            tickFormatter={(value: number) =>
-              hidden
-                ? "•••"
-                : formatCompactCurrency(value)
-            }
-            tickCount={4}
-            width={58}
-          />
-          <ChartTooltip
-            cursor={{ fill: "hsl(228.75 5.26% 50.98% / 8%)" }}
-            content={<ChartTooltipContent />}
-          />
-          <Bar
-            activeBar={{ fillOpacity: 0.78 }}
-            dataKey="income"
-            fill="var(--color-income)"
-            maxBarSize={28}
-            name={chartConfig.income.label}
-            radius={[5, 5, 0, 0]}
-          />
-          <Bar
-            activeBar={{ fillOpacity: 0.78 }}
-            dataKey="expenses"
-            fill="var(--color-expenses)"
-            maxBarSize={28}
-            name={chartConfig.expenses.label}
-            radius={[5, 5, 0, 0]}
-          />
-        </BarChart>
-      </ChartContainer>
-    </section>
+        </header>
+        <ChartContainer className="mt-4 h-[230px] w-full" config={chartConfig}>
+          <BarChart
+            accessibilityLayer
+            data={chartData}
+            margin={{ top: 10, right: 4, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid
+              vertical={false}
+              stroke="hsl(225 10% 17%)"
+              strokeDasharray="3 5"
+            />
+            <XAxis
+              axisLine={false}
+              dataKey="fullMonth"
+              tickLine={false}
+              tickFormatter={(value: string) =>
+                chartData.find((item) => item.fullMonth === value)?.month ?? value
+              }
+              tick={{ fill: "hsl(220 8% 60%)", fontSize: 11 }}
+              tickMargin={10}
+            />
+            <YAxis
+              axisLine={false}
+              domain={[0, "auto"]}
+              tickLine={false}
+              tick={{ fill: "hsl(220 8% 60%)", fontSize: 10 }}
+              tickFormatter={(value: number) =>
+                hidden ? "•••" : formatCompactCurrency(value)
+              }
+              tickCount={4}
+              width={58}
+            />
+            <ChartTooltip
+              cursor={{ fill: "hsl(220 8% 60% / 8%)" }}
+              content={<ChartTooltipContent />}
+            />
+            <Bar
+              animationBegin={1000}
+              animationDuration={500}
+              animationEasing="ease-out"
+              activeBar={{ fillOpacity: 0.78 }}
+              dataKey="income"
+              fill="var(--color-income)"
+              isAnimationActive
+              maxBarSize={28}
+              name={chartConfig.income.label}
+              radius={[5, 5, 0, 0]}
+            />
+            <Bar
+              animationBegin={1000}
+              animationDuration={500}
+              animationEasing="ease-out"
+              activeBar={{ fillOpacity: 0.78 }}
+              dataKey="expenses"
+              fill="var(--color-expenses)"
+              isAnimationActive
+              maxBarSize={28}
+              name={chartConfig.expenses.label}
+              radius={[5, 5, 0, 0]}
+            />
+          </BarChart>
+        </ChartContainer>
+      </CardSection>
+    </Card>
   );
 }

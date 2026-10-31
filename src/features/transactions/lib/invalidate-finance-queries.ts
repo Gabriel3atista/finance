@@ -3,24 +3,24 @@ import { queryKeys } from "@/shared/lib/query-keys";
 
 export async function invalidateFinanceQueries(
   queryClient: QueryClient,
-  householdId: string,
+  spaceId: string,
   { revalidateOccurrences = false }: { revalidateOccurrences?: boolean } = {},
 ) {
   if (revalidateOccurrences) {
     await queryClient.invalidateQueries({
-      queryKey: queryKeys.ensurePeriodEntriesForHousehold(householdId),
+      queryKey: queryKeys.ensurePeriodEntriesForSpace(spaceId),
     });
   }
 
   await Promise.all([
     queryClient.invalidateQueries({
-      queryKey: queryKeys.householdMonthEntries(householdId),
+      queryKey: queryKeys.spaceMonthEntries(spaceId),
     }),
     queryClient.invalidateQueries({
-      queryKey: queryKeys.dashboard(householdId),
+      queryKey: queryKeys.dashboard(spaceId),
     }),
     queryClient.invalidateQueries({
-      queryKey: queryKeys.history(householdId),
+      queryKey: queryKeys.history(spaceId),
     }),
   ]);
 }

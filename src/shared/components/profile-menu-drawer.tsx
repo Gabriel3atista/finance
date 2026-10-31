@@ -18,7 +18,7 @@ import { ProfileAvatar } from "@/shared/components/profile-avatar";
 const profileLinks = [
   { href: "/dashboard", label: "Painel" },
   { href: "/mes", label: "Meu mês" },
-  { href: "/household", label: "Gerenciar família" },
+  { href: "/space", label: "Gerenciar espaço" },
 ] as const;
 
 export function ProfileMenuDrawer({
@@ -69,7 +69,7 @@ export function ProfileMenuDrawer({
             </div>
           </div>
         </DrawerHeader>
-        <DrawerBody className="space-y-2 pb-5">
+        <DrawerBody className="!px-2 pb-2">
           <nav className="space-y-2" aria-label="Menu do usuário">
             {profileLinks.map((link) => (
               <Button
@@ -78,7 +78,7 @@ export function ProfileMenuDrawer({
                 className="w-full justify-between"
                 size="lg"
                 trailingIcon="ChevronRightOutline"
-                variant="secondary"
+                variant="ghost"
               >
                 <Link href={link.href} onClick={drawer.closeDrawer}>
                   {link.label}
@@ -87,7 +87,7 @@ export function ProfileMenuDrawer({
             ))}
           </nav>
         </DrawerBody>
-        <DrawerFooter className="shrink-0 border-t border-line px-3 pb-3 pt-4">
+        <DrawerFooter className="shrink-0 border-t border-line/30 p-2">
           <SignOutButton className="w-full justify-start" />
         </DrawerFooter>
       </DrawerContent>

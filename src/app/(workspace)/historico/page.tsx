@@ -20,7 +20,7 @@ export default async function HistoryPage() {
           desde 2024.
         </p>
       </header>
-      <HistoryList householdId={context.householdId} />
+      <HistoryList spaceId={context.spaceId} />
     </div>
   );
 }

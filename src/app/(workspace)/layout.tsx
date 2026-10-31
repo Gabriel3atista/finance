@@ -12,13 +12,13 @@ export default async function WorkspaceLayout({
   if (!user) redirect("/login");
 
   const { data: member } = await supabase
-    .from("household_members")
-    .select("household_id")
+    .from("space_members")
+    .select("space_id")
     .eq("user_id", user.id)
     .limit(1)
     .maybeSingle();
 
-  if (!member) redirect("/household");
+  if (!member) redirect("/space");
 
   const metadata = user.user_metadata ?? {};
   const userName =

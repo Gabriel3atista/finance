@@ -16,7 +16,7 @@ export type DashboardDueEntry = Pick<
   "id" | "title" | "entry_type" | "amount" | "due_date" | "competence_month"
 >;
 
-export async function getDashboardData(householdId: string) {
+export async function getDashboardData(spaceId: string) {
   const supabase = createClient();
   const today = new Date();
   const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -25,17 +25,17 @@ export async function getDashboardData(householdId: string) {
   const dueLimit = localDateString(addDays(today, 30));
 
   const [currentEntries, historyResult, dueResult] = await Promise.all([
-    fetchMonthEntries(householdId, currentMonth),
+    fetchMonthEntries(spaceId, currentMonth),
     getSettledHistory(
       supabase,
-      householdId,
+      spaceId,
       monthDate(firstMonth),
       monthDate(nextMonth),
     ),
     supabase
       .from("financial_entries")
       .select("id, title, entry_type, amount, due_date, competence_month")
-      .eq("household_id", householdId)
+      .eq("space_id", spaceId)
       .eq("status", "planned")
       .not("due_date", "is", null)
       .lte("due_date", dueLimit)
@@ -91,7 +91,7 @@ export async function getDashboardData(householdId: string) {
 
 async function getSettledHistory(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  householdId: string,
+  spaceId: string,
   firstMonth: string,
   nextMonth: string,
 ) {
@@ -106,7 +106,7 @@ async function getSettledHistory(
     const { data, error } = await supabase
       .from("financial_entries")
       .select("entry_type, amount, competence_month")
-      .eq("household_id", householdId)
+      .eq("space_id", spaceId)
       .eq("status", "settled")
       .gte("competence_month", firstMonth)
       .lt("competence_month", nextMonth)

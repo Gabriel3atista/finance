@@ -17,6 +17,7 @@ import {
 import { NextIcon } from "@/components/atoms/next-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -791,22 +792,23 @@ function SwipeableEntry({
         </span>
       </div>
       <motion.div className="relative z-10 w-full" style={{ transform }}>
-        <Button
-          aria-busy={statusPending || undefined}
-          aria-label={ariaLabel}
-          className="flex w-full rounded-xl border border-graphite-600 bg-graphite-700 p-3"
-          onClick={() => {
-            if (suppressClick.current) {
-              suppressClick.current = false;
-              return;
-            }
-            onOpen();
-          }}
-          type="button"
-          variant="unstyled"
-        >
-          {children}
-        </Button>
+        <Card asChild className="flex w-full rounded-xl p-3">
+          <Button
+            aria-busy={statusPending || undefined}
+            aria-label={ariaLabel}
+            onClick={() => {
+              if (suppressClick.current) {
+                suppressClick.current = false;
+                return;
+              }
+              onOpen();
+            }}
+            type="button"
+            variant="unstyled"
+          >
+            {children}
+          </Button>
+        </Card>
       </motion.div>
     </div>
   );

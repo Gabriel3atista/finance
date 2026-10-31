@@ -27,6 +27,8 @@ export const buttonVariants = cva(
           "bg-rose-500 text-moon-100 hover:bg-rose-500/90 active:bg-rose-500/80",
         "destructive-subtle":
           "bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 active:bg-rose-500/30",
+        "destructive-ghost":
+          "text-rose-500 hover:bg-rose-500/20 active:bg-rose-500/20",
         secondary:
           "bg-graphite-700 text-ink hover:bg-graphite-600  active:bg-graphite-600/90",
         outline:
@@ -188,26 +190,23 @@ export function Button({
       tabIndex={asChild && unavailable ? -1 : tabIndex}
       {...props}
     >
-      {isIconOnly ? (
+      {isIconOnly && (
         <IconSlot>{loading ? <Spinner /> : <NextIcon name={icon} />}</IconSlot>
-      ) : (
-        <>
-          {(loading || leadingIcon) && (
-            <IconSlot>
-              {loading ? (
-                <Spinner />
-              ) : leadingIcon ? (
-                <NextIcon name={leadingIcon} />
-              ) : null}
-            </IconSlot>
-          )}
-          <Slottable>{children}</Slottable>
-          {!loading && trailingIcon && (
-            <IconSlot>
-              <NextIcon name={trailingIcon} />
-            </IconSlot>
-          )}
-        </>
+      )}
+      {!isIconOnly && (loading || leadingIcon) && (
+        <IconSlot>
+          {loading ? (
+            <Spinner />
+          ) : leadingIcon ? (
+            <NextIcon name={leadingIcon} />
+          ) : null}
+        </IconSlot>
+      )}
+      {!isIconOnly && <Slottable>{children}</Slottable>}
+      {!isIconOnly && !loading && trailingIcon && (
+        <IconSlot>
+          <NextIcon name={trailingIcon} />
+        </IconSlot>
       )}
     </Component>
   );

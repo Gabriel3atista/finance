@@ -43,18 +43,18 @@ const errors: Record<string, string> = {
   "deactivate-series": "Não foi possível encerrar este cadastro.",
 };
 
-export function RecordsScreen({ householdId }: { householdId: string }) {
+export function RecordsScreen({ spaceId }: { spaceId: string }) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const saved = searchParams.get("saved");
   const deactivated = searchParams.get("deactivated");
   const recurringQuery = useQuery({
-    queryKey: queryKeys.recurringItems(householdId),
-    queryFn: () => fetchRecurringItems(householdId),
+    queryKey: queryKeys.recurringItems(spaceId),
+    queryFn: () => fetchRecurringItems(spaceId),
   });
   const plansQuery = useQuery({
-    queryKey: queryKeys.installmentPlans(householdId),
-    queryFn: () => fetchInstallmentPlans(householdId),
+    queryKey: queryKeys.installmentPlans(spaceId),
+    queryFn: () => fetchInstallmentPlans(spaceId),
   });
   const recurring = recurringQuery.data ?? [];
   const plans = plansQuery.data ?? [];
@@ -63,14 +63,14 @@ export function RecordsScreen({ householdId }: { householdId: string }) {
   const [mutationMessage, setMutationMessage] = useState("");
   const invalidateRecords = async () => {
     await Promise.all([
-      invalidateFinanceQueries(queryClient, householdId, {
+      invalidateFinanceQueries(queryClient, spaceId, {
         revalidateOccurrences: true,
       }),
       queryClient.invalidateQueries({
-        queryKey: queryKeys.recurringItems(householdId),
+        queryKey: queryKeys.recurringItems(spaceId),
       }),
       queryClient.invalidateQueries({
-        queryKey: queryKeys.installmentPlans(householdId),
+        queryKey: queryKeys.installmentPlans(spaceId),
       }),
     ]);
   };

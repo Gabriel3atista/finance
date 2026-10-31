@@ -4,8 +4,8 @@ import { getSignedInContext } from "@/features/transactions/lib/server-context";
 
 export default async function RecordsPage() {
   const context = await getSignedInContext();
-  if (!context) redirect("/household");
+  if (!context) redirect("/space");
   return (
-    <RecordsScreen householdId={context.householdId} />
+    <RecordsScreen spaceId={context.spaceId} />
   );
 }

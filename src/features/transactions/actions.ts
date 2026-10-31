@@ -62,7 +62,7 @@ export async function createFinancialEntry(
 
   const context = await getUserContext();
   const { error } = await context.supabase.from("financial_entries").insert({
-    household_id: context.householdId,
+    space_id: context.spaceId,
     title,
     entry_type: entryType,
     amount,
@@ -107,7 +107,7 @@ export async function createRecurringItem(
 
   const context = await getUserContext();
   const { error } = await context.supabase.from("recurring_items").insert({
-    household_id: context.householdId,
+    space_id: context.spaceId,
     title,
     entry_type: entryType,
     planned_amount: amount,
@@ -148,7 +148,7 @@ export async function createInstallmentPlan(
 
   const context = await getUserContext();
   const { error } = await context.supabase.from("installment_plans").insert({
-    household_id: context.householdId,
+    space_id: context.spaceId,
     title,
     total_amount: totalAmount,
     installment_count: installmentCount,
@@ -191,7 +191,7 @@ export async function updateFinancialEntry(
       "id, source_kind, recurring_item_id, installment_plan_id, installment_number, competence_month",
     )
     .eq("id", id)
-    .eq("household_id", context.householdId)
+    .eq("space_id", context.spaceId)
     .maybeSingle();
   if (!entry) return { error: "entry-unavailable" };
 
@@ -210,7 +210,7 @@ export async function updateFinancialEntry(
     const { data: futureEntries, error: fetchError } = await context.supabase
       .from("financial_entries")
       .select("id, competence_month")
-      .eq("household_id", context.householdId)
+      .eq("space_id", context.spaceId)
       .eq("recurring_item_id", entry.recurring_item_id)
       .gte("competence_month", entry.competence_month);
     if (fetchError) return { error: "update-series" };
@@ -228,7 +228,7 @@ export async function updateFinancialEntry(
             ),
           })
           .eq("id", futureEntry.id)
-          .eq("household_id", context.householdId),
+          .eq("space_id", context.spaceId),
       ),
     );
     if (updateResults.some((result) => result.error))
@@ -244,14 +244,14 @@ export async function updateFinancialEntry(
         due_day: dueDate ? Number(dueDate.slice(-2)) : null,
       })
       .eq("id", entry.recurring_item_id)
-      .eq("household_id", context.householdId);
+      .eq("space_id", context.spaceId);
     if (definitionError) return { error: "update-series" };
   } else {
     const { error } = await context.supabase
       .from("financial_entries")
       .update(values)
       .eq("id", id)
-      .eq("household_id", context.householdId);
+      .eq("space_id", context.spaceId);
     if (error) return { error: "update-entry" };
   }
   return { success: entry.competence_month.slice(0, 7) };
@@ -278,7 +278,7 @@ export async function copyPreviousMonthEntries(targetMonthValue: string) {
   const { data, error } = await context.supabase.rpc(
     "copy_financial_entries_to_month",
     {
-      p_household_id: context.householdId,
+      p_household_id: context.spaceId,
       p_target_month: targetMonth,
     },
   );
@@ -294,7 +294,7 @@ export async function deleteMonthEntries(monthValue: string) {
   const { data, error } = await context.supabase.rpc(
     "delete_financial_entries_for_month",
     {
-      p_household_id: context.householdId,
+      p_household_id: context.spaceId,
       p_month: month,
     },
   );
@@ -316,7 +316,7 @@ export async function deactivateSeries(
     .from(table)
     .update({ is_active: false })
     .eq("id", id)
-    .eq("household_id", context.householdId);
+    .eq("space_id", context.spaceId);
   if (error) return { error: "deactivate-series" };
   return { success: "deactivated" };
 }

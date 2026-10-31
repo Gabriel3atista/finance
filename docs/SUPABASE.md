@@ -3,10 +3,11 @@
 ## O que está preparado
 
 - `supabase/config.toml` define a configuração local. A API expõe `public`, `storage` e `graphql_public`; o schema `private` usado pelas funções de autorização não é exposto pelo PostgREST.
-- `supabase/migrations/20261022120000_household_finance_schema.sql` cria núcleos familiares, membros, convites, recorrências, parcelamentos, lançamentos financeiros e lotes de importação.
-- RLS está habilitado em todas as tabelas públicas. Leitura e escrita financeira exigem associação autenticada ao mesmo núcleo; sem sessão, `auth.uid()` é nulo e nenhuma política concede acesso.
-- O criador do núcleo é incluído por um trigger privado. Um segundo membro só pode entrar com convite pendente, não expirado e dirigido ao e-mail confirmado da sessão.
-- Chaves compostas impedem que lançamento financeiro aponte para recorrência, parcelamento ou lote de outro núcleo. `household_id` e autor de criação são imutáveis em registros financeiros.
+- A migration histórica `20261022120000_household_finance_schema.sql` criou espaços, membros, convites, recorrências, parcelamentos, lançamentos financeiros e lotes de importação. A migration `20261031120000_rename_households_to_spaces.sql` aplica os nomes atuais sem recriar os dados.
+- As tabelas principais são `spaces`, `space_members` e `space_invitations`; tabelas financeiras usam `space_id`.
+- RLS está habilitado em todas as tabelas públicas. Leitura e escrita financeira exigem associação autenticada ao mesmo espaço; sem sessão, `auth.uid()` é nulo e nenhuma política concede acesso.
+- Quem cria o espaço é incluído por um trigger privado. Outras pessoas só podem entrar com convite pendente, não expirado e dirigido ao e-mail confirmado da sessão.
+- Chaves compostas impedem que lançamento financeiro aponte para recorrência, parcelamento ou lote de outro espaço. `space_id` e autor de criação são imutáveis em registros financeiros.
 - Lançamentos preservam o estado de pagamento (`planned`, `settled` ou `cancelled`) e a data de baixa; continuam editáveis enquanto existirem e são removidos do banco ao excluir. Atraso é derivado da data de vencimento e do estado pendente.
 - Uma fatura é uma despesa (`source_kind = 'card_statement'`). Compras individuais não são gravadas junto com o pagamento da fatura; isso evita somar compra e fatura em dobro no modelo inicial.
 - Os lançamentos históricos importados preservam hash SHA-256 do arquivo e referência de aba/linha/célula para consulta e auditoria. O envio de novas planilhas foi desativado; registros e metadados existentes permanecem no banco.
@@ -46,7 +47,7 @@ A rota `/mes` carrega os lançamentos de uma competência (`?month=AAAA-MM`). Re
 
 ## Histórico importado
 
-A rota `/historico` é somente leitura e consulta os lançamentos históricos já gravados em `financial_entries`, junto com os lotes e a origem de cada item em `import_batches`. Os registros preservam o hash SHA-256 do arquivo e as referências de aba, linha e célula. Esses dados continuam sujeitos ao RLS por núcleo familiar.
+A rota `/historico` é somente leitura e consulta os lançamentos históricos já gravados em `financial_entries`, junto com os lotes e a origem de cada item em `import_batches`. Os registros preservam o hash SHA-256 do arquivo e as referências de aba, linha e célula. Esses dados continuam sujeitos ao RLS do espaço.
 
 O fluxo de envio foi aposentado: a interface, o parser `.xlsx`, a dependência de planilhas e a função `public.commit_historical_import(...)` foram removidos. A migration de aposentadoria revoga inserção e atualização autenticadas em `import_batches`, sem apagar lotes, lançamentos ou campos de proveniência existentes. Use o app para cadastrar novos lançamentos.
 
@@ -56,15 +57,15 @@ A rota `/projecao` foi aposentada. A migration `20261030120000_remove_forecast_f
 
 Os dois gráficos históricos usam lançamentos realizados por competência para exibir receitas e despesas nos últimos seis meses. Lançamentos históricos importados são consultáveis em `/historico`.
 
-## Conferir isolamento entre núcleos
+## Conferir isolamento entre espaços
 
-Para conferir o isolamento, crie dois usuários confirmados (A e B), cada qual com um núcleo separado, e cadastre pelo menos um lançamento com cada sessão. Faça as verificações usando a API com a chave publishable e o access token da sessão correspondente:
+Para conferir o isolamento, crie dois usuários confirmados (A e B), cada qual com um espaço separado, e cadastre pelo menos um lançamento com cada sessão. Faça as verificações usando a API com a chave publishable e o access token da sessão correspondente:
 
-1. Com a sessão A, liste núcleos e lançamentos. Só devem aparecer o núcleo A e seus lançamentos.
-2. Repita com a sessão B. Só devem aparecer o núcleo B e seus lançamentos.
-3. Tente inserir ou atualizar um lançamento usando o `household_id` do outro núcleo. A operação deve ser negada por RLS; uma consulta filtrada pelo núcleo alheio deve retornar zero linhas.
-4. Sem access token, tente ler e gravar cada tabela pública acima. Nenhum dado familiar pode ser retornado; leitura pode ser negada por falta de grant e gravação deve ser negada.
-5. Confirme que `household_members` não permite inserir vínculo arbitrário, trocar o `household_id` de um lançamento, ou aceitar convite com e-mail diferente/não confirmado.
+1. Com a sessão A, liste espaços e lançamentos. Só devem aparecer o espaço A e seus lançamentos.
+2. Repita com a sessão B. Só devem aparecer o espaço B e seus lançamentos.
+3. Tente inserir ou atualizar um lançamento usando o `space_id` do outro espaço. A operação deve ser negada por RLS; uma consulta filtrada pelo espaço alheio deve retornar zero linhas.
+4. Sem access token, tente ler e gravar cada tabela pública acima. Nenhum dado financeiro deve ser retornado; leitura pode ser negada por falta de grant e gravação deve ser negada.
+5. Confirme que `space_members` não permite inserir vínculo arbitrário, trocar o `space_id` de um lançamento, ou aceitar convite com e-mail diferente/não confirmado.
 
 No Studio local, também é possível conferir cobertura estrutural com:
 
@@ -73,7 +74,7 @@ select tablename, rowsecurity
 from pg_tables
 where schemaname = 'public'
   and tablename in (
-    'households', 'household_members', 'household_invitations',
+    'spaces', 'space_members', 'space_invitations',
     'recurring_items', 'installment_plans', 'financial_entries', 'import_batches'
   )
 order by tablename;

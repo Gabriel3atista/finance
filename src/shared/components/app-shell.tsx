@@ -62,7 +62,7 @@ export function AppShell({
                 />
               </div>
               <div className="app-shell-desktop-context hidden text-sm text-muted lg:block mobile-app:!hidden">
-                Finanças da família
+                Finanças
               </div>
               <div className="app-shell-desktop-actions hidden items-center gap-3 lg:flex mobile-app:!hidden">
                 <ValuesVisibilityToggle />
@@ -74,9 +74,9 @@ export function AppShell({
                 </span>
                 <a
                   className="hidden text-sm text-muted underline-offset-4 hover:text-ink hover:underline sm:inline"
-                  href="/household"
+                  href="/space"
                 >
-                  Família
+                  Espaço
                 </a>
                 <SignOutButton />
               </div>

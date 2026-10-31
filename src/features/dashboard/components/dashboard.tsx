@@ -1,32 +1,37 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/shared/lib/currency";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import {
-  addMonths,
-  formatDate,
-  formatMonth,
-  localDateString,
-  monthString,
-} from "@/shared/lib/date";
+  Card,
+  CardDescription,
+  CardHeader,
+  CardSection,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FinancialValue } from "@/shared/components/financial-values";
-import { BalanceChangeIndicator } from "@/shared/components/balance-change-indicator";
-import { Eyebrow } from "@/shared/components/eyebrow";
-import type { DashboardDueEntry } from "@/features/dashboard/lib/data";
+import { formatCurrency } from "@/shared/lib/currency";
+import { formatDate, localDateString, monthString } from "@/shared/lib/date";
 import { MonthlyHistoryCharts } from "@/features/dashboard/components/monthly-history-charts";
-import { cn } from "@/shared/lib/utils";
-import { getDashboardData } from "@/features/dashboard/lib/data";
+import {
+  YEARLY_TREND_CARD_HEIGHT,
+  YearlyTrendCards,
+} from "@/features/dashboard/components/yearly-trend-cards";
+import {
+  getDashboardData,
+  type DashboardDueEntry,
+} from "@/features/dashboard/lib/data";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { useEnsurePeriodEntries } from "@/features/transactions/hooks/use-ensure-period-entries";
+import { NextIcon } from "@/components/atoms/next-icon";
 
 export function Dashboard({
-  householdId,
+  spaceId,
   userId,
 }: {
-  householdId: string;
+  spaceId: string;
   userId: string;
 }) {
   const ensureMonth = new Date(
@@ -34,258 +39,143 @@ export function Dashboard({
     new Date().getMonth(),
     1,
   );
-  const ensureEntries = useEnsurePeriodEntries(householdId, userId, [
+  const ensureEntries = useEnsurePeriodEntries(spaceId, userId, [
     monthString(ensureMonth),
   ]);
   const { data, isPending, isError } = useQuery({
-    queryKey: queryKeys.dashboard(householdId),
-    queryFn: () => getDashboardData(householdId),
+    queryKey: queryKeys.dashboard(spaceId),
+    queryFn: () => getDashboardData(spaceId),
     enabled: ensureEntries.isReady,
   });
-  if (isPending && !ensureEntries.isError) {
+  const isLoading = isPending && !ensureEntries.isError;
+
+  if (isError || ensureEntries.isError || (!isLoading && !data)) {
     return (
-      <section
-        className="mx-auto max-w-6xl"
-        aria-live="polite"
-        aria-busy="true"
-      >
-        <header className="mb-7">
-          <Eyebrow>Visão geral da família</Eyebrow>
-          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink">
-            Dashboard
-          </h1>
-          <p className="mt-2 text-sm text-muted">Carregando seu resumo…</p>
-        </header>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {[0, 1, 2, 3].map((item) => (
-            <Skeleton
-              key={item}
-              className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-28"
-            />
-          ))}
-        </div>
-      </section>
-    );
-  }
-  if (isError || ensureEntries.isError || !data) {
-    return (
-      <div
+      <Card
         role="alert"
-        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-200"
+        className="mx-auto w-full max-w-5xl rounded-[18px] border-rose-500/20 bg-rose-500/10 p-5 text-sm text-rose-500 shadow-card"
       >
         Não foi possível carregar o painel financeiro. Tente novamente.
-      </div>
+      </Card>
     );
   }
-  const {
-    currentMonth,
-    history,
-    upcoming,
-    settledIncome,
-    settledExpenses,
-    realizedBalance,
-    plannedExpenses,
-  } = data;
-  const monthTitle = formatMonth(currentMonth);
-  const previousMonthKey = monthString(addMonths(currentMonth, -1));
-  const previousMonth = history.find(
-    (month) => monthString(month.month) === previousMonthKey,
-  );
-  const previousRealizedBalance = previousMonth
-    ? previousMonth.income - previousMonth.expenses
-    : undefined;
-
   return (
-    <section className="mx-auto max-w-6xl">
-      <header className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div>
-          <Eyebrow>Visão geral da família</Eyebrow>
-          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
-            Dashboard
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-[15px]">
-            Receitas e despesas cadastradas ao longo do tempo, com um resumo de{" "}
-            {monthTitle}.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="secondary">
-            <Link href={`/mes?month=${monthString(currentMonth)}`}>
-              Abrir meu mês
-            </Link>
-          </Button>
-        </div>
-      </header>
+    <section className="relative isolate mx-auto max-w-5xl">
+      <div className="relative z-10">
+        <header className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
+              Bem vindo de volta, <br /> Gabriel!
+            </h1>
+          </div>
+        </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard
-          label="Receita do mês"
-          value={settledIncome}
-          month={monthTitle}
-          tone="normal"
-        />
-        <SummaryCard
-          label="Despesas do mês"
-          value={settledExpenses}
-          month={monthTitle}
-          tone="normal"
-        />
-        <SummaryCard
-          label="Saldo"
-          value={realizedBalance}
-          month={monthTitle}
-          previousValue={previousRealizedBalance}
-          tone={realizedBalance < 0 ? "negative" : "positive"}
-        />
-        <SummaryCard
-          label="A pagar neste mês"
-          value={plannedExpenses}
-          month={monthTitle}
-          tone="normal"
-        />
+        <section
+          className="mt-8"
+          aria-label="Histórico de receitas e despesas"
+          aria-busy={isLoading || undefined}
+        >
+          {isLoading ? (
+            <DashboardChartsSkeletons />
+          ) : data ? (
+            <>
+              <MonthlyHistoryCharts data={data.history} />
+              <div className="mt-3">
+                <YearlyTrendCards data={data.history} />
+              </div>
+              <UpcomingDueCard entries={data.upcoming} />
+            </>
+          ) : null}
+        </section>
       </div>
-
-      <section className="mt-8" aria-labelledby="history-title">
-        <header className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-          <div>
-            <Eyebrow>Histórico realizado</Eyebrow>
-            <h2
-              className="mt-1 text-xl font-semibold tracking-tight text-ink"
-              id="history-title"
-            >
-              Evolução financeira
-            </h2>
-          </div>
-        </header>
-        <MonthlyHistoryCharts data={history} />
-        <p className="mt-3 text-xs leading-5 text-muted">
-          Os gráficos mostram somente lançamentos realizados. Valores previstos
-          ficam fora do histórico.
-        </p>
-      </section>
-
-      <section
-        className="rounded-[18px] border border-line bg-graphite-900 shadow-card mt-8 p-5 sm:p-6"
-        aria-labelledby="due-title"
-      >
-        <header className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <Eyebrow>Para acompanhar</Eyebrow>
-            <h2
-              className="mt-1 text-lg font-semibold tracking-tight text-ink"
-              id="due-title"
-            >
-              Próximos vencimentos
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Pendências vencidas e previstas para os próximos 30 dias.
-            </p>
-          </div>
-        </header>
-
-        {upcoming.length ? (
-          <div className="mt-4 divide-y divide-line">
-            {upcoming.slice(0, 6).map((entry) => (
-              <DueRow entry={entry} key={entry.id} />
-            ))}
-          </div>
-        ) : (
-          <p className="mt-5 rounded-xl bg-canvas px-4 py-6 text-center text-sm text-muted">
-            Nenhuma pendência com vencimento nos próximos 30 dias.
-          </p>
-        )}
-      </section>
-
-      {!history.some((month) => month.income > 0 || month.expenses > 0) && (
-        <p className="mt-5 rounded-xl border border-dashed border-line px-4 py-4 text-center text-sm leading-6 text-muted">
-          Ainda não há valores realizados para os gráficos. Cadastre pagamentos
-          e recebimentos ou consulte os lançamentos históricos na página de{" "}
-          <Link
-            className="font-medium text-accent underline underline-offset-4"
-            href="/historico"
-          >
-            histórico
-          </Link>
-          .
-        </p>
-      )}
     </section>
   );
 }
 
-function SummaryCard({
-  label,
-  value,
-  month,
-  previousValue,
-  tone,
+function UpcomingDueCard({
+  entries,
 }: {
-  label: string;
-  value: number;
-  month: string;
-  previousValue?: number;
-  tone: "normal" | "positive" | "negative";
+  entries: DashboardDueEntry[];
 }) {
-  return (
-    <article className="rounded-[18px] border border-line bg-graphite-900 shadow-card min-w-0 p-4 sm:p-5">
-      <h2 className="text-sm text-muted">{label}</h2>
-      <p
-        className={cn(
-          "mt-3 truncate text-[22px] font-semibold tracking-tight tabular-nums",
-          tone === "negative" && "text-rose-200",
-          tone === "positive" && "text-mint-200",
-          tone === "normal" && "text-ink",
-        )}
-      >
-        <FinancialValue>{formatCurrency(value)}</FinancialValue>
-      </p>
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <p className="text-xs text-muted">{month}</p>
-        {previousValue !== undefined && (
-          <BalanceChangeIndicator
-            currentBalance={value}
-            previousBalance={previousValue}
-          />
-        )}
-      </div>
-    </article>
-  );
-}
-
-function DueRow({ entry }: { entry: DashboardDueEntry }) {
   const today = localDateString();
-  const overdue = entry.due_date !== null && entry.due_date < today;
-  const month = entry.competence_month.slice(0, 7);
-  const href = `/mes?month=${month}`;
+  const upcomingEntries = entries.slice(0, 6);
 
   return (
-    <Link
-      className="flex items-center justify-between gap-3 py-3 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none"
-      href={href}
-    >
-      <span className="min-w-0">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-medium text-ink">
-            {entry.title}
-          </span>
-          <span className="shrink-0 rounded-full bg-canvas px-2 py-0.5 text-[10px] text-muted">
-            {entry.entry_type === "income" ? "Receita" : "Despesa"}
-          </span>
-        </span>
-        <span
-          className={cn(
-            "mt-1 block text-xs",
-            overdue ? "text-rose-300" : "text-muted",
-          )}
+    <Card sections className="mt-3 overflow-hidden">
+      <CardHeader className="flex flex-col gap-2 bg-graphite-600">
+        <CardTitle
+          className="flex items-center gap-2"
         >
-          {overdue ? "Vencida · " : "Vence · "}
-          {formatDate(entry.due_date!)}
-        </span>
-      </span>
-      <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">
-        <FinancialValue>{formatCurrency(entry.amount)}</FinancialValue>
-      </span>
-    </Link>
+          <div className="flex items-center justify-center p-3  rounded-lg size-4 bg-accent/10 text-accent">
+            <NextIcon name="ShieldWarningOutline" size="xs" />
+          </div>
+          Próximos vencimentos
+        </CardTitle>
+        <CardDescription className="text-xs max-w-[256px]">
+          Lançamentos vencidos e previstos para os próximos 30 dias,
+          organizados por data.
+        </CardDescription>
+      </CardHeader>
+      {upcomingEntries.length ? (
+        upcomingEntries.map((entry) => {
+          const overdue = entry.due_date !== null && entry.due_date < today;
+
+          return (
+            <Link
+              className="flex min-w-0 items-center justify-between gap-3 p-3 transition-colors hover:bg-graphite-600/50"
+              href={`/mes?month=${entry.competence_month.slice(0, 7)}`}
+              key={entry.id}
+            >
+              <span className="flex min-w-0 flex-col gap-2">
+                <span className="truncate text-sm font-medium text-ink">
+                  {entry.title}
+                </span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <Badge
+                    size="sm"
+                    variant={overdue ? "destructive" : "secondary"}
+                  >
+                    {overdue ? "Vencido" : "Vence"} {formatDate(entry.due_date!)}
+                  </Badge>
+                  <Badge size="sm" variant="secondary">
+                    {entry.entry_type === "income" ? "Receita" : "Despesa"}
+                  </Badge>
+                </span>
+              </span>
+              <span
+                className={`shrink-0 text-sm font-semibold tabular-nums ${entry.entry_type === "income" ? "text-mint-300" : "text-ink"}`}
+              >
+                <FinancialValue>
+                  {entry.entry_type === "income" ? "+" : "−"}
+                  {formatCurrency(entry.amount)}
+                </FinancialValue>
+              </span>
+            </Link>
+          );
+        })
+      ) : (
+        <CardSection>
+          <p className="py-2 text-sm text-muted">
+            Nenhum vencimento próximo.
+          </p>
+        </CardSection>
+      )}
+    </Card>
   );
 }
 
+function DashboardChartsSkeletons() {
+  return (
+    <div className="grid gap-3">
+      <Skeleton className="h-[312px] rounded-2xl border border-graphite-600 bg-graphite-700 shadow-card" />
+      <div className="grid grid-cols-2 gap-3">
+        {[0, 1].map((item) => (
+          <Skeleton
+            key={item}
+            className={`rounded-2xl border border-graphite-600 bg-graphite-700 shadow-card ${YEARLY_TREND_CARD_HEIGHT}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

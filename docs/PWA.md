@@ -10,4 +10,4 @@ O aplicativo publica `/manifest.webmanifest` com modo standalone, cores escuras 
 4. Navegue pelas quatro rotas principais, role a tela e abra formulários com o teclado virtual. Confirme que cabeçalho, navegação inferior, notch e indicador de início não cobrem conteúdo.
 5. Gire o aparelho para paisagem e confirme que os formulários continuam utilizáveis.
 
-Confirme login, convite e isolamento usando duas contas de teste e dois núcleos diferentes antes de considerar o comportamento de produção validado. A inspeção de migrations confirma as políticas declaradas, mas não substitui esse teste comportamental com sessões reais.
+Confirme login, convite e isolamento usando duas contas de teste e dois espaços diferentes antes de considerar o comportamento de produção validado. A inspeção de migrations confirma as políticas declaradas, mas não substitui esse teste comportamental com sessões reais.

@@ -47,17 +47,17 @@ Deno.serve(async (request: Request) => {
     return Response.json({ error: "Function is not configured" }, { status: 500, headers: corsHeaders });
   }
 
-  let input: { householdId?: string; email?: string };
+  let input: { spaceId?: string; householdId?: string; email?: string };
   try {
     input = await request.json();
   } catch {
     return Response.json({ error: "Invalid request body" }, { status: 400, headers: corsHeaders });
   }
 
-  const householdId = input.householdId ?? "";
+  const spaceId = input.spaceId ?? input.householdId ?? "";
   const email = (input.email ?? "").trim().toLowerCase();
-  if (!/^[0-9a-f-]{36}$/i.test(householdId) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return Response.json({ error: "Household and valid email are required" }, { status: 400, headers: corsHeaders });
+  if (!/^[0-9a-f-]{36}$/i.test(spaceId) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return Response.json({ error: "Space and valid email are required" }, { status: 400, headers: corsHeaders });
   }
 
   const userClient = createClient(url, publishableKey, {
@@ -79,20 +79,20 @@ Deno.serve(async (request: Request) => {
   }
 
   const { data: membership } = await adminClient
-    .from("household_members")
+    .from("space_members")
     .select("member_role")
-    .eq("household_id", householdId)
+    .eq("space_id", spaceId)
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (membership?.member_role !== "owner") {
-    return Response.json({ error: "Only the household owner can invite members" }, { status: 403, headers: corsHeaders });
+    return Response.json({ error: "Only the space owner can invite members" }, { status: 403, headers: corsHeaders });
   }
 
   const { data: existing } = await adminClient
-    .from("household_invitations")
+    .from("space_invitations")
     .select("id")
-    .eq("household_id", householdId)
+    .eq("space_id", spaceId)
     .eq("invited_email", email)
     .eq("status", "pending")
     .gt("expires_at", new Date().toISOString())
@@ -103,9 +103,9 @@ Deno.serve(async (request: Request) => {
   }
 
   const { data: invitation, error: insertError } = await adminClient
-    .from("household_invitations")
+    .from("space_invitations")
     .insert({
-      household_id: householdId,
+      space_id: spaceId,
       invited_email: email,
       invited_by: user.id,
     })
@@ -117,13 +117,13 @@ Deno.serve(async (request: Request) => {
   }
 
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/household`,
-    data: { household_invitation_id: invitation.id },
+    redirectTo: `${origin}/auth/callback?next=/space`,
+    data: { space_invitation_id: invitation.id, household_invitation_id: invitation.id },
   });
 
   if (inviteError) {
     await adminClient
-      .from("household_invitations")
+      .from("space_invitations")
       .update({ status: "revoked" })
       .eq("id", invitation.id);
     return Response.json({ error: "Could not send invitation email" }, { status: 422, headers: corsHeaders });

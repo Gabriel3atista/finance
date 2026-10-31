@@ -3,6 +3,15 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --app-header-height: calc(56px + env(safe-area-inset-top, 0px));
+    --app-sticky-content-top: calc(var(--app-header-height) + 16px);
+  }
+
+  html {
+    scroll-padding-top: var(--app-sticky-content-top);
+  }
+
   a,
   button,
   [role="button"] {

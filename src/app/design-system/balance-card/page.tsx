@@ -131,8 +131,8 @@ export default function BalanceCardPlaygroundPage() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-7xl px-4 py-6 sm:px-8 sm:py-10">
-      <div className="mb-8 flex items-center justify-between gap-4">
+    <main className="mx-auto min-h-dvh w-full max-w-7xl px-4 pb-6 pt-0 sm:px-8 sm:pb-10">
+      <div className="sticky top-0 z-40 -mx-4 mb-6 flex min-h-[var(--app-header-height)] items-center justify-between gap-4 border-b border-line bg-graphite-900/95 px-4 pb-2 pt-[env(safe-area-inset-top)] sm:-mx-8 sm:px-8">
         <div className="inline-flex items-center gap-2 rounded-full border border-line bg-graphite-800 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-moon-300">
           <span className="size-1.5 rounded-full bg-mint-400" />
           Design system · playground
@@ -175,89 +175,47 @@ export default function BalanceCardPlaygroundPage() {
         </p>
       </header>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="space-y-5 xl:sticky xl:top-6 xl:self-start">
-          <Card className="overflow-hidden border-line bg-graphite-900">
-            <CardHeader className="flex flex-wrap items-center justify-between gap-3 border-b border-line/70 p-5 sm:px-6">
-              <div>
-                <CardTitle>Prévia ao vivo</CardTitle>
-                <CardDescription className="mt-1">
-                  A renderização usa os mesmos parâmetros do card real.
-                </CardDescription>
-              </div>
-              <Button
-                leadingIcon={copied ? "CheckOutline" : "CopyOutline"}
-                onClick={copyConfig}
-                size="sm"
-                variant={copied ? "secondary" : "outline"}
-              >
-                {copied ? "Copiado" : "Copiar valores"}
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4 p-5 sm:p-6">
-              <BalanceCard
-                balance={balance}
-                previousBalance={PREVIOUS_BALANCE}
-                valuesHidden={!valuesVisible}
-                onToggleValues={() => setValuesVisible((visible) => !visible)}
-                shaderConfig={shaderConfig}
-              />
-              <p
-                aria-live="polite"
-                className="min-h-5 text-xs text-muted"
-                role="status"
-              >
-                {copied
-                  ? "Configuração JSON copiada para a área de transferência."
-                  : copyError
-                    ? "Não foi possível copiar. Use o playground em uma conexão segura."
-                    : "Copie o objeto e passe-o à prop shaderConfig do BalanceCard."}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Simular saldo</CardTitle>
+      <div className="flex flex-col items-stretch gap-5 xl:grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <Card className="sticky top-[var(--app-sticky-content-top)] z-30 w-full self-start overflow-hidden border-line bg-graphite-900">
+          <CardHeader className="flex flex-wrap items-center justify-between gap-3 border-b border-line/70 p-5 sm:px-6">
+            <div>
+              <CardTitle>Prévia ao vivo</CardTitle>
               <CardDescription className="mt-1">
-                Dados fictícios para visualizar o card sem alterar lançamentos.
+                A renderização usa os mesmos parâmetros do card real.
               </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2 pt-0">
-              <Button
-                onClick={() => setBalance((value) => value + 250)}
-                size="sm"
-                variant="secondary"
-              >
-                + R$ 250
-              </Button>
-              <Button
-                onClick={() => setBalance((value) => value - 180)}
-                size="sm"
-                variant="secondary"
-              >
-                − R$ 180
-              </Button>
-              <Button
-                onClick={() => setBalance(-350.4)}
-                size="sm"
-                variant="secondary"
-              >
-                Saldo negativo
-              </Button>
-              <Button
-                leadingIcon="HistoryOutline"
-                onClick={() => setBalance(INITIAL_BALANCE)}
-                size="sm"
-                variant="ghost"
-              >
-                Restaurar
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+            <Button
+              leadingIcon={copied ? "CheckOutline" : "CopyOutline"}
+              onClick={copyConfig}
+              size="sm"
+              variant={copied ? "secondary" : "outline"}
+            >
+              {copied ? "Copiado" : "Copiar valores"}
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4 p-5 sm:p-6">
+            <BalanceCard
+              balance={balance}
+              previousBalance={PREVIOUS_BALANCE}
+              valuesHidden={!valuesVisible}
+              onToggleValues={() => setValuesVisible((visible) => !visible)}
+              shaderConfig={shaderConfig}
+            />
+            <p
+              aria-live="polite"
+              className="min-h-5 text-xs text-muted"
+              role="status"
+            >
+              {copied
+                ? "Configuração JSON copiada para a área de transferência."
+                : copyError
+                  ? "Não foi possível copiar. Use o playground em uma conexão segura."
+                  : "Copie o objeto e passe-o à prop shaderConfig do BalanceCard."}
+            </p>
+          </CardContent>
+        </Card>
 
-        <Card className="overflow-hidden">
+        <Card className="w-full overflow-hidden">
           <CardHeader className="border-b border-line/70 px-5 py-4 sm:px-6">
             <CardTitle>Configuração do shader</CardTitle>
             <CardDescription className="mt-1">
@@ -425,6 +383,46 @@ export default function BalanceCardPlaygroundPage() {
               </Button>
             </div>
           </section>
+        </Card>
+
+        <Card className="w-full xl:col-start-1">
+          <CardHeader>
+            <CardTitle>Simular saldo</CardTitle>
+            <CardDescription className="mt-1">
+              Dados fictícios para visualizar o card sem alterar lançamentos.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2 pt-0">
+            <Button
+              onClick={() => setBalance((value) => value + 250)}
+              size="sm"
+              variant="secondary"
+            >
+              + R$ 250
+            </Button>
+            <Button
+              onClick={() => setBalance((value) => value - 180)}
+              size="sm"
+              variant="secondary"
+            >
+              − R$ 180
+            </Button>
+            <Button
+              onClick={() => setBalance(-350.4)}
+              size="sm"
+              variant="secondary"
+            >
+              Saldo negativo
+            </Button>
+            <Button
+              leadingIcon="HistoryOutline"
+              onClick={() => setBalance(INITIAL_BALANCE)}
+              size="sm"
+              variant="ghost"
+            >
+              Restaurar
+            </Button>
+          </CardContent>
         </Card>
       </div>
 

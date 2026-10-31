@@ -40,8 +40,8 @@ export function AppShell({
             />
           </aside>
           <div className="app-shell-content min-w-0 lg:flex lg:h-[100dvh] lg:min-h-0 lg:flex-col standalone-wide:!h-auto standalone-wide:min-h-0 standalone-wide:flex-1">
-            <header className="app-shell-header sticky top-0 z-30 flex min-h-[calc(56px_+_env(safe-area-inset-top))] shrink-0 items-center justify-between bg-graphite-900/60 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl standalone:!min-h-[calc(56px_+_env(safe-area-inset-top)_+_16px)] standalone:!bg-graphite-900 standalone:!pt-[calc(env(safe-area-inset-top)_+_16px)] standalone:!backdrop-blur-none sm:px-8 lg:px-10">
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[env(safe-area-inset-top)] z-10 flex items-center justify-center">
+            <header className="app-shell-header sticky top-0 z-30 flex min-h-[var(--app-header-height)] shrink-0 items-center justify-between bg-graphite-900/60 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl standalone:!min-h-[calc(var(--app-header-height)_+_16px)] standalone:!bg-graphite-900 standalone:!pt-[calc(env(safe-area-inset-top)_+_16px)] standalone:!backdrop-blur-none sm:px-8 lg:px-10">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[env(safe-area-inset-top)] z-10 flex items-center justify-center standalone:!top-[calc(env(safe-area-inset-top)_+_16px)]">
                 <AppShellHeaderSlot />
               </div>
               <div className="app-shell-mobile-header flex w-full items-center justify-between lg:hidden mobile-app:!flex">
@@ -87,7 +87,7 @@ export function AppShell({
                 <SignOutButton />
               </div>
             </header>
-            <main className="min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            <main className="min-w-0 scroll-pt-[var(--app-sticky-content-top)] lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
               <div className="mx-auto w-full max-w-[1440px] px-3 pb-28 pt-3 sm:px-8 sm:pt-10 lg:px-10 lg:pb-12">
                 {children}
               </div>

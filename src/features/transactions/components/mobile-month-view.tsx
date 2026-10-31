@@ -5,11 +5,10 @@ import { NextIcon } from "@/components/atoms/next-icon";
 import { Card, CardSection } from "@/components/ui/card";
 import {
   FinancialValue,
-  ValuesVisibilityToggle,
+  useValuesVisibility,
 } from "@/shared/components/financial-values";
-import { BalanceChangeIndicator } from "@/shared/components/balance-change-indicator";
-import { AnimatedNumber } from "@/shared/components/animated-number";
 import { MonthSelector } from "@/features/transactions/components/month-selector";
+import { BalanceCard } from "@/features/transactions/components/balance-card";
 import { MonthlyEntryList } from "@/features/transactions/components/monthly-entry-list";
 import type { FinancialEntry } from "@/features/transactions/lib/data";
 import { formatCurrency } from "@/shared/lib/currency";
@@ -59,6 +58,8 @@ export function MobileMonthView({
   onMonthPreview: (month: Date | null) => void;
 }) {
   const lastAvailableBalance = useRef(currentBalance);
+  const { hidden: valuesHidden, toggle: toggleValuesVisibility } =
+    useValuesVisibility();
   const displayedBalance = isBalancePending
     ? lastAvailableBalance.current
     : currentBalance;
@@ -91,43 +92,14 @@ export function MobileMonthView({
         onMonthPreview={onMonthPreview}
         onMonthSelect={onMonthSelect}
       />
-      <article className="relative isolate flex h-40 max-h-40 min-h-40 flex-col justify-between overflow-hidden rounded-3xl bg-[url('/current-balance-card-background.png')] bg-cover bg-center px-6 pb-6 pt-3">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border-[1px] border-white/50 mix-blend-overlay"
-        />
-        <div className="relative z-10 flex items-center justify-between gap-3">
-          <p className="text-sm text-ink">Saldo previsto</p>
-          <ValuesVisibilityToggle
-            iconOnly
-            className="min-h-8 size-8 rounded-full bg-transparent p-0 text-ink"
-            loading={isBalancePending || isPreviousBalancePending}
-          />
-        </div>
-        <div className="relative z-10 flex items-end justify-between gap-3">
-          <p
-            className="text-3xl font-semibold tracking-tight text-white tabular-nums"
-            aria-busy={isBalancePending}
-          >
-            <FinancialValue>
-              <AnimatedNumber
-                value={displayedBalance}
-                locale="pt-BR"
-                format={{ style: "currency", currency: "BRL" }}
-              />
-            </FinancialValue>
-          </p>
-          {previousBalance !== undefined || isPreviousBalancePending ? (
-            <div className="mb-1">
-              <BalanceChangeIndicator
-                currentBalance={displayedBalance}
-                previousBalance={previousBalance ?? 0}
-                loading={isBalancePending || isPreviousBalancePending}
-              />
-            </div>
-          ) : null}
-        </div>
-      </article>
+      <BalanceCard
+        balance={displayedBalance}
+        previousBalance={previousBalance}
+        isBalancePending={isBalancePending}
+        isPreviousBalancePending={isPreviousBalancePending}
+        valuesHidden={valuesHidden}
+        onToggleValues={toggleValuesVisibility}
+      />
       <Card asChild sections className="overflow-hidden">
         <article aria-busy={isBalancePending}>
           <CardSection>

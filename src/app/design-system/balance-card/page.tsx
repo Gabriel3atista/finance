@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BalanceCardShader } from "@/app/design-system/balance-card/balance-card-shader";
-import { AnimatedNumber } from "@/shared/components/animated-number";
-import { BalanceChangeIndicator } from "@/shared/components/balance-change-indicator";
+import { BalanceCard } from "@/features/transactions/components/balance-card";
 
 const INITIAL_BALANCE = 4820.75;
 const PREVIOUS_BALANCE = 4390.2;
@@ -33,45 +31,12 @@ export default function BalanceCardPlaygroundPage() {
         aria-label="Playground do card de saldo"
         className="grid max-w-xl gap-4"
       >
-        <article className="relative isolate flex h-48 max-h-48 min-h-48 flex-col justify-between overflow-hidden rounded-3xl bg-[url('/current-balance-card-background.png')] bg-cover bg-center px-6 pb-6 pt-3">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border border-white/50 mix-blend-overlay"
-          />
-          <BalanceCardShader />
-          <div className="relative z-10 flex items-center justify-between gap-3">
-            <p className="text-sm text-ink">Saldo previsto</p>
-            <Button
-              aria-label={valuesVisible ? "Ocultar valores" : "Mostrar valores"}
-              aria-pressed={!valuesVisible}
-              className="size-8 min-h-8 rounded-full bg-transparent p-0 text-ink"
-              icon={valuesVisible ? "EyeOutline" : "EyeOffOutline"}
-              onClick={() => setValuesVisible((visible) => !visible)}
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            />
-          </div>
-          <div className="relative z-10 flex items-end justify-between gap-3">
-            <p className="text-3xl font-semibold tracking-tight text-white tabular-nums">
-              {valuesVisible ? (
-                <AnimatedNumber
-                  value={balance}
-                  locale="pt-BR"
-                  format={{ style: "currency", currency: "BRL" }}
-                />
-              ) : (
-                <span aria-label="Valor oculto">••••••••</span>
-              )}
-            </p>
-            <div className="mb-1">
-              <BalanceChangeIndicator
-                currentBalance={balance}
-                previousBalance={PREVIOUS_BALANCE}
-              />
-            </div>
-          </div>
-        </article>
+        <BalanceCard
+          balance={balance}
+          previousBalance={PREVIOUS_BALANCE}
+          valuesHidden={!valuesVisible}
+          onToggleValues={() => setValuesVisible((visible) => !visible)}
+        />
 
         <div className="rounded-2xl border border-line bg-graphite-800/70 p-4">
           <h2 className="text-sm font-semibold text-ink">Simular saldo</h2>

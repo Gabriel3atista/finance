@@ -44,18 +44,19 @@ const fragmentShaderSource = `
     p.x *= aspect;
 
     float time = u_time * 0.24;
-    vec2 diagonalAxis = vec2(0.70710678, 0.70710678);
-    float diagonalPosition = dot(p, diagonalAxis);
-    float waveProgress = mod(u_time, 18.0) / 18.0;
-    float waveCenter = mix(-1.7, 1.7, waveProgress);
-    float waveDistance = diagonalPosition - waveCenter;
-    float waveEnvelope = exp(-square(waveDistance * 3.4));
-    float wavePhase = waveDistance * 20.0 + sin(p.x * 2.8 + time) * 0.55;
+    vec2 waveDirection = vec2(cos(radians(-22.0)), sin(radians(-22.0)));
+    vec2 waveNormal = vec2(-waveDirection.y, waveDirection.x);
+    float alongWave = dot(p, waveDirection);
+    float acrossWave = dot(p, waveNormal);
+    float waveEnvelope = exp(-square(acrossWave * 4.6));
+    float wavePhase =
+      alongWave * 8.0 - u_time * 0.9 + sin(acrossWave * 3.0 + time) * 0.35;
     float ripple = sin(wavePhase);
+    float secondaryRipple = sin(wavePhase * 2.1 + 1.1) * 0.18;
 
-    // Refract the sampled image along the 45-degree wave normal.
-    float lensDistortion = waveEnvelope * ripple * 0.016;
-    vec2 refractionDirection = vec2(diagonalAxis.x / aspect, diagonalAxis.y);
+    // Keep the wave axis fixed at -22 degrees and move the refraction along it.
+    float lensDistortion = waveEnvelope * (ripple * 0.82 + secondaryRipple) * 0.018;
+    vec2 refractionDirection = vec2(waveNormal.x / aspect, waveNormal.y);
     vec2 distortedUv = clamp(
       coverUv(v_uv + refractionDirection * lensDistortion),
       vec2(0.001),
@@ -63,14 +64,15 @@ const fragmentShaderSource = `
     );
     vec3 background = texture2D(u_background, distortedUv).rgb;
 
-    float specularRidge = exp(-square(waveDistance * 15.0));
-    float softRidge = exp(-square(waveDistance * 5.0));
-    float shimmer = 0.5 + 0.5 * sin(wavePhase * 1.3 + time * 0.5);
+    float specularRidge = exp(-square(acrossWave * 18.0));
+    float softRidge = exp(-square(acrossWave * 4.8));
+    float shimmer = 0.5 + 0.5 * sin(wavePhase + time * 0.5);
 
     vec3 gold = vec3(1.0, 0.76, 0.43);
     vec3 ice = vec3(0.66, 0.82, 1.0);
     vec3 reflectedColor = mix(gold, ice, smoothstep(-0.65, 0.65, p.x + sin(time) * 0.18));
-    float sheen = specularRidge * (0.08 + shimmer * 0.1) + softRidge * 0.035;
+    float sheen = specularRidge * (0.06 + shimmer * 0.09);
+    sheen += softRidge * 0.025 + waveEnvelope * abs(ripple) * 0.025;
 
     gl_FragColor = vec4(clamp(background + reflectedColor * sheen, 0.0, 1.0), 1.0);
   }

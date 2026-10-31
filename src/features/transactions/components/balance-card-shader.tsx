@@ -33,7 +33,7 @@ export const DEFAULT_BALANCE_CARD_SHADER_CONFIG: BalanceCardShaderConfig = {
   frequency: 3.6,
   thickness: 3.6,
   lightResponse: 1.25,
-  speed: 0.6,
+  speed: 1,
   backgroundOffsetX: 19,
   backgroundOffsetY: 4,
   backgroundScale: 1.23,

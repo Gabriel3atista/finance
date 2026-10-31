@@ -2,6 +2,36 @@
 
 import { useEffect, useRef } from "react";
 
+export type BalanceCardShaderShape = "wave" | "ripple" | "diamond";
+
+export type BalanceCardShaderConfig = {
+  shape: BalanceCardShaderShape;
+  intensity: number;
+  offsetX: number;
+  offsetY: number;
+  rotation: number;
+  refraction: number;
+  dispersion: number;
+  frequency: number;
+  thickness: number;
+  lightResponse: number;
+  speed: number;
+};
+
+export const DEFAULT_BALANCE_CARD_SHADER_CONFIG: BalanceCardShaderConfig = {
+  shape: "wave",
+  intensity: 0.085,
+  offsetX: 100,
+  offsetY: 0,
+  rotation: -22,
+  refraction: 1,
+  dispersion: 0.1,
+  frequency: 8,
+  thickness: 4.6,
+  lightResponse: 1,
+  speed: 1,
+};
+
 const vertexShaderSource = `
   attribute vec2 a_position;
   varying vec2 v_uv;
@@ -18,6 +48,16 @@ const fragmentShaderSource = `
   uniform vec2 u_resolution;
   uniform vec2 u_textureSize;
   uniform float u_centerOffsetX;
+  uniform float u_centerOffsetY;
+  uniform float u_rotation;
+  uniform float u_intensity;
+  uniform float u_refraction;
+  uniform float u_dispersion;
+  uniform float u_frequency;
+  uniform float u_thickness;
+  uniform float u_lightResponse;
+  uniform float u_speed;
+  uniform float u_shape;
   uniform float u_time;
   uniform sampler2D u_background;
   varying vec2 v_uv;
@@ -46,31 +86,48 @@ const fragmentShaderSource = `
   void main() {
     vec2 p = v_uv - 0.5;
     p.x -= u_centerOffsetX;
+    p.y -= u_centerOffsetY;
     float aspect = u_resolution.x / u_resolution.y;
     p.x *= aspect;
 
-    float time = u_time * 0.24;
-    vec2 waveDirection = vec2(cos(radians(-22.0)), sin(radians(-22.0)));
+    float time = u_time * u_speed * 0.24;
+    vec2 waveDirection = vec2(cos(radians(u_rotation)), sin(radians(u_rotation)));
     vec2 waveNormal = vec2(-waveDirection.y, waveDirection.x);
     float alongWave = dot(p, waveDirection);
     float acrossWave = dot(p, waveNormal);
-    float waveEnvelope = exp(-square(acrossWave * 4.6));
+    float ridgeDistance = acrossWave;
+    float phasePosition = alongWave;
+    vec2 refractionNormal = waveNormal;
+
+    if (u_shape > 0.5 && u_shape < 1.5) {
+      float radialDistance = length(p);
+      ridgeDistance = radialDistance - 0.24;
+      phasePosition = radialDistance;
+      refractionNormal = normalize(p + vec2(0.0001));
+    } else if (u_shape > 1.5) {
+      float diamondDistance = abs(alongWave) + abs(acrossWave);
+      ridgeDistance = diamondDistance - 0.24;
+      phasePosition = diamondDistance;
+      refractionNormal = waveDirection * sign(alongWave) + waveNormal * sign(acrossWave);
+    }
+
+    float waveEnvelope = exp(-square(ridgeDistance * u_thickness));
     float wavePhase =
-      alongWave * 8.0 - u_time * 0.9 + sin(acrossWave * 3.0 + time) * 0.35;
+      phasePosition * u_frequency - u_time * u_speed * 0.9 +
+      sin(ridgeDistance * 3.0 + time) * 0.35;
     float ripple = sin(wavePhase);
     float secondaryRipple = sin(wavePhase * 2.1 + 1.1) * 0.18;
 
-    // Keep the wave axis fixed at -22 degrees and move the refraction along it.
-    float lensDistortion = waveEnvelope * (ripple * 0.82 + secondaryRipple) * 0.085;
-    vec2 refractionDirection = vec2(waveNormal.x / aspect, waveNormal.y);
+    float lensDistortion =
+      waveEnvelope * (ripple * 0.82 + secondaryRipple) * u_intensity * u_refraction;
+    vec2 refractionDirection = vec2(refractionNormal.x / aspect, refractionNormal.y);
     vec2 distortedUv = clamp(
       coverUv(v_uv + refractionDirection * lensDistortion),
       vec2(0.001),
       vec2(0.999)
     );
     vec3 background = texture2D(u_background, distortedUv).rgb;
-    vec2 dispersionOffset =
-      refractionDirection * (0.001 + abs(lensDistortion) * 0.1);
+    vec2 dispersionOffset = refractionDirection * abs(lensDistortion) * u_dispersion;
     vec3 redLight = texture2D(
       u_background,
       clamp(distortedUv + dispersionOffset, vec2(0.001), vec2(0.999))
@@ -93,13 +150,14 @@ const fragmentShaderSource = `
     float backgroundLightEdge =
       abs(luminance(lightAhead) - luminance(lightBehind));
     float lightResponse = clamp(
-      backgroundIllumination * 0.55 + backgroundLightEdge * 2.5,
+      (backgroundIllumination * 0.55 + backgroundLightEdge * 2.5) *
+        u_lightResponse,
       0.0,
       1.0
     );
 
-    float specularRidge = exp(-square(acrossWave * 18.0));
-    float softRidge = exp(-square(acrossWave * 4.8));
+    float specularRidge = exp(-square(ridgeDistance * u_thickness * 3.9));
+    float softRidge = exp(-square(ridgeDistance * u_thickness * 1.04));
     float shimmer = 0.5 + 0.5 * sin(wavePhase + time * 0.5);
 
     vec3 gold = vec3(1.0, 0.76, 0.43);
@@ -121,8 +179,15 @@ const fragmentShaderSource = `
   }
 `;
 
-export function BalanceCardShader() {
+export function BalanceCardShader({
+  config = DEFAULT_BALANCE_CARD_SHADER_CONFIG,
+}: {
+  config?: BalanceCardShaderConfig;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const configRef = useRef(config);
+  const refreshRef = useRef<() => void>(() => {});
+  configRef.current = config;
 
   useEffect(() => {
     const canvasElement = canvasRef.current;
@@ -201,7 +266,26 @@ export function BalanceCardShader() {
     const positionLocation = gl.getAttribLocation(program, "a_position");
     const resolutionLocation = gl.getUniformLocation(program, "u_resolution");
     const textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
-    const centerOffsetLocation = gl.getUniformLocation(program, "u_centerOffsetX");
+    const centerOffsetXLocation = gl.getUniformLocation(
+      program,
+      "u_centerOffsetX",
+    );
+    const centerOffsetYLocation = gl.getUniformLocation(
+      program,
+      "u_centerOffsetY",
+    );
+    const rotationLocation = gl.getUniformLocation(program, "u_rotation");
+    const intensityLocation = gl.getUniformLocation(program, "u_intensity");
+    const refractionLocation = gl.getUniformLocation(program, "u_refraction");
+    const dispersionLocation = gl.getUniformLocation(program, "u_dispersion");
+    const frequencyLocation = gl.getUniformLocation(program, "u_frequency");
+    const thicknessLocation = gl.getUniformLocation(program, "u_thickness");
+    const lightResponseLocation = gl.getUniformLocation(
+      program,
+      "u_lightResponse",
+    );
+    const speedLocation = gl.getUniformLocation(program, "u_speed");
+    const shapeLocation = gl.getUniformLocation(program, "u_shape");
     const backgroundLocation = gl.getUniformLocation(program, "u_background");
     const timeLocation = gl.getUniformLocation(program, "u_time");
     gl.enableVertexAttribArray(positionLocation);
@@ -271,12 +355,35 @@ export function BalanceCardShader() {
       if (resolutionLocation) {
         gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
       }
-      if (centerOffsetLocation) {
-        gl.uniform1f(
-          centerOffsetLocation,
-          (100 * getPixelRatio()) / canvas.width,
-        );
-      }
+      const currentConfig = configRef.current;
+      const pixelRatio = getPixelRatio();
+      setUniformFloat(
+        gl,
+        centerOffsetXLocation,
+        (currentConfig.offsetX * pixelRatio) / canvas.width,
+      );
+      setUniformFloat(
+        gl,
+        centerOffsetYLocation,
+        (currentConfig.offsetY * pixelRatio) / canvas.height,
+      );
+      setUniformFloat(gl, rotationLocation, currentConfig.rotation);
+      setUniformFloat(gl, intensityLocation, currentConfig.intensity);
+      setUniformFloat(gl, refractionLocation, currentConfig.refraction);
+      setUniformFloat(gl, dispersionLocation, currentConfig.dispersion);
+      setUniformFloat(gl, frequencyLocation, currentConfig.frequency);
+      setUniformFloat(gl, thicknessLocation, currentConfig.thickness);
+      setUniformFloat(gl, lightResponseLocation, currentConfig.lightResponse);
+      setUniformFloat(gl, speedLocation, currentConfig.speed);
+      setUniformFloat(
+        gl,
+        shapeLocation,
+        currentConfig.shape === "wave"
+          ? 0
+          : currentConfig.shape === "ripple"
+            ? 1
+            : 2,
+      );
       if (timeLocation) {
         gl.uniform1f(
           timeLocation,
@@ -298,6 +405,10 @@ export function BalanceCardShader() {
     function getPixelRatio() {
       return Math.min(window.devicePixelRatio || 1, 1.35);
     }
+
+    refreshRef.current = () => {
+      if (reducedMotion && textureReady) render(performance.now());
+    };
 
     function resize() {
       const pixelRatio = getPixelRatio();
@@ -361,6 +472,7 @@ export function BalanceCardShader() {
     return () => {
       disposed = true;
       stop();
+      refreshRef.current = () => {};
       backgroundImage.onload = null;
       backgroundImage.onerror = null;
       resizeObserver.disconnect();
@@ -372,6 +484,10 @@ export function BalanceCardShader() {
       gl.deleteProgram(program);
     };
   }, []);
+
+  useEffect(() => {
+    refreshRef.current();
+  }, [config]);
 
   return (
     <div
@@ -399,4 +515,12 @@ function compileShader(
     return null;
   }
   return shader;
+}
+
+function setUniformFloat(
+  gl: WebGLRenderingContext,
+  location: WebGLUniformLocation | null,
+  value: number,
+) {
+  if (location) gl.uniform1f(location, value);
 }

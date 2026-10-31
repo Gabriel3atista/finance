@@ -3,7 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { AnimatedNumber } from "@/shared/components/animated-number";
 import { BalanceChangeIndicator } from "@/shared/components/balance-change-indicator";
-import { BalanceCardShader } from "@/features/transactions/components/balance-card-shader";
+import {
+  BalanceCardShader,
+  type BalanceCardShaderConfig,
+} from "@/features/transactions/components/balance-card-shader";
 
 export function BalanceCard({
   balance,
@@ -12,6 +15,7 @@ export function BalanceCard({
   isPreviousBalancePending = false,
   valuesHidden,
   onToggleValues,
+  shaderConfig,
 }: {
   balance: number;
   previousBalance?: number;
@@ -19,6 +23,7 @@ export function BalanceCard({
   isPreviousBalancePending?: boolean;
   valuesHidden: boolean;
   onToggleValues: () => void;
+  shaderConfig?: BalanceCardShaderConfig;
 }) {
   const isLoading = isBalancePending || isPreviousBalancePending;
 
@@ -28,7 +33,7 @@ export function BalanceCard({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border border-white/50 mix-blend-overlay"
       />
-      <BalanceCardShader />
+      <BalanceCardShader config={shaderConfig} />
       <div className="relative z-10 flex items-center justify-between gap-3">
         <p className="text-sm text-ink">Saldo previsto</p>
         <Button

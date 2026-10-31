@@ -57,7 +57,7 @@ const fragmentShaderSource = `
     float secondaryRipple = sin(wavePhase * 2.1 + 1.1) * 0.18;
 
     // Keep the wave axis fixed at -22 degrees and move the refraction along it.
-    float lensDistortion = waveEnvelope * (ripple * 0.82 + secondaryRipple) * 0.036;
+    float lensDistortion = waveEnvelope * (ripple * 0.82 + secondaryRipple) * 0.055;
     vec2 refractionDirection = vec2(waveNormal.x / aspect, waveNormal.y);
     vec2 distortedUv = clamp(
       coverUv(v_uv + refractionDirection * lensDistortion),

@@ -26,6 +26,10 @@ const fragmentShaderSource = `
     return value * value;
   }
 
+  float luminance(vec3 color) {
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+  }
+
   vec2 coverUv(vec2 uv) {
     float screenAspect = u_resolution.x / u_resolution.y;
     float imageAspect = u_textureSize.x / u_textureSize.y;
@@ -57,7 +61,7 @@ const fragmentShaderSource = `
     float secondaryRipple = sin(wavePhase * 2.1 + 1.1) * 0.18;
 
     // Keep the wave axis fixed at -22 degrees and move the refraction along it.
-    float lensDistortion = waveEnvelope * (ripple * 0.82 + secondaryRipple) * 0.055;
+    float lensDistortion = waveEnvelope * (ripple * 0.82 + secondaryRipple) * 0.085;
     vec2 refractionDirection = vec2(waveNormal.x / aspect, waveNormal.y);
     vec2 distortedUv = clamp(
       coverUv(v_uv + refractionDirection * lensDistortion),
@@ -65,6 +69,34 @@ const fragmentShaderSource = `
       vec2(0.999)
     );
     vec3 background = texture2D(u_background, distortedUv).rgb;
+    vec2 dispersionOffset =
+      refractionDirection * (0.001 + abs(lensDistortion) * 0.1);
+    vec3 redLight = texture2D(
+      u_background,
+      clamp(distortedUv + dispersionOffset, vec2(0.001), vec2(0.999))
+    ).rgb;
+    vec3 blueLight = texture2D(
+      u_background,
+      clamp(distortedUv - dispersionOffset, vec2(0.001), vec2(0.999))
+    ).rgb;
+    vec3 refractedBackground = vec3(redLight.r, background.g, blueLight.b);
+
+    vec3 lightAhead = texture2D(
+      u_background,
+      clamp(distortedUv + refractionDirection * 0.014, vec2(0.001), vec2(0.999))
+    ).rgb;
+    vec3 lightBehind = texture2D(
+      u_background,
+      clamp(distortedUv - refractionDirection * 0.014, vec2(0.001), vec2(0.999))
+    ).rgb;
+    float backgroundIllumination = luminance(background);
+    float backgroundLightEdge =
+      abs(luminance(lightAhead) - luminance(lightBehind));
+    float lightResponse = clamp(
+      backgroundIllumination * 0.55 + backgroundLightEdge * 2.5,
+      0.0,
+      1.0
+    );
 
     float specularRidge = exp(-square(acrossWave * 18.0));
     float softRidge = exp(-square(acrossWave * 4.8));
@@ -73,10 +105,19 @@ const fragmentShaderSource = `
     vec3 gold = vec3(1.0, 0.76, 0.43);
     vec3 ice = vec3(0.66, 0.82, 1.0);
     vec3 reflectedColor = mix(gold, ice, smoothstep(-0.65, 0.65, p.x + sin(time) * 0.18));
+    reflectedColor = mix(
+      reflectedColor,
+      (lightAhead + lightBehind) * 0.5,
+      lightResponse * 0.55
+    );
     float sheen = specularRidge * (0.06 + shimmer * 0.09);
     sheen += softRidge * 0.025 + waveEnvelope * abs(ripple) * 0.025;
+    sheen += specularRidge * lightResponse * 0.12;
 
-    gl_FragColor = vec4(clamp(background + reflectedColor * sheen, 0.0, 1.0), 1.0);
+    gl_FragColor = vec4(
+      clamp(refractedBackground + reflectedColor * sheen, 0.0, 1.0),
+      1.0
+    );
   }
 `;
 

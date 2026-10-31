@@ -30,7 +30,10 @@ export function BalanceCard({
   const visualConfig = shaderConfig ?? DEFAULT_BALANCE_CARD_SHADER_CONFIG;
 
   return (
-    <article className="relative isolate flex h-48 max-h-48 min-h-48 flex-col justify-between overflow-hidden rounded-3xl bg-graphite-800 px-6 pb-6 pt-3">
+    <article
+      className="relative isolate flex h-48 max-h-48 min-h-48 flex-col justify-between overflow-hidden rounded-3xl bg-graphite-800 px-6 pb-6 pt-3"
+      style={{ clipPath: "inset(0 round 1.5rem)" }}
+    >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[url('/current-balance-card-background.png')] bg-cover bg-center"

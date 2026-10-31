@@ -21,6 +21,11 @@ const profileLinks = [
   { href: "/space", label: "Gerenciar espaço" },
 ] as const;
 
+const developerLinks = [
+  { href: "/design-system/balance-card", label: "Playground do saldo" },
+  { href: "/design-system/buttons", label: "Playground de botões" },
+] as const;
+
 export function ProfileMenuDrawer({
   userId,
   userName,
@@ -86,6 +91,27 @@ export function ProfileMenuDrawer({
               </Button>
             ))}
           </nav>
+          <section className="-mx-2 mt-3 border-t border-line/30 px-2 pt-3">
+            <h2 className="px-3 pb-2 text-xs font-medium text-muted">
+              Desenvolvedor
+            </h2>
+            <nav className="space-y-2" aria-label="Menu de desenvolvedor">
+              {developerLinks.map((link) => (
+                <Button
+                  asChild
+                  key={link.href}
+                  className="w-full justify-between"
+                  size="lg"
+                  trailingIcon="ChevronRightOutline"
+                  variant="ghost"
+                >
+                  <Link href={link.href} onClick={drawer.closeDrawer}>
+                    {link.label}
+                  </Link>
+                </Button>
+              ))}
+            </nav>
+          </section>
         </DrawerBody>
         <DrawerFooter className="shrink-0 border-t border-line/30 p-2">
           <SignOutButton className="w-full justify-start" />

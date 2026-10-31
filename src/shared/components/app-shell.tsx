@@ -66,6 +66,12 @@ export function AppShell({
               </div>
               <div className="app-shell-desktop-actions hidden items-center gap-3 lg:flex mobile-app:!hidden">
                 <ValuesVisibilityToggle />
+                <ProfileMenuDrawer
+                  userId={userId}
+                  userName={userName}
+                  userEmail={userEmail}
+                  fallbackAvatarUrl={fallbackAvatarUrl}
+                />
                 <span
                   className="hidden max-w-[220px] truncate text-sm text-muted sm:inline"
                   title={userEmail}

@@ -16,20 +16,28 @@ export type BalanceCardShaderConfig = {
   thickness: number;
   lightResponse: number;
   speed: number;
+  backgroundOffsetX: number;
+  backgroundOffsetY: number;
+  backgroundScale: number;
+  backgroundRotation: number;
 };
 
 export const DEFAULT_BALANCE_CARD_SHADER_CONFIG: BalanceCardShaderConfig = {
   shape: "wave",
-  intensity: 0.085,
-  offsetX: 100,
-  offsetY: 0,
-  rotation: -22,
-  refraction: 1,
-  dispersion: 0.1,
-  frequency: 8,
-  thickness: 4.6,
-  lightResponse: 1,
-  speed: 1,
+  intensity: 0.1,
+  offsetX: 40,
+  offsetY: -14,
+  rotation: -113,
+  refraction: 0.76,
+  dispersion: 0.29,
+  frequency: 6.9,
+  thickness: 5.5,
+  lightResponse: 1.25,
+  speed: 0.75,
+  backgroundOffsetX: 0,
+  backgroundOffsetY: 0,
+  backgroundScale: 1,
+  backgroundRotation: 0,
 };
 
 const vertexShaderSource = `
@@ -49,6 +57,9 @@ const fragmentShaderSource = `
   uniform vec2 u_textureSize;
   uniform float u_centerOffsetX;
   uniform float u_centerOffsetY;
+  uniform vec2 u_backgroundOffset;
+  uniform float u_backgroundScale;
+  uniform float u_backgroundRotation;
   uniform float u_rotation;
   uniform float u_intensity;
   uniform float u_refraction;
@@ -81,6 +92,18 @@ const fragmentShaderSource = `
     }
 
     return uv;
+  }
+
+  vec2 backgroundUv(vec2 uv) {
+    float aspect = u_resolution.x / u_resolution.y;
+    vec2 p = uv - 0.5;
+    p.x *= aspect;
+    p -= u_backgroundOffset;
+    float angle = radians(-u_backgroundRotation);
+    mat2 inverseRotation = mat2(cos(angle), sin(angle), -sin(angle), cos(angle));
+    p = inverseRotation * p / max(u_backgroundScale, 0.01);
+    p.x /= aspect;
+    return coverUv(p + 0.5);
   }
 
   void main() {
@@ -122,7 +145,7 @@ const fragmentShaderSource = `
       waveEnvelope * (ripple * 0.82 + secondaryRipple) * u_intensity * u_refraction;
     vec2 refractionDirection = vec2(refractionNormal.x / aspect, refractionNormal.y);
     vec2 distortedUv = clamp(
-      coverUv(v_uv + refractionDirection * lensDistortion),
+      backgroundUv(v_uv + refractionDirection * lensDistortion),
       vec2(0.001),
       vec2(0.999)
     );
@@ -274,6 +297,18 @@ export function BalanceCardShader({
       program,
       "u_centerOffsetY",
     );
+    const backgroundOffsetLocation = gl.getUniformLocation(
+      program,
+      "u_backgroundOffset",
+    );
+    const backgroundScaleLocation = gl.getUniformLocation(
+      program,
+      "u_backgroundScale",
+    );
+    const backgroundRotationLocation = gl.getUniformLocation(
+      program,
+      "u_backgroundRotation",
+    );
     const rotationLocation = gl.getUniformLocation(program, "u_rotation");
     const intensityLocation = gl.getUniformLocation(program, "u_intensity");
     const refractionLocation = gl.getUniformLocation(program, "u_refraction");
@@ -366,6 +401,23 @@ export function BalanceCardShader({
         gl,
         centerOffsetYLocation,
         (currentConfig.offsetY * pixelRatio) / canvas.height,
+      );
+      if (backgroundOffsetLocation) {
+        gl.uniform2f(
+          backgroundOffsetLocation,
+          (currentConfig.backgroundOffsetX * pixelRatio) / canvas.height,
+          (currentConfig.backgroundOffsetY * pixelRatio) / canvas.height,
+        );
+      }
+      setUniformFloat(
+        gl,
+        backgroundScaleLocation,
+        currentConfig.backgroundScale,
+      );
+      setUniformFloat(
+        gl,
+        backgroundRotationLocation,
+        currentConfig.backgroundRotation,
       );
       setUniformFloat(gl, rotationLocation, currentConfig.rotation);
       setUniformFloat(gl, intensityLocation, currentConfig.intensity);

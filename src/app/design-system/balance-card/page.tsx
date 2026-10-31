@@ -337,6 +337,53 @@ export default function BalanceCardPlaygroundPage() {
             </div>
           </section>
 
+          <section className="space-y-4 border-b border-line/70 p-5 sm:px-6">
+            <div>
+              <h2 className="text-sm font-semibold text-ink">Background</h2>
+              <p className="mt-1 text-xs leading-5 text-muted">
+                Ajuste o enquadramento da imagem que a lente refrata.
+              </p>
+            </div>
+            <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+              <SliderControl
+                label="Posição horizontal do fundo"
+                value={shaderConfig.backgroundOffsetX}
+                min={-120}
+                max={120}
+                step={1}
+                format={(value) => (value > 0 ? "+" : "") + value + " px"}
+                onChange={(value) => updateConfig("backgroundOffsetX", value)}
+              />
+              <SliderControl
+                label="Posição vertical do fundo"
+                value={shaderConfig.backgroundOffsetY}
+                min={-80}
+                max={80}
+                step={1}
+                format={(value) => (value > 0 ? "+" : "") + value + " px"}
+                onChange={(value) => updateConfig("backgroundOffsetY", value)}
+              />
+              <SliderControl
+                label="Tamanho do fundo"
+                value={shaderConfig.backgroundScale}
+                min={0.75}
+                max={2}
+                step={0.01}
+                format={formatMultiplier}
+                onChange={(value) => updateConfig("backgroundScale", value)}
+              />
+              <SliderControl
+                label="Rotação do fundo"
+                value={shaderConfig.backgroundRotation}
+                min={-180}
+                max={180}
+                step={1}
+                format={(value) => value + "°"}
+                onChange={(value) => updateConfig("backgroundRotation", value)}
+              />
+            </div>
+          </section>
+
           <section className="space-y-4 p-5 sm:px-6">
             <div>
               <h2 className="text-sm font-semibold text-ink">Luz e cor</h2>

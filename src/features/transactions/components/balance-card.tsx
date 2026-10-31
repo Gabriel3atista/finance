@@ -5,6 +5,7 @@ import { AnimatedNumber } from "@/shared/components/animated-number";
 import { BalanceChangeIndicator } from "@/shared/components/balance-change-indicator";
 import {
   BalanceCardShader,
+  DEFAULT_BALANCE_CARD_SHADER_CONFIG,
   type BalanceCardShaderConfig,
 } from "@/features/transactions/components/balance-card-shader";
 
@@ -26,14 +27,22 @@ export function BalanceCard({
   shaderConfig?: BalanceCardShaderConfig;
 }) {
   const isLoading = isBalancePending || isPreviousBalancePending;
+  const visualConfig = shaderConfig ?? DEFAULT_BALANCE_CARD_SHADER_CONFIG;
 
   return (
-    <article className="relative isolate flex h-48 max-h-48 min-h-48 flex-col justify-between overflow-hidden rounded-3xl bg-[url('/current-balance-card-background.png')] bg-cover bg-center px-6 pb-6 pt-3">
+    <article className="relative isolate flex h-48 max-h-48 min-h-48 flex-col justify-between overflow-hidden rounded-3xl bg-graphite-800 px-6 pb-6 pt-3">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[url('/current-balance-card-background.png')] bg-cover bg-center"
+        style={{
+          transform: `translate(${visualConfig.backgroundOffsetX}px, ${visualConfig.backgroundOffsetY}px) rotate(${visualConfig.backgroundRotation}deg) scale(${visualConfig.backgroundScale})`,
+        }}
+      />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border border-white/50 mix-blend-overlay"
       />
-      <BalanceCardShader config={shaderConfig} />
+      <BalanceCardShader config={visualConfig} />
       <div className="relative z-10 flex items-center justify-between gap-3">
         <p className="text-sm text-ink">Saldo previsto</p>
         <Button

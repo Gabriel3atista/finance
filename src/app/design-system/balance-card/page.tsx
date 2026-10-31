@@ -176,7 +176,7 @@ export default function BalanceCardPlaygroundPage() {
       </header>
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="space-y-5">
+        <div className="space-y-5 xl:sticky xl:top-6 xl:self-start">
           <Card className="overflow-hidden border-line bg-graphite-900">
             <CardHeader className="flex flex-wrap items-center justify-between gap-3 border-b border-line/70 p-5 sm:px-6">
               <div>

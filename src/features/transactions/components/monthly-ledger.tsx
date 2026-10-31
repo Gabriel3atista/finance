@@ -508,33 +508,31 @@ export function MonthlyLedger({
           />
         </div>
 
-        <div className="mt-5 flex min-h-0 flex-1 flex-col">
-          <div className="flex min-h-0 flex-1 flex-col rounded-[18px] border border-line bg-graphite-900 p-5 shadow-card sm:p-7">
-            <MonthlyEntryList
-              entries={entries}
-              month={monthValue}
-              onCreateEntry={openCreateDrawer}
-              onSetStatus={setEntryStatus}
-              statusPendingId={
-                setStatus.isPending ? setStatus.variables?.id : undefined
-              }
-              onUpdate={updateEntryFromForm}
-              onDelete={deleteEntryFromForm}
-              onCopyPreviousMonth={copyPreviousMonth}
-              onDeleteMonth={clearMonth}
-              monthActionsPending={monthActionsPending}
-              rowMutationPending={
-                updateEntry.isPending || deleteEntry.isPending
-              }
-              headerContent={
-                <p className="px-3 text-sm text-muted">
-                  Valores cadastrados neste mês.
-                </p>
-              }
-              isLoading={isLoading}
-              loadError={entryLoadFailed}
-            />
-          </div>
+        <div className="flex min-h-0 flex-1 flex-col rounded-[18px] border border-line bg-red-900 p-5 shadow-card sm:p-7">
+          <MonthlyEntryList
+            entries={entries}
+            month={monthValue}
+            onCreateEntry={openCreateDrawer}
+            onSetStatus={setEntryStatus}
+            statusPendingId={
+              setStatus.isPending ? setStatus.variables?.id : undefined
+            }
+            onUpdate={updateEntryFromForm}
+            onDelete={deleteEntryFromForm}
+            onCopyPreviousMonth={copyPreviousMonth}
+            onDeleteMonth={clearMonth}
+            monthActionsPending={monthActionsPending}
+            rowMutationPending={
+              updateEntry.isPending || deleteEntry.isPending
+            }
+            headerContent={
+              <p className="px-3 text-sm text-muted">
+                Valores cadastrados neste mês.
+              </p>
+            }
+            isLoading={isLoading}
+            loadError={entryLoadFailed}
+          />
         </div>
       </section>
       {newEntryDrawer}

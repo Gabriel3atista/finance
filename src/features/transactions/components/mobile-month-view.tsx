@@ -182,7 +182,7 @@ export function MobileMonthView({
           </CardSection>
         </article>
       </Card>
-      <section className="mt-6 flex min-h-0 flex-1 flex-col">
+      <section className="flex min-h-0 flex-1 flex-col">
         <MonthlyEntryList
           entries={entries}
           month={monthValue}

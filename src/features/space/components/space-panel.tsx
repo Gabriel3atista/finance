@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,8 @@ export function SpacePanel({
   email: string;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedInvitationId = searchParams.get("invite");
   const queryClient = useQueryClient();
   const spaceQuery = useQuery({
     queryKey: queryKeys.space(userId),
@@ -29,6 +31,7 @@ export function SpacePanel({
   const [acceptError, setAcceptError] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteState, setInviteState] = useState("");
+  const [inviteUrl, setInviteUrl] = useState("");
   const [inviteError, setInviteError] = useState("");
   const space = spaceQuery.data?.space ?? null;
   const invitations = spaceQuery.data?.invitations ?? [];
@@ -48,9 +51,7 @@ export function SpacePanel({
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.space(userId) }),
     onError: () =>
-      setCreateError(
-        "Não foi possível criar o espaço. Tente novamente.",
-      ),
+      setCreateError("Não foi possível criar o espaço. Tente novamente."),
   });
   const acceptMutation = useMutation({
     mutationFn: async (invitationId: string) => {
@@ -79,7 +80,7 @@ export function SpacePanel({
   });
   const invitationMutation = useMutation({
     mutationFn: async (targetEmail: string) => {
-      const { error } = await createClient().functions.invoke(
+      const { data, error } = await createClient().functions.invoke(
         "household-invite",
         {
           body: {
@@ -97,10 +98,17 @@ export function SpacePanel({
           .catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error ?? error.message);
       }
+      if (typeof data?.invitationUrl !== "string") {
+        throw new Error("invitation-link-unavailable");
+      }
+      return data.invitationUrl as string;
     },
-    onSuccess: async () => {
+    onSuccess: async (url) => {
       setInviteEmail("");
-      setInviteState("Convite enviado. Ele expira em sete dias.");
+      setInviteUrl(url);
+      setInviteState(
+        "Link criado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
+      );
       await queryClient.invalidateQueries({
         queryKey: queryKeys.space(userId),
       });
@@ -134,6 +142,7 @@ export function SpacePanel({
     event.preventDefault();
     setInviteError("");
     setInviteState("");
+    setInviteUrl("");
 
     try {
       await invitationMutation.mutateAsync(inviteEmail.trim().toLowerCase());
@@ -213,8 +222,7 @@ export function SpacePanel({
                       Convite para compartilhar finanças
                     </p>
                     <p className="mt-1 text-xs text-muted">
-                      Expira em{" "}
-                      {formatDate(invitation.expires_at)}
+                      Expira em {formatDate(invitation.expires_at)}
                     </p>
                   </div>
                   <form
@@ -229,7 +237,9 @@ export function SpacePanel({
                       size="sm"
                       type="submit"
                     >
-                      Aceitar convite
+                      {requestedInvitationId === invitation.id
+                        ? "Aceitar este convite"
+                        : "Aceitar convite"}
                     </Button>
                   </form>
                 </div>
@@ -242,10 +252,32 @@ export function SpacePanel({
             </div>
           ) : (
             <p className="mt-3 text-sm leading-6 text-muted">
-              {acceptError ||
-                "Quando alguém convidar seu e-mail, o convite aparecerá aqui."}
+              {requestedInvitationId
+                ? "Este convite não está disponível para a conta conectada. Entre com o e-mail confirmado que recebeu o convite."
+                : acceptError ||
+                  "Quando alguém convidar seu e-mail, o convite aparecerá aqui."}
             </p>
           )}
+          {requestedInvitationId &&
+            !invitations.some(
+              (invitation) => invitation.id === requestedInvitationId,
+            ) &&
+            invitations.length > 0 && (
+              <p role="alert" className="mt-3 text-sm leading-6 text-rose-500">
+                O link não está disponível para a conta conectada. Entre com o
+                e-mail confirmado que recebeu o convite.
+              </p>
+            )}
+          {requestedInvitationId &&
+            invitations.some(
+              (invitation) => invitation.id === requestedInvitationId,
+            ) && (
+              <p className="mt-3 text-sm leading-6 text-muted">
+                Você está conectado como {email}. O convite só pode ser aceito
+                por esta conta se o e-mail confirmado corresponder ao endereço
+                convidado.
+              </p>
+            )}
         </section>
       </div>
     );
@@ -258,7 +290,8 @@ export function SpacePanel({
         {space.name}
       </h2>
       <p className="mt-2 text-sm leading-6 text-muted">
-        Convide outras pessoas para acompanhar e atualizar as finanças junto com você.
+        Convide outras pessoas para acompanhar e atualizar as finanças junto com
+        você.
       </p>
 
       {space.member_role === "owner" ? (
@@ -287,10 +320,40 @@ export function SpacePanel({
               {inviteState}
             </p>
           )}
+          {inviteUrl && (
+            <div className="space-y-2 rounded-xl bg-canvas p-4">
+              <label
+                htmlFor="invitation-link"
+                className="text-sm font-medium text-ink"
+              >
+                Link do convite
+              </label>
+              <Input
+                id="invitation-link"
+                readOnly
+                value={inviteUrl}
+                className="min-h-11 px-3.5"
+                onFocus={(event) => event.currentTarget.select()}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(inviteUrl);
+                  setInviteState(
+                    "Link copiado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
+                  );
+                }}
+              >
+                Copiar link
+              </Button>
+            </div>
+          )}
           <Button disabled={invitationMutation.isPending} type="submit">
             {invitationMutation.isPending
-              ? "Enviando…"
-              : "Enviar convite por e-mail"}
+              ? "Gerando link…"
+              : "Gerar link de convite"}
           </Button>
         </form>
       ) : (

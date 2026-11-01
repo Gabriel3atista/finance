@@ -33,7 +33,7 @@ Esse reset apaga os dados locais. Nunca acrescente `--linked` a `db reset`: esse
 
 O `npx supabase status` exibe a URL e a chave publishable locais. Use valores locais em `.env.local` para desenvolvimento local. Em produção, o Vercel usa o Project URL e a chave **publishable** nas variáveis `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. `.env.example` contém apenas nomes e placeholders. Nunca use `service_role`, secret API key ou senha do banco em `NEXT_PUBLIC_*`, no repositório ou no chat.
 
-As rotas de autenticação, configuração de redirects e publicação do convite por e-mail estão descritas em [AUTH.md](AUTH.md).
+As rotas de autenticação, configuração de redirects e publicação da função de links de convite estão descritas em [AUTH.md](AUTH.md).
 
 ## Operação mensal e cadastros
 

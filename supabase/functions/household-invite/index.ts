@@ -8,10 +8,13 @@ const allowedOrigins = new Set([
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") ?? "";
   const corsHeaders = {
-    "Access-Control-Allow-Origin": allowedOrigins.has(origin) ? origin : "https://finance-beige-chi.vercel.app",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Origin": allowedOrigins.has(origin)
+      ? origin
+      : "https://finance-beige-chi.vercel.app",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Vary": "Origin",
+    Vary: "Origin",
   };
 
   if (request.method === "OPTIONS") {
@@ -19,13 +22,18 @@ Deno.serve(async (request: Request) => {
   }
 
   if (request.method !== "POST" || !allowedOrigins.has(origin)) {
-    return Response.json({ error: "Origin or method not allowed" }, { status: 403, headers: corsHeaders });
+    return Response.json(
+      { error: "Origin or method not allowed" },
+      { status: 403, headers: corsHeaders },
+    );
   }
 
   const authorization = request.headers.get("Authorization");
   const url = Deno.env.get("SUPABASE_URL");
   const publishableKeys = Deno.env.get("SUPABASE_PUBLISHABLE_KEYS");
-  let publishableKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  let publishableKey =
+    Deno.env.get("SUPABASE_ANON_KEY") ??
+    Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
   if (!publishableKey && publishableKeys) {
     try {
       publishableKey = JSON.parse(publishableKeys).default;
@@ -34,7 +42,9 @@ Deno.serve(async (request: Request) => {
     }
   }
   const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
-  let adminKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY");
+  let adminKey =
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+    Deno.env.get("SUPABASE_SECRET_KEY");
   if (!adminKey && secretKeys) {
     try {
       adminKey = JSON.parse(secretKeys).default;
@@ -44,20 +54,32 @@ Deno.serve(async (request: Request) => {
   }
 
   if (!authorization || !url || !publishableKey || !adminKey) {
-    return Response.json({ error: "Function is not configured" }, { status: 500, headers: corsHeaders });
+    return Response.json(
+      { error: "Function is not configured" },
+      { status: 500, headers: corsHeaders },
+    );
   }
 
   let input: { spaceId?: string; householdId?: string; email?: string };
   try {
     input = await request.json();
   } catch {
-    return Response.json({ error: "Invalid request body" }, { status: 400, headers: corsHeaders });
+    return Response.json(
+      { error: "Invalid request body" },
+      { status: 400, headers: corsHeaders },
+    );
   }
 
   const spaceId = input.spaceId ?? input.householdId ?? "";
   const email = (input.email ?? "").trim().toLowerCase();
-  if (!/^[0-9a-f-]{36}$/i.test(spaceId) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return Response.json({ error: "Space and valid email are required" }, { status: 400, headers: corsHeaders });
+  if (
+    !/^[0-9a-f-]{36}$/i.test(spaceId) ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ) {
+    return Response.json(
+      { error: "Space and valid email are required" },
+      { status: 400, headers: corsHeaders },
+    );
   }
 
   const userClient = createClient(url, publishableKey, {
@@ -69,13 +91,22 @@ Deno.serve(async (request: Request) => {
   });
 
   const token = authorization.replace(/^Bearer\s+/i, "");
-  const { data: { user }, error: userError } = await userClient.auth.getUser(token);
+  const {
+    data: { user },
+    error: userError,
+  } = await userClient.auth.getUser(token);
   if (userError || !user?.email) {
-    return Response.json({ error: "Sign in is required" }, { status: 401, headers: corsHeaders });
+    return Response.json(
+      { error: "Sign in is required" },
+      { status: 401, headers: corsHeaders },
+    );
   }
 
   if (user.email.toLowerCase() === email) {
-    return Response.json({ error: "You cannot invite your own email" }, { status: 400, headers: corsHeaders });
+    return Response.json(
+      { error: "You cannot invite your own email" },
+      { status: 400, headers: corsHeaders },
+    );
   }
 
   const { data: membership } = await adminClient
@@ -86,7 +117,10 @@ Deno.serve(async (request: Request) => {
     .maybeSingle();
 
   if (membership?.member_role !== "owner") {
-    return Response.json({ error: "Only the space owner can invite members" }, { status: 403, headers: corsHeaders });
+    return Response.json(
+      { error: "Only the space owner can invite members" },
+      { status: 403, headers: corsHeaders },
+    );
   }
 
   const { data: existing } = await adminClient
@@ -99,7 +133,10 @@ Deno.serve(async (request: Request) => {
     .maybeSingle();
 
   if (existing) {
-    return Response.json({ error: "An active invitation already exists for this email" }, { status: 409, headers: corsHeaders });
+    return Response.json(
+      { error: "An active invitation already exists for this email" },
+      { status: 409, headers: corsHeaders },
+    );
   }
 
   const { data: invitation, error: insertError } = await adminClient
@@ -113,21 +150,17 @@ Deno.serve(async (request: Request) => {
     .single();
 
   if (insertError || !invitation) {
-    return Response.json({ error: "Could not create invitation" }, { status: 500, headers: corsHeaders });
+    return Response.json(
+      { error: "Could not create invitation" },
+      { status: 500, headers: corsHeaders },
+    );
   }
 
-  const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/space`,
-    data: { space_invitation_id: invitation.id, household_invitation_id: invitation.id },
-  });
+  const invitationUrl = new URL("/space", origin);
+  invitationUrl.searchParams.set("invite", invitation.id);
 
-  if (inviteError) {
-    await adminClient
-      .from("space_invitations")
-      .update({ status: "revoked" })
-      .eq("id", invitation.id);
-    return Response.json({ error: "Could not send invitation email" }, { status: 422, headers: corsHeaders });
-  }
-
-  return Response.json({ invitationId: invitation.id }, { status: 200, headers: corsHeaders });
+  return Response.json(
+    { invitationId: invitation.id, invitationUrl: invitationUrl.toString() },
+    { status: 200, headers: corsHeaders },
+  );
 });

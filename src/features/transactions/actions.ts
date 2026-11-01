@@ -3,8 +3,10 @@
 import { redirect } from "next/navigation";
 import { parseCurrencyInput } from "@/shared/lib/currency";
 import {
+  addMonths,
   dateForDay,
   isValidDateString,
+  monthString,
   parseMonth,
   parseMonthInput,
 } from "@/shared/lib/date";
@@ -83,24 +85,55 @@ const seriesTypes = {
   other_expense: { entryType: "expense", category: "Fixos" },
 } as const;
 
-export async function createFinancialSeries(
+type FinancialSeriesValues = {
+  title: string;
+  seriesType: (typeof seriesTypes)[keyof typeof seriesTypes];
+  amount: number;
+  startsOn: string;
+  endsOn: string | null;
+  hasInstallments: boolean;
+  installmentCount: number;
+  indefinite: boolean;
+  dueDay: number | null;
+};
+
+function readFinancialSeriesValues(
   formData: FormData,
-): Promise<MutationResult> {
+): FinancialSeriesValues | null {
   const title = textValue(formData, "title", 160);
   const seriesTypeKey = String(formData.get("series_type"));
   const seriesType =
     seriesTypes[seriesTypeKey as keyof typeof seriesTypes] ?? null;
-  const amount = parseCurrencyInput(formData.get("amount"));
-  const startsOn = parseMonthInput(formData.get("starts_on"));
-  const endsOnValue = String(formData.get("ends_on") ?? "");
-  const endsOn = endsOnValue ? parseMonthInput(endsOnValue) : null;
   const hasInstallments = formData.get("has_installments") === "true";
+  const installmentCount = Number(formData.get("installment_count"));
+  const installmentValue = parseCurrencyInput(
+    formData.get("installment_amount"),
+  );
+  const amount = hasInstallments
+    ? (Math.round(installmentValue * 100) * installmentCount) / 100
+    : parseCurrencyInput(formData.get("amount"));
+  const startsOn = String(formData.get("starts_on") ?? "");
+  const endsOnValue = String(formData.get("ends_on") ?? "");
+  const endsOn = endsOnValue || null;
+  const validStartsOn = isValidDateString(startsOn);
+  const validEndsOn = endsOn !== null && isValidDateString(endsOn);
   const indefinite = formData.get("indefinite") === "true";
   const dueDayValue = String(formData.get("due_day") ?? "");
   const dueDay = dueDayValue ? Number(dueDayValue) : null;
   const invalidEnd =
     (hasInstallments || !indefinite) &&
-    (!endsOn || (startsOn !== null && endsOn < startsOn));
+    (!validEndsOn || !validStartsOn || (endsOn !== null && endsOn < startsOn));
+  const invalidInstallmentRange =
+    hasInstallments &&
+    (!validStartsOn ||
+      !validEndsOn ||
+      endsOn === null ||
+      !Number.isInteger(installmentCount) ||
+      installmentCount < 1 ||
+      installmentCount > 600 ||
+      monthString(
+        addMonths(parseMonth(startsOn.slice(0, 7)), installmentCount - 1),
+      ) !== endsOn.slice(0, 7));
 
   if (
     !title ||
@@ -109,36 +142,50 @@ export async function createFinancialSeries(
     !Number.isFinite(amount) ||
     amount <= 0 ||
     amount > 999999999999.99 ||
-    !startsOn ||
+    (hasInstallments &&
+      (!Number.isFinite(installmentValue) ||
+        installmentValue <= 0 ||
+        installmentValue > 999999999999.99)) ||
+    !validStartsOn ||
     invalidEnd ||
+    invalidInstallmentRange ||
     (dueDay !== null &&
       (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31)) ||
     (hasInstallments && (indefinite || seriesType.entryType !== "expense"))
   ) {
-    return { error: "invalid-series" };
+    return null;
   }
 
-  const context = await getUserContext();
-  if (hasInstallments) {
-    const first = new Date(`${startsOn}T00:00:00`);
-    const last = new Date(`${endsOn}T00:00:00`);
-    const installmentCount =
-      (last.getFullYear() - first.getFullYear()) * 12 +
-      last.getMonth() -
-      first.getMonth() +
-      1;
-    if (installmentCount < 1 || installmentCount > 600) {
-      return { error: "invalid-series" };
-    }
+  return {
+    title,
+    seriesType,
+    amount,
+    startsOn,
+    endsOn,
+    hasInstallments,
+    installmentCount,
+    indefinite,
+    dueDay,
+  };
+}
 
+export async function createFinancialSeries(
+  formData: FormData,
+): Promise<MutationResult> {
+  const values = readFinancialSeriesValues(formData);
+  if (!values) return { error: "invalid-series" };
+
+  const context = await getUserContext();
+  if (values.hasInstallments) {
     const { error } = await context.supabase.from("installment_plans").insert({
       space_id: context.spaceId,
-      title,
-      total_amount: amount,
-      installment_count: installmentCount,
-      first_month: startsOn,
-      due_day: dueDay,
-      category: seriesType.category,
+      title: values.title,
+      total_amount: values.amount,
+      installment_count: values.installmentCount,
+      starts_on: values.startsOn,
+      ends_on: values.endsOn,
+      due_day: values.dueDay,
+      category: values.seriesType.category,
       created_by: context.user.id,
     });
     if (error) return { error: "save-series" };
@@ -147,17 +194,70 @@ export async function createFinancialSeries(
 
   const { error } = await context.supabase.from("recurring_items").insert({
     space_id: context.spaceId,
-    title,
-    entry_type: seriesType.entryType,
-    planned_amount: amount,
-    category: seriesType.category,
-    due_day: dueDay,
-    starts_on: startsOn,
-    ends_on: indefinite ? null : endsOn,
+    title: values.title,
+    entry_type: values.seriesType.entryType,
+    planned_amount: values.amount,
+    category: values.seriesType.category,
+    due_day: values.dueDay,
+    starts_on: values.startsOn,
+    ends_on: values.indefinite ? null : values.endsOn,
     created_by: context.user.id,
   });
   if (error) return { error: "save-series" };
   return { success: "series" };
+}
+
+export async function updateFinancialSeries(
+  formData: FormData,
+): Promise<MutationResult> {
+  const id = String(formData.get("id") ?? "");
+  const kind = String(formData.get("kind") ?? "");
+  const values = readFinancialSeriesValues(formData);
+  if (
+    !id ||
+    (kind !== "recurrence" && kind !== "installment") ||
+    !values ||
+    (kind === "installment") !== values.hasInstallments
+  ) {
+    return { error: "invalid-series" };
+  }
+
+  const context = await getUserContext();
+  const result =
+    kind === "installment"
+      ? await context.supabase
+          .from("installment_plans")
+          .update({
+            title: values.title,
+            total_amount: values.amount,
+            installment_count: values.installmentCount,
+            starts_on: values.startsOn,
+            ends_on: values.endsOn,
+            due_day: values.dueDay,
+            category: values.seriesType.category,
+          })
+          .eq("id", id)
+          .eq("space_id", context.spaceId)
+          .select("id")
+          .maybeSingle()
+      : await context.supabase
+          .from("recurring_items")
+          .update({
+            title: values.title,
+            entry_type: values.seriesType.entryType,
+            planned_amount: values.amount,
+            category: values.seriesType.category,
+            due_day: values.dueDay,
+            starts_on: values.startsOn,
+            ends_on: values.indefinite ? null : values.endsOn,
+          })
+          .eq("id", id)
+          .eq("space_id", context.spaceId)
+          .select("id")
+          .maybeSingle();
+
+  if (result.error || !result.data) return { error: "update-series" };
+  return { success: "series-updated" };
 }
 
 export async function updateFinancialEntry(

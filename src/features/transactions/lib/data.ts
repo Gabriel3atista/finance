@@ -34,7 +34,8 @@ export type InstallmentPlan = {
   title: string;
   total_amount: number;
   installment_count: number;
-  first_month: string;
+  starts_on: string;
+  ends_on: string;
   due_day: number | null;
   category: string | null;
   is_active: boolean;

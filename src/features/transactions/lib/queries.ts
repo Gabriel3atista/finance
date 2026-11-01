@@ -14,7 +14,7 @@ const entryColumns =
 const recurringColumns =
   "id, space_id, title, entry_type, planned_amount, category, due_day, starts_on, ends_on, is_active";
 const installmentColumns =
-  "id, space_id, title, total_amount, installment_count, first_month, due_day, category, is_active";
+  "id, space_id, title, total_amount, installment_count, starts_on, ends_on, due_day, category, is_active";
 
 export async function fetchRecurringItems(spaceId: string) {
   const { data, error } = await createClient()
@@ -45,6 +45,7 @@ export async function ensureMonthEntries(
 ) {
   const supabase = createClient();
   const monthValue = monthDate(month);
+  const nextMonthValue = monthDate(addMonths(month, 1));
   const [recurringResult, plansResult, existingResult, exclusionsResult] =
     await Promise.all([
       supabase
@@ -52,14 +53,14 @@ export async function ensureMonthEntries(
         .select(recurringColumns)
         .eq("space_id", spaceId)
         .eq("is_active", true)
-        .lte("starts_on", monthValue)
+        .lt("starts_on", nextMonthValue)
         .or(`ends_on.is.null,ends_on.gte.${monthValue}`),
       supabase
         .from("installment_plans")
         .select(installmentColumns)
         .eq("space_id", spaceId)
         .eq("is_active", true)
-        .lte("first_month", monthValue),
+        .lt("starts_on", nextMonthValue),
       supabase
         .from("financial_entries")
         .select("recurring_item_id, installment_plan_id, installment_number")
@@ -114,7 +115,7 @@ export async function ensureMonthEntries(
   }
 
   for (const plan of (plansResult.data ?? []) as InstallmentPlan[]) {
-    const first = new Date(`${plan.first_month}T00:00:00`);
+    const first = new Date(`${plan.starts_on}T00:00:00`);
     const number =
       (month.getFullYear() - first.getFullYear()) * 12 +
       (month.getMonth() - first.getMonth()) +

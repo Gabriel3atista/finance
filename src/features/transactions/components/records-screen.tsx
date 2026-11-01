@@ -23,8 +23,12 @@ import {
   createFinancialSeries,
   deactivateSeries,
   deleteFinancialSeries,
+  updateFinancialSeries,
 } from "@/features/transactions/actions";
-import { SeriesFormDrawer } from "@/features/transactions/components/series-form";
+import {
+  SeriesFormDrawer,
+  type SeriesFormInitialData,
+} from "@/features/transactions/components/series-form";
 import type {
   InstallmentPlan,
   RecurringItem,
@@ -37,10 +41,8 @@ import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate
 import { formatCurrency, installmentAmount } from "@/shared/lib/currency";
 import { FinancialValue } from "@/shared/components/financial-values";
 import {
-  addMonths,
-  formatMonth,
-  monthString,
-  parseMonth,
+  formatDate,
+  localDateString,
 } from "@/shared/lib/date";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { cn } from "@/shared/lib/utils";
@@ -48,6 +50,7 @@ import { cn } from "@/shared/lib/utils";
 const errors: Record<string, string> = {
   "invalid-series": "Confira a descrição, o valor e o período do cadastro.",
   "save-series": "Não foi possível salvar o cadastro.",
+  "update-series": "Não foi possível atualizar o cadastro.",
   "deactivate-series": "Não foi possível encerrar este cadastro.",
   "delete-series": "Não foi possível excluir este cadastro.",
 };
@@ -59,6 +62,7 @@ type SeriesListItem = {
   detail: string;
   amount: string;
   active: boolean;
+  initialData: SeriesFormInitialData;
 };
 
 export function RecordsScreen({ spaceId }: { spaceId: string }) {
@@ -77,10 +81,11 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
   const recurring = recurringQuery.data ?? [];
   const plans = plansQuery.data ?? [];
   const isLoading = recurringQuery.isPending || plansQuery.isPending;
-  const currentMonth = monthString(new Date());
+  const currentDate = localDateString();
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
   const [formKey, setFormKey] = useState(0);
+  const [seriesToEdit, setSeriesToEdit] = useState<SeriesListItem | null>(null);
   const [seriesToDelete, setSeriesToDelete] = useState<SeriesListItem | null>(
     null,
   );
@@ -99,29 +104,34 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     ]);
   };
 
-  const createSeries = useMutation({
+  const saveSeries = useMutation({
     mutationFn: async (form: FormData) => {
-      const result = await createFinancialSeries(form);
+      const isEditing = form.has("id");
+      const result = isEditing
+        ? await updateFinancialSeries(form)
+        : await createFinancialSeries(form);
       if (result.error) throw new Error(result.error);
+      return isEditing;
     },
-    onSuccess: () => {
-      setMutationMessage("saved");
+    onSuccess: (isEditing) => {
+      setMutationMessage(isEditing ? "updated" : "saved");
       void invalidateRecords();
     },
     onError: (caught) =>
-      setMutationMessage(
-        caught instanceof Error ? caught.message : "save-series",
-      ),
+      setMutationMessage(caught instanceof Error ? caught.message : "save-series"),
   });
   const seriesDrawer = useDrawer({
-    canClose: () => !createSeries.isPending,
+    canClose: () => !saveSeries.isPending,
     onOpenChange: (open) => {
       if (open) {
-        createSeries.reset();
+        saveSeries.reset();
         setMutationMessage("");
       }
     },
-    onCloseComplete: () => setFormKey((key) => key + 1),
+    onCloseComplete: () => {
+      setSeriesToEdit(null);
+      setFormKey((key) => key + 1);
+    },
   });
   const deactivate = useMutation({
     mutationFn: async (form: FormData) => {
@@ -158,9 +168,21 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
 
   function submitSeries(form: FormData) {
     setMutationMessage("");
-    createSeries.mutate(form, {
+    saveSeries.mutate(form, {
       onSuccess: () => seriesDrawer.forceCloseDrawer(),
     });
+  }
+
+  function openNewSeries() {
+    setSeriesToEdit(null);
+    setFormKey((key) => key + 1);
+    seriesDrawer.openDrawer();
+  }
+
+  function editSeries(item: SeriesListItem) {
+    setSeriesToEdit(item);
+    setFormKey((key) => key + 1);
+    seriesDrawer.openDrawer();
   }
 
   function requestDeleteSeries(item: SeriesListItem) {
@@ -191,25 +213,27 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     );
   }
 
-  const message =
-    mutationMessage === "saved"
-      ? "Cadastro salvo. As ocorrências serão criadas ao abrir cada mês."
-      : mutationMessage === "deactivated"
-        ? "Cadastro encerrado. Os lançamentos já criados continuam no mês."
-        : mutationMessage === "series-deleted"
-          ? "Cadastro excluído. Os lançamentos já criados foram mantidos."
-          : mutationMessage
-            ? (errors[mutationMessage] ?? "Não foi possível concluir a ação.")
-            : urlError
-              ? (errors[urlError] ?? "Não foi possível concluir a ação.")
-              : saved
-                ? "Cadastro salvo. As ocorrências serão criadas ao abrir cada mês."
-                : deactivated
-                  ? "Cadastro encerrado. Os lançamentos já criados continuam no mês."
-                  : "";
+  const messages: Record<string, string> = {
+    saved: "Cadastro salvo. As ocorrências serão criadas ao abrir cada mês.",
+    updated:
+      "Cadastro atualizado. Novas ocorrências usarão esses dados; lançamentos já gerados permanecem iguais.",
+    deactivated: "Cadastro encerrado. Os lançamentos já criados continuam no mês.",
+    "series-deleted": "Cadastro excluído. Os lançamentos já criados foram mantidos.",
+  };
+  const message = mutationMessage
+    ? (messages[mutationMessage] ??
+      errors[mutationMessage] ??
+      "Não foi possível concluir a ação.")
+    : urlError
+      ? (errors[urlError] ?? "Não foi possível concluir a ação.")
+      : saved
+        ? messages.saved
+        : deactivated
+          ? messages.deactivated
+          : "";
   const messageIsError = Boolean(
     (mutationMessage &&
-      !["saved", "deactivated", "series-deleted"].includes(mutationMessage)) ||
+      !["saved", "deactivated", "updated", "series-deleted"].includes(mutationMessage)) ||
     urlError,
   );
 
@@ -230,7 +254,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
         <Button
           className="w-full sm:w-auto"
           leadingIcon="PlusOutline"
-          onClick={seriesDrawer.openDrawer}
+          onClick={openNewSeries}
           rounded
           size="sm"
           type="button"
@@ -257,6 +281,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       <SeriesList
         items={series}
         loading={isLoading}
+        onEdit={editSeries}
         onDeactivate={(form) => {
           setMutationMessage("");
           deactivate.mutate(form);
@@ -269,13 +294,14 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       <SeriesFormDrawer
         key={formKey}
         drawer={seriesDrawer}
-        currentMonth={currentMonth}
+        currentDate={currentDate}
+        initialData={seriesToEdit?.initialData}
         error={
-          createSeries.isError
-            ? (errors[createSeries.error.message] ?? errors["save-series"])
+          saveSeries.isError
+            ? (errors[saveSeries.error.message] ?? errors["save-series"])
             : undefined
         }
-        pending={createSeries.isPending}
+        pending={saveSeries.isPending}
         onSubmit={submitSeries}
       />
 
@@ -337,33 +363,66 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
 }
 
 function toRecurringListItem(item: RecurringItem): SeriesListItem {
-  const startsOn = parseMonth(item.starts_on.slice(0, 7));
+  const seriesType =
+    item.entry_type === "income"
+      ? item.category === "Salário"
+        ? "salary"
+        : "other_income"
+      : item.category === "Dívidas e parcelas"
+        ? "purchase"
+        : item.category === "Fixos"
+          ? "service"
+          : "other_expense";
+
   return {
     id: item.id,
     kind: "recurrence",
     title: item.title,
-    detail: `${item.entry_type === "income" ? "Receita" : "Despesa"} · ${item.due_day ? `vence dia ${item.due_day}` : "sem vencimento"} · desde ${formatMonth(startsOn)}${item.ends_on ? ` · até ${formatMonth(parseMonth(item.ends_on.slice(0, 7)))}` : " · sem data final"}`,
+    detail: `${item.entry_type === "income" ? "Receita" : "Despesa"} · ${item.due_day ? `vence dia ${item.due_day}` : "sem vencimento"} · desde ${formatDate(item.starts_on)}${item.ends_on ? ` · até ${formatDate(item.ends_on)}` : " · sem data final"}`,
     amount: `${formatCurrency(Number(item.planned_amount))} / mês`,
     active: item.is_active,
+    initialData: {
+      id: item.id,
+      kind: "recurrence",
+      title: item.title,
+      seriesType,
+      amount: Number(item.planned_amount),
+      dueDay: item.due_day,
+      startsOn: item.starts_on,
+      endsOn: item.ends_on,
+    },
   };
 }
 
 function toInstallmentListItem(plan: InstallmentPlan): SeriesListItem {
-  const firstMonth = parseMonth(plan.first_month.slice(0, 7));
-  const lastMonth = addMonths(firstMonth, plan.installment_count - 1);
+  const seriesType =
+    plan.category === "Fixos" ? "service" : "purchase";
+
   return {
     id: plan.id,
     kind: "installment",
     title: plan.title,
-    detail: `${plan.installment_count} parcelas · ${formatMonth(firstMonth)} a ${formatMonth(lastMonth)}${plan.due_day ? ` · vence dia ${plan.due_day}` : ""}`,
+    detail: `${plan.installment_count} parcelas · ${formatDate(plan.starts_on)} a ${formatDate(plan.ends_on)}${plan.due_day ? ` · vence dia ${plan.due_day}` : ""}`,
     amount: `${formatCurrency(installmentAmount(Number(plan.total_amount), plan.installment_count, 1))} / parcela`,
     active: plan.is_active,
+    initialData: {
+      id: plan.id,
+      kind: "installment",
+      title: plan.title,
+      seriesType,
+      amount: Number(plan.total_amount),
+      dueDay: plan.due_day,
+      startsOn: plan.starts_on,
+      endsOn: plan.ends_on,
+      installmentCount: plan.installment_count,
+    },
   };
 }
 
 function SeriesList({
   items,
   loading,
+  onEdit,
   onDeactivate,
   deactivatePending,
   onDelete,
@@ -371,6 +430,7 @@ function SeriesList({
 }: {
   items: SeriesListItem[];
   loading: boolean;
+  onEdit: (item: SeriesListItem) => void;
   onDeactivate: (form: FormData) => void;
   deactivatePending: boolean;
   onDelete: (item: SeriesListItem) => void;
@@ -462,6 +522,15 @@ function SeriesList({
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    disabled={deletePending || deactivatePending}
+                    onClick={() => onEdit(item)}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Editar
+                  </Button>
                   {item.active ? (
                     <form
                       onSubmit={(event) => {

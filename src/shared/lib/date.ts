@@ -61,6 +61,21 @@ export function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
+export function addMonthsToDate(value: string, amount: number) {
+  if (!isValidDateString(value)) return value;
+
+  const [year, month, day] = value.split("-").map(Number);
+  const targetMonth = new Date(year, month - 1 + amount, 1);
+  const targetDay = Math.min(
+    day,
+    daysInMonth(targetMonth.getFullYear(), targetMonth.getMonth()),
+  );
+
+  return localDateString(
+    new Date(targetMonth.getFullYear(), targetMonth.getMonth(), targetDay),
+  );
+}
+
 export function addDays(date: Date, amount: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + amount);

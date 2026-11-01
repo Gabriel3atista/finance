@@ -485,6 +485,7 @@ export function MonthlyEntryList({
                     label="Aplicar alteração"
                     name="scope"
                     defaultValue="single"
+                    variant="secondary"
                   >
                     <SelectTrigger>
                       <SelectValue />

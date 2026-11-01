@@ -253,7 +253,7 @@ export function SeriesFormDrawer({
               type="submit"
               variant="primary"
             >
-              Salvar cadastro
+              Salvar
             </Button>
             <Button
               className="w-full"

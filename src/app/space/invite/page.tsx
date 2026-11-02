@@ -33,18 +33,8 @@ export default async function SpaceInvitationPage() {
             userName={userName}
             fallbackAvatarUrl={fallbackAvatarUrl}
           />
-          <main className="px-3 pb-10 pt-6 sm:px-8 sm:py-10">
-            <div className="mx-auto mb-6 max-w-[920px]">
-              <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
-                Convide alguém para seu espaço
-              </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-                Gere um link individual para compartilhar o acesso às finanças.
-              </p>
-            </div>
-            <div className="mx-auto max-w-[920px]">
-              <InvitationPanel userId={user.id} email={user.email ?? ""} />
-            </div>
+          <main className="flex min-h-[calc(100dvh-var(--app-header-height))] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8">
+            <InvitationPanel userId={user.id} email={user.email ?? ""} />
           </main>
         </div>
       </ValuesVisibilityProvider>

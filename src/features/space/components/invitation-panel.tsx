@@ -2,19 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import Image from "next/image";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NextIcon } from "@/components/atoms/next-icon";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { fetchSpacePage } from "@/features/space/lib/queries";
 import { invitationEmailSchema } from "@/features/space/lib/form-schemas";
@@ -32,9 +27,9 @@ export function InvitationPanel({
     queryKey: queryKeys.space(userId),
     queryFn: () => fetchSpacePage(userId, email),
   });
-  const [inviteState, setInviteState] = useState("");
   const [inviteUrl, setInviteUrl] = useState("");
   const [inviteError, setInviteError] = useState("");
+  const [copied, setCopied] = useState(false);
   const inviteForm = useForm<{ email: string }>({
     resolver: zodResolver(invitationEmailSchema),
     mode: "onBlur",
@@ -70,9 +65,7 @@ export function InvitationPanel({
     onSuccess: async (url) => {
       inviteForm.reset();
       setInviteUrl(url);
-      setInviteState(
-        "Link criado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
-      );
+      setCopied(false);
       await queryClient.invalidateQueries({
         queryKey: queryKeys.space(userId),
       });
@@ -89,17 +82,24 @@ export function InvitationPanel({
 
   if (spaceQuery.isPending) {
     return (
-      <Card className="flex flex-col gap-3 p-5 sm:p-6" aria-busy="true">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-7 w-2/3" />
-        <Skeleton className="h-11 w-full" />
-      </Card>
+      <div
+        className="mx-auto flex w-full max-w-[560px] flex-1 flex-col gap-3 pt-8"
+        aria-busy="true"
+      >
+        <Skeleton className="mx-auto h-8 w-2/3" />
+        <Skeleton className="mx-auto h-4 w-4/5" />
+        <Skeleton className="my-auto h-56 w-full max-w-[420px] self-center" />
+        <Skeleton className="mt-auto h-11 w-full" />
+      </div>
     );
   }
 
   if (spaceQuery.isError) {
     return (
-      <Card role="alert" className="flex flex-col items-start gap-3 p-5 sm:p-6">
+      <div
+        role="alert"
+        className="mx-auto flex w-full max-w-[560px] flex-1 flex-col items-center justify-center gap-3 text-center"
+      >
         <p className="text-sm text-rose-500">
           Não foi possível carregar as informações do espaço.
         </p>
@@ -110,41 +110,91 @@ export function InvitationPanel({
         >
           Tentar novamente
         </Button>
-      </Card>
+      </div>
     );
   }
 
   if (!space || space.member_role !== "owner") {
     return (
-      <Card sections className="overflow-hidden">
-        <CardContent className="flex flex-col gap-4 p-5 sm:p-6">
+      <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col items-center justify-center gap-4 text-center">
+        <p className="text-sm leading-6 text-muted">
+          Apenas a pessoa proprietária do espaço pode enviar convites.
+        </p>
+        <Button asChild className="self-center" variant="secondary">
+          <Link href="/space">Voltar ao espaço</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (inviteUrl) {
+    return (
+      <section className="mx-auto flex w-full max-w-[560px] flex-1 flex-col items-center justify-center gap-6 py-8 text-center">
+        <div className="flex size-16 items-center justify-center rounded-full bg-mint-900 text-mint-400">
+          <NextIcon name="CheckRoundedFilled" size={32} aria-hidden="true" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
+            Convite criado com sucesso!
+          </h1>
           <p className="text-sm leading-6 text-muted">
-            Apenas a pessoa proprietária do espaço pode enviar convites.
+            Compartilhe o link abaixo. Ele fica válido por sete dias.
           </p>
-          <Button asChild className="self-start" variant="secondary">
-            <Link href="/space">Voltar ao espaço</Link>
+        </div>
+        <div className="w-full rounded-2xl border border-dashed border-line bg-graphite-800/60 p-4 text-left">
+          <p className="mb-2 text-xs font-medium text-muted">Link do convite</p>
+          <p className="break-all text-sm leading-6 text-ink">{inviteUrl}</p>
+        </div>
+        <div className="flex w-full flex-col gap-3 sm:flex-row">
+          <Button
+            className="w-full sm:flex-1"
+            onClick={async () => {
+              await navigator.clipboard.writeText(inviteUrl);
+              setCopied(true);
+            }}
+            leadingIcon={copied ? "CheckOutline" : "CopyOutline"}
+            type="button"
+            variant="secondary"
+          >
+            {copied ? "Link copiado" : "Copiar link"}
           </Button>
-        </CardContent>
-      </Card>
+          <Button asChild className="w-full sm:flex-1">
+            <Link href="/dashboard">Voltar para o dashboard</Link>
+          </Button>
+        </div>
+      </section>
     );
   }
 
   return (
-    <Card sections className="mx-auto max-w-[640px] overflow-hidden">
-      <CardHeader className="flex flex-col gap-3 bg-graphite-600 p-5 sm:p-6">
-        <CardTitle className="text-xl tracking-tight">
-          Compartilhe {space.name}
-        </CardTitle>
-        <CardDescription className="leading-6">
-          O convite dá acesso às finanças deste espaço e expira em sete dias.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4 p-5 sm:p-6">
+    <section className="mx-auto flex w-full max-w-[560px] flex-1 flex-col">
+      <header className="pt-7 text-center sm:pt-9">
+        <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
+          Convide alguém para seu espaço
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Gere um link individual para compartilhar o acesso às finanças.
+        </p>
+      </header>
+
+      <figure className="flex min-h-0 flex-1 items-center justify-center py-4">
+        <div className="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white shadow-card">
+          <Image
+            src="/space-invitation.jpg"
+            alt="Dois cartões de perfil conectados, representando o convite para compartilhar o espaço"
+            width={1280}
+            height={800}
+            sizes="(min-width: 640px) 420px, 100vw"
+            className="h-auto max-h-[38dvh] w-full object-contain"
+            priority
+          />
+        </div>
+      </figure>
+
+      <div className="mt-auto pb-2">
         <form
           onSubmit={inviteForm.handleSubmit(({ email: targetEmail }) => {
             setInviteError("");
-            setInviteState("");
-            setInviteUrl("");
             invitationMutation.mutate(targetEmail.trim().toLowerCase());
           })}
           className="flex flex-col gap-3"
@@ -165,47 +215,8 @@ export function InvitationPanel({
               {inviteError}
             </p>
           )}
-          {inviteState && (
-            <p
-              role="status"
-              className="rounded-xl bg-accent-soft px-3.5 py-3 text-sm text-accent"
-            >
-              {inviteState}
-            </p>
-          )}
-          {inviteUrl && (
-            <div className="flex flex-col gap-3 rounded-xl border border-line/50 bg-graphite-800 p-4">
-              <label
-                htmlFor="invitation-link"
-                className="text-sm font-medium text-ink"
-              >
-                Link do convite
-              </label>
-              <Input
-                id="invitation-link"
-                readOnly
-                value={inviteUrl}
-                className="min-h-11 px-3.5"
-                onFocus={(event) => event.currentTarget.select()}
-              />
-              <Button
-                className="self-start"
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(inviteUrl);
-                  setInviteState(
-                    "Link copiado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
-                  );
-                }}
-              >
-                Copiar link
-              </Button>
-            </div>
-          )}
           <Button
-            className="w-full sm:w-auto sm:self-start"
+            className="w-full"
             disabled={invitationMutation.isPending}
             type="submit"
           >
@@ -214,10 +225,7 @@ export function InvitationPanel({
               : "Gerar link de convite"}
           </Button>
         </form>
-        <Button asChild className="self-start" variant="ghost">
-          <Link href="/space">Voltar ao espaço</Link>
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

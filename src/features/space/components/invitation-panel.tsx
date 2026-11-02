@@ -189,7 +189,7 @@ export function InvitationPanel({
         />
       </figure>
 
-      <div className="mt-auto pb-2">
+      <div className="pb-2">
         <form
           onSubmit={inviteForm.handleSubmit(({ email: targetEmail }) => {
             setInviteError("");
@@ -200,7 +200,7 @@ export function InvitationPanel({
         >
           <Input
             label="E-mail da pessoa convidada"
-            containerClassName="gap-2"
+            containerClassName="gap-2 [&>label]:sr-only"
             className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
             autoComplete="email"
             type="email"

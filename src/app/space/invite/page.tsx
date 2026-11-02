@@ -37,7 +37,7 @@ export default async function SpaceInvitationPage() {
             userName={userName}
             fallbackAvatarUrl={fallbackAvatarUrl}
           />
-          <main className="relative z-10 flex min-h-0 flex-1 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8">
+          <main className="relative z-10 flex min-h-0 flex-1 flex-col gap-6 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8">
             <InvitationPanel userId={user.id} email={user.email ?? ""} />
           </main>
         </div>

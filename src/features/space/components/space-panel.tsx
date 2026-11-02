@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,10 +22,7 @@ import { Eyebrow } from "@/shared/components/eyebrow";
 import { fetchSpacePage } from "@/features/space/lib/queries";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { formatDate } from "@/shared/lib/date";
-import {
-  createSpaceSchema,
-  invitationEmailSchema,
-} from "@/features/space/lib/form-schemas";
+import { createSpaceSchema } from "@/features/space/lib/form-schemas";
 
 export function SpacePanel({
   userId,
@@ -43,20 +41,11 @@ export function SpacePanel({
   });
   const [createError, setCreateError] = useState("");
   const [acceptError, setAcceptError] = useState("");
-  const [inviteState, setInviteState] = useState("");
-  const [inviteUrl, setInviteUrl] = useState("");
-  const [inviteError, setInviteError] = useState("");
   const createSpaceForm = useForm<{ name: string }>({
     resolver: zodResolver(createSpaceSchema),
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: { name: "" },
-  });
-  const inviteForm = useForm<{ email: string }>({
-    resolver: zodResolver(invitationEmailSchema),
-    mode: "onBlur",
-    reValidateMode: "onChange",
-    defaultValues: { email: "" },
   });
   const space = spaceQuery.data?.space ?? null;
   const invitations = spaceQuery.data?.invitations ?? [];
@@ -110,51 +99,6 @@ export function SpacePanel({
         "Este convite não está mais disponível. Atualize a página e tente novamente.",
       ),
   });
-  const invitationMutation = useMutation({
-    mutationFn: async (targetEmail: string) => {
-      const { data, error } = await createClient().functions.invoke(
-        "household-invite",
-        {
-          body: {
-            spaceId: space?.id,
-            householdId: space?.id,
-            email: targetEmail,
-          },
-        },
-      );
-      if (error) {
-        const context = (error as { context?: Response }).context;
-        const payload = (await context
-          ?.clone()
-          .json()
-          .catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error ?? error.message);
-      }
-      if (typeof data?.invitationUrl !== "string") {
-        throw new Error("invitation-link-unavailable");
-      }
-      return data.invitationUrl as string;
-    },
-    onSuccess: async (url) => {
-      inviteForm.reset();
-      setInviteUrl(url);
-      setInviteState(
-        "Link criado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
-      );
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.space(userId),
-      });
-    },
-    onError: (caught) => {
-      const message = caught instanceof Error ? caught.message : "";
-      setInviteError(
-        message.includes("already exists")
-          ? "Já existe um convite ativo para esse e-mail."
-          : "Não foi possível gerar o convite. Confira o e-mail e tente novamente.",
-      );
-    },
-  });
-
   if (spaceQuery.isPending) {
     return (
       <div
@@ -340,80 +284,15 @@ export function SpacePanel({
       </CardHeader>
       <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
         {space.member_role === "owner" ? (
-          <form
-            onSubmit={inviteForm.handleSubmit(({ email: targetEmail }) => {
-              setInviteError("");
-              setInviteState("");
-              setInviteUrl("");
-              invitationMutation.mutate(targetEmail.trim().toLowerCase());
-            })}
-            className="flex flex-col gap-3"
-            noValidate
-          >
-            <Input
-              label="E-mail da pessoa convidada"
-              containerClassName="gap-2"
-              className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
-              autoComplete="email"
-              type="email"
-              placeholder="nome@exemplo.com"
-              error={inviteForm.formState.errors.email?.message}
-              {...inviteForm.register("email")}
-            />
-            {inviteError && (
-              <p role="alert" className="text-sm text-rose-500">
-                {inviteError}
-              </p>
-            )}
-            {inviteState && (
-              <p
-                role="status"
-                className="rounded-xl bg-accent-soft px-3.5 py-3 text-sm text-accent"
-              >
-                {inviteState}
-              </p>
-            )}
-            {inviteUrl && (
-              <div className="flex flex-col gap-3 rounded-xl border border-line/50 bg-graphite-800 p-4">
-                <label
-                  htmlFor="invitation-link"
-                  className="text-sm font-medium text-ink"
-                >
-                  Link do convite
-                </label>
-                <Input
-                  id="invitation-link"
-                  readOnly
-                  value={inviteUrl}
-                  className="min-h-11 px-3.5"
-                  onFocus={(event) => event.currentTarget.select()}
-                />
-                <Button
-                  className="self-start"
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(inviteUrl);
-                    setInviteState(
-                      "Link copiado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
-                    );
-                  }}
-                >
-                  Copiar link
-                </Button>
-              </div>
-            )}
-            <Button
-              className="w-full sm:w-auto sm:self-start"
-              disabled={invitationMutation.isPending}
-              type="submit"
-            >
-              {invitationMutation.isPending
-                ? "Gerando link…"
-                : "Gerar link de convite"}
+          <div className="flex flex-col gap-3">
+            <p className="text-sm leading-6 text-muted">
+              Convide pessoas de confiança para compartilhar as finanças deste
+              espaço.
+            </p>
+            <Button asChild className="w-full sm:w-auto sm:self-start">
+              <Link href="/space/invite">Convidar uma pessoa</Link>
             </Button>
-          </form>
+          </div>
         ) : (
           <p className="rounded-xl border border-line/50 bg-graphite-800 px-4 py-3 text-sm text-muted">
             Você já participa deste espaço.

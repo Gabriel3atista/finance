@@ -8,6 +8,14 @@ export type Invitation = {
   expires_at: string;
 };
 export type Space = { id: string; name: string; member_role: string };
+export type SpaceMember = {
+  user_id: string;
+  display_name: string;
+  email: string | null;
+  avatar_url: string | null;
+  member_role: "owner" | "member";
+  joined_at: string;
+};
 
 export async function fetchSpacePage(userId: string, email: string) {
   const supabase = createClient();
@@ -27,9 +35,16 @@ export async function fetchSpacePage(userId: string, email: string) {
       .maybeSingle();
     if (error) throw error;
     if (!space) throw new Error("space-unavailable");
+    const { data: members, error: membersError } = await supabase.rpc(
+      "list_space_members",
+      { p_space_id: member.space_id },
+    );
+    if (membersError) throw membersError;
+
     return {
       space: { ...space, member_role: member.member_role },
       invitations: [] as Invitation[],
+      members: (members ?? []) as SpaceMember[],
     };
   }
 
@@ -40,5 +55,9 @@ export async function fetchSpacePage(userId: string, email: string) {
     .eq("status", "pending")
     .gt("expires_at", new Date().toISOString());
   if (error) throw error;
-  return { space: null, invitations: (invitations ?? []) as Invitation[] };
+  return {
+    space: null,
+    invitations: (invitations ?? []) as Invitation[],
+    members: [] as SpaceMember[],
+  };
 }

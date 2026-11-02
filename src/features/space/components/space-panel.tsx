@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,9 +18,25 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  useDrawer,
+} from "@/components/ui/drawer";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { Eyebrow } from "@/shared/components/eyebrow";
-import { fetchSpacePage } from "@/features/space/lib/queries";
+import { fetchSpacePage, type SpaceMember } from "@/features/space/lib/queries";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { formatDate } from "@/shared/lib/date";
 import { createSpaceSchema } from "@/features/space/lib/form-schemas";
@@ -41,6 +58,11 @@ export function SpacePanel({
   });
   const [createError, setCreateError] = useState("");
   const [acceptError, setAcceptError] = useState("");
+  const [memberToRemove, setMemberToRemove] = useState<SpaceMember | null>(
+    null,
+  );
+  const [removeMemberError, setRemoveMemberError] = useState("");
+  const [memberNotice, setMemberNotice] = useState("");
   const createSpaceForm = useForm<{ name: string }>({
     resolver: zodResolver(createSpaceSchema),
     mode: "onBlur",
@@ -98,6 +120,42 @@ export function SpacePanel({
       setAcceptError(
         "Este convite não está mais disponível. Atualize a página e tente novamente.",
       ),
+  });
+  const removeMemberMutation = useMutation({
+    mutationFn: async ({
+      spaceId,
+      userId: memberUserId,
+    }: {
+      spaceId: string;
+      userId: string;
+    }) => {
+      const { data, error } = await createClient().rpc("remove_space_member", {
+        p_space_id: spaceId,
+        p_user_id: memberUserId,
+      });
+      if (error || !data) throw new Error("remove-space-member");
+    },
+    onSuccess: async () => {
+      setMemberNotice("Pessoa removida do espaço.");
+      removeMemberDrawer.forceCloseDrawer();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.space(userId),
+      });
+    },
+    onError: () =>
+      setRemoveMemberError(
+        "Não foi possível remover esta pessoa. Tente novamente.",
+      ),
+  });
+  const removeMemberDrawer = useDrawer({
+    canClose: () => !removeMemberMutation.isPending,
+    onOpenChange: (open) => {
+      if (open) {
+        removeMemberMutation.reset();
+        setRemoveMemberError("");
+      }
+    },
+    onCloseComplete: () => setMemberToRemove(null),
   });
   if (spaceQuery.isPending) {
     return (
@@ -264,49 +322,201 @@ export function SpacePanel({
     );
   }
 
+  const members = spaceQuery.data?.members ?? [];
+
   return (
-    <Card sections className="mx-auto max-w-[640px] overflow-hidden">
-      <CardHeader className="flex flex-col gap-3 bg-graphite-600 p-5 sm:p-6">
-        <Eyebrow tone="accent">Seu espaço</Eyebrow>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle className="min-w-0 break-words text-2xl tracking-tight">
-            {space.name}
-          </CardTitle>
-          <Badge variant="secondary">
-            {space.member_role === "owner" ? "Proprietário" : "Membro"}
-          </Badge>
-        </div>
-        <CardDescription className="leading-6">
-          {space.member_role === "owner"
-            ? "Gerencie o acesso e compartilhe suas finanças com pessoas de confiança."
-            : "Acompanhe as finanças compartilhadas neste espaço."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
-        {space.member_role === "owner" ? (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm leading-6 text-muted">
-              Convide pessoas de confiança para compartilhar as finanças deste
-              espaço.
-            </p>
-            <Button asChild className="w-full sm:w-auto sm:self-start">
-              <Link href="/space/invite">Convidar uma pessoa</Link>
-            </Button>
+    <div className="grid items-start gap-3 lg:grid-cols-2">
+      <Card sections className="overflow-hidden">
+        <CardHeader className="flex flex-col gap-3 bg-graphite-600 p-5 sm:p-6">
+          <Eyebrow tone="accent">Seu espaço</Eyebrow>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="min-w-0 break-words text-2xl tracking-tight">
+              {space.name}
+            </CardTitle>
+            <Badge variant="secondary">
+              {space.member_role === "owner" ? "Proprietário" : "Membro"}
+            </Badge>
           </div>
-        ) : (
-          <p className="rounded-xl border border-line/50 bg-graphite-800 px-4 py-3 text-sm text-muted">
-            Você já participa deste espaço.
-          </p>
-        )}
-        <Button
-          className="w-full"
-          onClick={() => router.push("/dashboard")}
-          type="button"
-          variant="secondary"
-        >
-          Ir para o Finance
-        </Button>
-      </CardContent>
-    </Card>
+          <CardDescription className="leading-6">
+            {space.member_role === "owner"
+              ? "Gerencie o acesso e compartilhe suas finanças com pessoas de confiança."
+              : "Acompanhe as finanças compartilhadas neste espaço."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
+          {space.member_role === "owner" ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm leading-6 text-muted">
+                Convide pessoas de confiança para compartilhar as finanças deste
+                espaço.
+              </p>
+              <Button asChild className="w-full sm:w-auto sm:self-start">
+                <Link href="/space/invite">Convidar uma pessoa</Link>
+              </Button>
+            </div>
+          ) : (
+            <p className="rounded-xl border border-line/50 bg-graphite-800 px-4 py-3 text-sm text-muted">
+              Você já participa deste espaço.
+            </p>
+          )}
+          <Button
+            className="w-full"
+            onClick={() => router.push("/dashboard")}
+            type="button"
+            variant="secondary"
+          >
+            Ir para o Finance
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card sections className="overflow-hidden">
+        <CardHeader className="flex flex-col gap-2 bg-graphite-600 p-5 sm:p-6">
+          <Eyebrow tone="accent">Acesso</Eyebrow>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-xl tracking-tight">
+              Pessoas do espaço
+            </CardTitle>
+            <Badge variant="secondary">{members.length}</Badge>
+          </div>
+          <CardDescription className="leading-6">
+            Quem pode acompanhar as finanças compartilhadas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 p-3 sm:p-4">
+          {memberNotice && (
+            <p role="status" className="px-2 text-sm text-mint-300">
+              {memberNotice}
+            </p>
+          )}
+          {members.map((member) => (
+            <div
+              className="flex min-w-0 items-center gap-3 rounded-xl border border-line/50 bg-graphite-800 p-3"
+              key={member.user_id}
+            >
+              <SpaceMemberAvatar member={member} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="min-w-0 break-words text-sm font-medium text-ink">
+                    {member.display_name}
+                  </p>
+                  <Badge size="sm" variant="secondary">
+                    {member.member_role === "owner" ? "Proprietário" : "Membro"}
+                  </Badge>
+                </div>
+                <p className="mt-1 break-all text-xs text-muted">
+                  {member.email ?? "E-mail indisponível"}
+                </p>
+              </div>
+              {space.member_role === "owner" &&
+                member.member_role === "member" && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        aria-label={`Gerenciar ${member.display_name}`}
+                        disabled={removeMemberMutation.isPending}
+                        icon="VerticalDots"
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setMemberToRemove(member);
+                          setRemoveMemberError("");
+                          setMemberNotice("");
+                          removeMemberDrawer.openDrawer();
+                        }}
+                        leadingIcon="TrashOutline"
+                        variant="destructive-ghost"
+                      >
+                        Remover do espaço
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Drawer {...removeMemberDrawer.props}>
+        <DrawerContent>
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Remover pessoa do espaço?</DrawerTitle>
+            <DrawerDescription>
+              {memberToRemove?.display_name} perderá acesso às informações
+              compartilhadas deste espaço.
+            </DrawerDescription>
+          </DrawerHeader>
+          <DrawerBody>
+            {removeMemberError && (
+              <p role="alert" className="py-2 text-sm text-rose-500">
+                {removeMemberError}
+              </p>
+            )}
+          </DrawerBody>
+          <DrawerFooter className="border-t border-line/50">
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                disabled={removeMemberMutation.isPending}
+                onClick={removeMemberDrawer.closeDrawer}
+                type="button"
+                variant="secondary"
+              >
+                Cancelar
+              </Button>
+              <Button
+                disabled={!memberToRemove}
+                leadingIcon="TrashOutline"
+                loading={removeMemberMutation.isPending}
+                onClick={() => {
+                  if (!memberToRemove) return;
+                  removeMemberMutation.mutate({
+                    spaceId: space.id,
+                    userId: memberToRemove.user_id,
+                  });
+                }}
+                type="button"
+                variant="destructive"
+              >
+                Remover
+              </Button>
+            </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  );
+}
+
+function SpaceMemberAvatar({ member }: { member: SpaceMember }) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const initials = member.display_name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toLocaleUpperCase("pt-BR");
+
+  return (
+    <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-graphite-600 text-xs font-semibold text-ink">
+      {member.avatar_url && !hasImageError ? (
+        <Image
+          alt=""
+          className="size-full object-cover"
+          height={40}
+          onError={() => setHasImageError(true)}
+          src={member.avatar_url}
+          unoptimized
+          width={40}
+        />
+      ) : (
+        initials || "?"
+      )}
+    </div>
   );
 }

@@ -167,29 +167,30 @@ export function InvitationPanel({
   }
 
   return (
-    <section className="mx-auto flex min-h-0 w-full max-w-[560px] flex-1 flex-col gap-6">
-      <header className="pt-7 text-center sm:pt-9">
-        <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
-          Convide alguém para seu espaço
+    <section className="mx-auto flex min-h-0 w-full items-center justify-center max-w-[560px] flex-1 flex-col gap-12">
+      <header className="flex flex-col gap-3 text-center items-center">
+        <h1 className="text-3xl font-semibold tracking-[-0.04em] max-w-80 text-ink">
+          Compartilhe suas finanças com alguém
         </h1>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Gere um link individual para compartilhar o acesso às finanças.
+        <p className="leading-6 text-muted max-w-80">
+          Convide alguém de confiança para ajudar a cuidar das finanças do
+          espaço.
         </p>
       </header>
 
-      <figure className="flex min-h-0 flex-1 items-center justify-center">
+      <figure className="flex items-center justify-center">
         <Image
           src="/space-invitation-transparent.png"
           alt="Dois cartões de perfil conectados, representando o convite para compartilhar o espaço"
           width={1586}
           height={992}
           sizes="(min-width: 640px) 420px, 100vw"
-          className="h-full max-h-[min(38dvh,320px)] w-full max-w-[420px] object-contain"
+          className="h-full max-h-[min(38dvh,320px)] w-full max-w-[256px] object-contain"
           priority
         />
       </figure>
 
-      <div className="pb-2">
+      <div className="w-full">
         <form
           onSubmit={inviteForm.handleSubmit(({ email: targetEmail }) => {
             setInviteError("");

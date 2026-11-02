@@ -26,14 +26,14 @@ export default async function SpaceInvitationPage() {
   return (
     <AppShellHeaderSlotProvider>
       <ValuesVisibilityProvider>
-        <div className="min-h-[100dvh] bg-graphite-900">
+        <div className="flex h-[100dvh] flex-col overflow-hidden bg-graphite-900">
           <AppShellHeader
             userEmail={user.email ?? ""}
             userId={user.id}
             userName={userName}
             fallbackAvatarUrl={fallbackAvatarUrl}
           />
-          <main className="flex min-h-[calc(100dvh-var(--app-header-height))] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8">
+          <main className="flex min-h-0 flex-1 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8">
             <InvitationPanel userId={user.id} email={user.email ?? ""} />
           </main>
         </div>

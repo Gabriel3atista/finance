@@ -183,13 +183,13 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         <Link
           href="/login"
           className="mb-8 inline-flex items-center gap-3"
-          aria-label="Finance"
+          aria-label="pinutie"
         >
           <span className="grid size-10 place-items-center rounded-[14px] bg-moon-200 text-graphite-900">
             <NextIcon name="BrandMarkOutline" size={20} />
           </span>
           <span className="text-base font-semibold tracking-tight text-ink">
-            Finance
+            pinutie
           </span>
         </Link>
         <h1 className="mt-8 text-[28px] font-semibold tracking-[-0.04em] text-ink">

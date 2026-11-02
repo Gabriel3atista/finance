@@ -36,13 +36,13 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
         <Link
           href="/dashboard"
           className="focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none mb-10 flex h-[68px] items-center gap-3 border-b border-line/30 px-6"
-          aria-label="Finance, página inicial"
+          aria-label="pinutie, página inicial"
         >
           <span className="grid size-9 place-items-center rounded-xl bg-moon-200 text-graphite-900">
             <NextIcon name="BrandMarkOutline" size={24} />
           </span>
           <span className="text-[15px] font-semibold tracking-tight text-ink">
-            Finance
+            pinutie
           </span>
         </Link>
       )}

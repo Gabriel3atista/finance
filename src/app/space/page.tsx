@@ -34,15 +34,6 @@ export default async function SpacePage() {
             fallbackAvatarUrl={fallbackAvatarUrl}
           />
           <main className="px-3 pb-10 pt-6 sm:px-8 sm:py-10">
-            <div className="mx-auto mb-6 max-w-[920px]">
-              <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
-                Organize seu espaço financeiro
-              </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-                Seus dados ficam disponíveis para você e para as pessoas que
-                convidar.
-              </p>
-            </div>
             <div className="mx-auto max-w-[920px]">
               <SpacePanel userId={user.id} email={user.email ?? ""} />
             </div>

@@ -15,16 +15,29 @@ const kantumruyPro = Kantumruy_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Finance — suas finanças",
-  description: "Uma visão simples das suas finanças, com opção de compartilhar.",
+  applicationName: "pinutie",
+  title: "pinutie — suas finanças",
+  description: "Organize suas finanças pessoais e compartilhadas.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icons/finance-192.png",
-    apple: "/icons/apple-touch-icon.png",
+    icon: [
+      {
+        url: "/icons/pinutie-mascot.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+      },
+    ],
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
   },
   appleWebApp: {
     capable: true,
-    title: "Finance",
+    title: "pinutie",
     statusBarStyle: "black",
   },
 };

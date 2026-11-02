@@ -159,165 +159,168 @@ export function SpacePanel({
   });
   if (spaceQuery.isPending) {
     return (
-      <div
-        className="grid gap-3 lg:grid-cols-2"
-        aria-live="polite"
-        aria-busy="true"
-      >
-        {[0, 1].map((item) => (
-          <Card className="flex min-h-64 flex-col gap-3 p-5 sm:p-6" key={item}>
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-7 w-2/3" />
-            <Skeleton className="h-4 w-full max-w-sm" />
-            <Skeleton className="mt-auto h-11 w-full" />
-          </Card>
-        ))}
+      <div aria-live="polite" aria-busy="true" className="flex flex-col gap-6">
+        <SpacePageHeading title="Organize seu espaço financeiro" />
+        <Card className="flex min-h-48 flex-col gap-3 p-5 sm:p-6">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </Card>
       </div>
     );
   }
   if (spaceQuery.isError) {
     return (
-      <Card role="alert" className="flex flex-col items-start gap-3 p-5 sm:p-6">
-        <p className="text-sm text-rose-500">
-          Não foi possível carregar as informações do espaço.
-        </p>
-        <Button
-          onClick={() => {
-            void spaceQuery.refetch();
-          }}
-          type="button"
-          variant="secondary"
+      <div className="flex flex-col gap-6">
+        <SpacePageHeading title="Organize seu espaço financeiro" />
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-graphite-700 p-5 sm:p-6"
         >
-          Tentar novamente
-        </Button>
-      </Card>
+          <p className="text-sm text-rose-500">
+            Não foi possível carregar as informações do espaço.
+          </p>
+          <Button
+            onClick={() => {
+              void spaceQuery.refetch();
+            }}
+            type="button"
+            variant="secondary"
+          >
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
     );
   }
 
   if (!space) {
     return (
-      <div className="grid items-start gap-3 lg:grid-cols-2">
-        <Card sections className="overflow-hidden">
-          <CardHeader className="flex flex-col gap-2 bg-graphite-600 p-5 sm:p-6">
-            <Eyebrow tone="accent">Comece por aqui</Eyebrow>
-            <CardTitle className="text-xl tracking-tight">
-              Crie seu espaço
-            </CardTitle>
-            <CardDescription className="max-w-md leading-6">
-              Você poderá organizar suas finanças e convidar outras pessoas para
-              compartilhar os mesmos dados.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-5 sm:p-6">
-            <form
-              onSubmit={createSpaceForm.handleSubmit(({ name }) => {
-                setCreateError("");
-                createMutation.mutate(name.trim());
-              })}
-              className="flex flex-col gap-3"
-              noValidate
-            >
-              <Input
-                label="Nome do espaço"
-                containerClassName="gap-2"
-                className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
-                error={createSpaceForm.formState.errors.name?.message}
-                maxLength={100}
-                placeholder="Ex.: Pessoal"
-                {...createSpaceForm.register("name")}
-              />
-              {createError && (
-                <p role="alert" className="text-sm text-rose-500">
-                  {createError}
-                </p>
-              )}
-              <Button
-                className="w-full sm:w-auto sm:self-start"
-                disabled={createMutation.isPending}
-                type="submit"
+      <div className="flex flex-col gap-6">
+        <SpacePageHeading title="Organize seu espaço financeiro" />
+        <div className="grid items-start gap-3 lg:grid-cols-2">
+          <Card sections className="overflow-hidden">
+            <CardHeader className="flex flex-col gap-2 bg-graphite-600 p-5 sm:p-6">
+              <Eyebrow tone="accent">Comece por aqui</Eyebrow>
+              <CardTitle className="text-xl tracking-tight">
+                Crie seu espaço
+              </CardTitle>
+              <CardDescription className="max-w-md leading-6">
+                Você poderá organizar suas finanças e convidar outras pessoas
+                para compartilhar os mesmos dados.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-5 sm:p-6">
+              <form
+                onSubmit={createSpaceForm.handleSubmit(({ name }) => {
+                  setCreateError("");
+                  createMutation.mutate(name.trim());
+                })}
+                className="flex flex-col gap-3"
+                noValidate
               >
-                {createMutation.isPending ? "Criando…" : "Criar espaço"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card sections className="overflow-hidden">
-          <CardHeader className="flex flex-col gap-2 bg-graphite-600 p-5 sm:p-6">
-            <Eyebrow tone="accent">Convites recebidos</Eyebrow>
-            <CardTitle className="text-xl tracking-tight">
-              Acesse um espaço existente
-            </CardTitle>
-            <CardDescription className="leading-6">
-              Convites enviados ao seu e-mail aparecem aqui.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
-            {invitations.length ? (
-              <div className="flex flex-col gap-3">
-                {invitations.map((invitation) => (
-                  <div
-                    key={invitation.id}
-                    className="flex flex-col items-start gap-3 rounded-xl border border-line/50 bg-graphite-800 p-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-ink">
-                        Convite para compartilhar finanças
-                      </p>
-                      <p className="mt-1 text-xs text-muted">
-                        Expira em {formatDate(invitation.expires_at)}
-                      </p>
-                    </div>
-                    <Button
-                      className="w-full sm:w-auto"
-                      disabled={acceptMutation.isPending}
-                      onClick={() => {
-                        setAcceptError("");
-                        acceptMutation.mutate(invitation.id);
-                      }}
-                      size="sm"
-                      type="button"
-                    >
-                      {requestedInvitationId === invitation.id
-                        ? "Aceitar este convite"
-                        : "Aceitar convite"}
-                    </Button>
-                  </div>
-                ))}
-                {acceptError && (
+                <Input
+                  label="Nome do espaço"
+                  containerClassName="gap-2"
+                  className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
+                  error={createSpaceForm.formState.errors.name?.message}
+                  maxLength={100}
+                  placeholder="Ex.: Pessoal"
+                  {...createSpaceForm.register("name")}
+                />
+                {createError && (
                   <p role="alert" className="text-sm text-rose-500">
-                    {acceptError}
+                    {createError}
                   </p>
                 )}
-              </div>
-            ) : (
-              <p className="rounded-xl border border-dashed border-line px-4 py-3 text-sm leading-6 text-muted">
-                {requestedInvitationId
-                  ? "Este convite não está disponível para a conta conectada. Entre com o e-mail confirmado que recebeu o convite."
-                  : acceptError ||
-                    "Quando alguém convidar seu e-mail, o convite aparecerá aqui."}
-              </p>
-            )}
-            {requestedInvitationId &&
-              !requestedInvitation &&
-              invitations.length > 0 && (
-                <p
-                  role="alert"
-                  className="mt-3 text-sm leading-6 text-rose-500"
+                <Button
+                  className="w-full sm:w-auto sm:self-start"
+                  disabled={createMutation.isPending}
+                  type="submit"
                 >
-                  O link não está disponível para a conta conectada. Entre com o
-                  e-mail confirmado que recebeu o convite.
+                  {createMutation.isPending ? "Criando…" : "Criar espaço"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card sections className="overflow-hidden">
+            <CardHeader className="flex flex-col gap-2 bg-graphite-600 p-5 sm:p-6">
+              <Eyebrow tone="accent">Convites recebidos</Eyebrow>
+              <CardTitle className="text-xl tracking-tight">
+                Acesse um espaço existente
+              </CardTitle>
+              <CardDescription className="leading-6">
+                Convites enviados ao seu e-mail aparecem aqui.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
+              {invitations.length ? (
+                <div className="flex flex-col gap-3">
+                  {invitations.map((invitation) => (
+                    <div
+                      key={invitation.id}
+                      className="flex flex-col items-start gap-3 rounded-xl border border-line/50 bg-graphite-800 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-ink">
+                          Convite para compartilhar finanças
+                        </p>
+                        <p className="mt-1 text-xs text-muted">
+                          Expira em {formatDate(invitation.expires_at)}
+                        </p>
+                      </div>
+                      <Button
+                        className="w-full sm:w-auto"
+                        disabled={acceptMutation.isPending}
+                        onClick={() => {
+                          setAcceptError("");
+                          acceptMutation.mutate(invitation.id);
+                        }}
+                        size="sm"
+                        type="button"
+                      >
+                        {requestedInvitationId === invitation.id
+                          ? "Aceitar este convite"
+                          : "Aceitar convite"}
+                      </Button>
+                    </div>
+                  ))}
+                  {acceptError && (
+                    <p role="alert" className="text-sm text-rose-500">
+                      {acceptError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="rounded-xl border border-dashed border-line px-4 py-3 text-sm leading-6 text-muted">
+                  {requestedInvitationId
+                    ? "Este convite não está disponível para a conta conectada. Entre com o e-mail confirmado que recebeu o convite."
+                    : acceptError ||
+                      "Quando alguém convidar seu e-mail, o convite aparecerá aqui."}
                 </p>
               )}
-            {requestedInvitationId && requestedInvitation && (
-              <p className="mt-3 text-sm leading-6 text-muted">
-                Você está conectado como {email}. O convite só pode ser aceito
-                por esta conta se o e-mail confirmado corresponder ao endereço
-                convidado.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              {requestedInvitationId &&
+                !requestedInvitation &&
+                invitations.length > 0 && (
+                  <p
+                    role="alert"
+                    className="mt-3 text-sm leading-6 text-rose-500"
+                  >
+                    O link não está disponível para a conta conectada. Entre com
+                    o e-mail confirmado que recebeu o convite.
+                  </p>
+                )}
+              {requestedInvitationId && requestedInvitation && (
+                <p className="mt-3 text-sm leading-6 text-muted">
+                  Você está conectado como {email}. O convite só pode ser aceito
+                  por esta conta se o e-mail confirmado corresponder ao endereço
+                  convidado.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -325,51 +328,22 @@ export function SpacePanel({
   const members = spaceQuery.data?.members ?? [];
 
   return (
-    <div className="grid items-start gap-3 lg:grid-cols-2">
-      <Card sections className="overflow-hidden">
-        <CardHeader className="flex flex-col gap-3 bg-graphite-600 p-5 sm:p-6">
-          <Eyebrow tone="accent">Seu espaço</Eyebrow>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle className="min-w-0 break-words text-2xl tracking-tight">
-              {space.name}
-            </CardTitle>
-            <Badge variant="secondary">
-              {space.member_role === "owner" ? "Proprietário" : "Membro"}
-            </Badge>
-          </div>
-          <CardDescription className="leading-6">
-            {space.member_role === "owner"
-              ? "Gerencie o acesso e compartilhe suas finanças com pessoas de confiança."
-              : "Acompanhe as finanças compartilhadas neste espaço."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
-          {space.member_role === "owner" ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-sm leading-6 text-muted">
-                Convide pessoas de confiança para compartilhar as finanças deste
-                espaço.
-              </p>
-              <Button asChild className="w-full sm:w-auto sm:self-start">
-                <Link href="/space/invite">Convidar uma pessoa</Link>
-              </Button>
-            </div>
-          ) : (
-            <p className="rounded-xl border border-line/50 bg-graphite-800 px-4 py-3 text-sm text-muted">
-              Você já participa deste espaço.
-            </p>
-          )}
-          <Button
-            className="w-full"
-            onClick={() => router.push("/dashboard")}
-            type="button"
-            variant="secondary"
-          >
-            Ir para o Finance
+    <div className="flex flex-col gap-6">
+      <SpacePageHeading title={space.name} />
+      <div className="flex flex-wrap items-center gap-3">
+        {space.member_role === "owner" && (
+          <Button asChild>
+            <Link href="/space/invite">Convidar uma pessoa</Link>
           </Button>
-        </CardContent>
-      </Card>
-
+        )}
+        <Button
+          onClick={() => router.push("/dashboard")}
+          type="button"
+          variant="secondary"
+        >
+          Ir para o painel
+        </Button>
+      </div>
       <Card sections className="overflow-hidden">
         <CardHeader className="flex flex-col gap-2 bg-graphite-600 p-5 sm:p-6">
           <Eyebrow tone="accent">Acesso</Eyebrow>
@@ -489,6 +463,19 @@ export function SpacePanel({
         </DrawerContent>
       </Drawer>
     </div>
+  );
+}
+
+function SpacePageHeading({ title }: { title: string }) {
+  return (
+    <header>
+      <h1 className="break-words text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
+        {title}
+      </h1>
+      <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+        Seus dados ficam disponíveis para você e para as pessoas que convidar.
+      </p>
+    </header>
   );
 }
 

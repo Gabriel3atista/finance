@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
@@ -69,19 +69,12 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
           />
         )}
         {items.map((item, index) => {
-          const active =
-            variant === "mobile"
-              ? selectedIndex === index
-              : pathname === item.href;
+          const active = selectedIndex === index;
           const current = pathname === item.href;
           return (
             <Link
               key={item.href}
-              onClick={
-                variant === "mobile"
-                  ? () => setOptimisticActiveIndex(index)
-                  : undefined
-              }
+              onNavigate={() => setOptimisticActiveIndex(index)}
               href={item.href}
               aria-current={current ? "page" : undefined}
               className={cn(
@@ -100,12 +93,26 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
               aria-label={variant === "mobile" ? item.label : undefined}
               title={variant === "mobile" ? item.label : undefined}
             >
-              <NextIcon name={item.icon} size={24} />
+              <AppNavLinkIcon name={item.icon} />
               {variant === "sidebar" && <span>{item.label}</span>}
             </Link>
           );
         })}
       </div>
     </div>
+  );
+}
+
+function AppNavLinkIcon({ name }: { name: (typeof items)[number]["icon"] }) {
+  const { pending } = useLinkStatus();
+
+  return (
+    <NextIcon
+      className={
+        pending ? "animate-spin motion-reduce:animate-none" : undefined
+      }
+      name={pending ? "LoadingOutline" : name}
+      size={24}
+    />
   );
 }

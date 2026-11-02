@@ -1,6 +1,7 @@
 import { AppShell } from "@/shared/components/app-shell";
 import { redirect } from "next/navigation";
 import { createClient } from "@/features/auth/lib/supabase/server";
+import { getDashboardGreeting } from "@/features/dashboard/lib/greetings";
 
 export default async function WorkspaceLayout({
   children,
@@ -30,6 +31,7 @@ export default async function WorkspaceLayout({
     (typeof metadata.avatar_url === "string" && metadata.avatar_url) ||
     (typeof metadata.picture === "string" && metadata.picture) ||
     "";
+  const dashboardGreeting = getDashboardGreeting(userName);
 
   return (
     <AppShell
@@ -37,6 +39,8 @@ export default async function WorkspaceLayout({
       userId={user.id}
       userName={userName}
       fallbackAvatarUrl={userAvatarUrl}
+      spaceId={member.space_id}
+      dashboardGreeting={dashboardGreeting}
     >
       {children}
     </AppShell>

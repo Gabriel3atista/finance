@@ -1,11 +1,5 @@
-import { redirect } from "next/navigation";
-import { RecordsScreen } from "@/features/transactions/components/records-screen";
-import { getSignedInContext } from "@/features/transactions/lib/server-context";
+import { RecordsRoute } from "@/features/transactions/components/records-route";
 
-export default async function RecordsPage() {
-  const context = await getSignedInContext();
-  if (!context) redirect("/space");
-  return (
-    <RecordsScreen spaceId={context.spaceId} />
-  );
+export default function RecordsPage() {
+  return <RecordsRoute />;
 }

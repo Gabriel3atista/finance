@@ -26,14 +26,18 @@ export default async function SpaceInvitationPage() {
   return (
     <AppShellHeaderSlotProvider>
       <ValuesVisibilityProvider>
-        <div className="flex h-[100dvh] flex-col overflow-hidden bg-graphite-900">
+        <div className="relative isolate flex h-[100dvh] flex-col overflow-hidden bg-graphite-900">
+          <div
+            aria-hidden="true"
+            className="space-invitation-iridescence pointer-events-none absolute inset-0 z-0"
+          />
           <AppShellHeader
             userEmail={user.email ?? ""}
             userId={user.id}
             userName={userName}
             fallbackAvatarUrl={fallbackAvatarUrl}
           />
-          <main className="flex min-h-0 flex-1 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8">
+          <main className="relative z-10 flex min-h-0 flex-1 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8">
             <InvitationPanel userId={user.id} email={user.email ?? ""} />
           </main>
         </div>

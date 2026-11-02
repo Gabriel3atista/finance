@@ -137,7 +137,7 @@ function MonthlyBarChart({
               content={<ChartTooltipContent />}
             />
             <Bar
-              animationBegin={1000}
+              animationBegin={0}
               animationDuration={500}
               animationEasing="ease-out"
               activeBar={{ fillOpacity: 0.78 }}
@@ -149,7 +149,7 @@ function MonthlyBarChart({
               radius={[5, 5, 0, 0]}
             />
             <Bar
-              animationBegin={1000}
+              animationBegin={0}
               animationDuration={500}
               animationEasing="ease-out"
               activeBar={{ fillOpacity: 0.78 }}

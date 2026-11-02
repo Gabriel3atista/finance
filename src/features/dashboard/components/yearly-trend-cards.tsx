@@ -71,7 +71,7 @@ export function YearlyTrendCards({ data }: { data: DashboardMonth[] }) {
                 </defs>
                 <Area
                   activeDot={false}
-                  animationBegin={1000}
+                  animationBegin={0}
                   animationDuration={500}
                   animationEasing="ease-out"
                   dataKey={trend.key}
@@ -84,7 +84,7 @@ export function YearlyTrendCards({ data }: { data: DashboardMonth[] }) {
                   activeDot={false}
                   dataKey={trend.key}
                   dot={false}
-                  animationBegin={1000}
+                  animationBegin={0}
                   animationDuration={500}
                   animationEasing="ease-out"
                   isAnimationActive

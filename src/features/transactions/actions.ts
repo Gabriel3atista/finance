@@ -10,7 +10,10 @@ import {
   parseMonth,
   parseMonthInput,
 } from "@/shared/lib/date";
-import { isFinancialCategory } from "@/features/transactions/lib/categories";
+import {
+  getSeriesTypeOption,
+  isCategoryAllowedForEntryType,
+} from "@/features/transactions/lib/categories";
 import { getSignedInContext } from "@/features/transactions/lib/server-context";
 
 function textValue(formData: FormData, key: string, maxLength: number) {
@@ -18,9 +21,9 @@ function textValue(formData: FormData, key: string, maxLength: number) {
   return value.length <= maxLength ? value : null;
 }
 
-function categoryValue(formData: FormData) {
+function categoryValue(formData: FormData, entryType: string) {
   const value = String(formData.get("category") ?? "").trim();
-  return isFinancialCategory(value) ? value : null;
+  return isCategoryAllowedForEntryType(value, entryType) ? value : null;
 }
 
 function validDueDate(value: FormDataEntryValue | null) {
@@ -41,11 +44,11 @@ export async function createFinancialEntry(
   formData: FormData,
 ): Promise<MutationResult> {
   const title = textValue(formData, "title", 160);
-  const category = categoryValue(formData);
+  const entryType = String(formData.get("entry_type"));
+  const category = categoryValue(formData, entryType);
   const amount = parseCurrencyInput(formData.get("amount"));
   const competenceMonth = parseMonthInput(formData.get("competence_month"));
   const dueDate = validDueDate(formData.get("due_date"));
-  const entryType = String(formData.get("entry_type"));
   if (
     !title ||
     title.length < 1 ||
@@ -76,18 +79,9 @@ export async function createFinancialEntry(
   return { success: "created" };
 }
 
-const seriesTypes = {
-  salary: { entryType: "income", category: "Salário" },
-  service: { entryType: "expense", category: "Fixos" },
-  financing: { entryType: "expense", category: "Dívidas e parcelas" },
-  purchase: { entryType: "expense", category: "Dívidas e parcelas" },
-  other_income: { entryType: "income", category: "Outras entradas" },
-  other_expense: { entryType: "expense", category: "Fixos" },
-} as const;
-
 type FinancialSeriesValues = {
   title: string;
-  seriesType: (typeof seriesTypes)[keyof typeof seriesTypes];
+  seriesType: NonNullable<ReturnType<typeof getSeriesTypeOption>>;
   amount: number;
   startsOn: string;
   endsOn: string | null;
@@ -102,8 +96,7 @@ function readFinancialSeriesValues(
 ): FinancialSeriesValues | null {
   const title = textValue(formData, "title", 160);
   const seriesTypeKey = String(formData.get("series_type"));
-  const seriesType =
-    seriesTypes[seriesTypeKey as keyof typeof seriesTypes] ?? null;
+  const seriesType = getSeriesTypeOption(seriesTypeKey);
   const hasInstallments = formData.get("has_installments") === "true";
   const installmentCount = Number(formData.get("installment_count"));
   const installmentValue = parseCurrencyInput(
@@ -213,16 +206,35 @@ export async function updateFinancialSeries(
   const id = String(formData.get("id") ?? "");
   const kind = String(formData.get("kind") ?? "");
   const values = readFinancialSeriesValues(formData);
-  if (
-    !id ||
-    (kind !== "recurrence" && kind !== "installment") ||
-    !values ||
-    (kind === "installment") !== values.hasInstallments
-  ) {
+  if (!id || (kind !== "recurrence" && kind !== "installment") || !values) {
     return { error: "invalid-series" };
   }
 
   const context = await getUserContext();
+  const nextKind = values.hasInstallments ? "installment" : "recurrence";
+  if (kind !== nextKind) {
+    const { data, error } = await context.supabase.rpc(
+      "convert_financial_series_kind",
+      {
+        p_space_id: context.spaceId,
+        p_series_id: id,
+        p_from_kind: kind,
+        p_to_kind: nextKind,
+        p_title: values.title,
+        p_entry_type: values.seriesType.entryType,
+        p_amount: values.amount,
+        p_category: values.seriesType.category,
+        p_due_day: values.dueDay,
+        p_starts_on: values.startsOn,
+        p_ends_on: values.endsOn,
+        p_installment_count: values.installmentCount,
+        p_indefinite: values.indefinite,
+      },
+    );
+    if (error || !data) return { error: "update-series" };
+    return { success: "series-updated" };
+  }
+
   const result =
     kind === "installment"
       ? await context.supabase
@@ -265,10 +277,10 @@ export async function updateFinancialEntry(
 ): Promise<MutationResult> {
   const id = String(formData.get("id") ?? "");
   const title = textValue(formData, "title", 160);
-  const category = categoryValue(formData);
+  const entryType = String(formData.get("entry_type"));
+  const category = categoryValue(formData, entryType);
   const amount = parseCurrencyInput(formData.get("amount"));
   const dueDate = validDueDate(formData.get("due_date"));
-  const entryType = String(formData.get("entry_type"));
   const scope = String(formData.get("scope") ?? "single");
   if (
     !id ||

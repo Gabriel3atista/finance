@@ -3,7 +3,17 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/features/auth/lib/supabase/client";
@@ -11,6 +21,10 @@ import { Eyebrow } from "@/shared/components/eyebrow";
 import { fetchSpacePage } from "@/features/space/lib/queries";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { formatDate } from "@/shared/lib/date";
+import {
+  createSpaceSchema,
+  invitationEmailSchema,
+} from "@/features/space/lib/form-schemas";
 
 export function SpacePanel({
   userId,
@@ -29,12 +43,26 @@ export function SpacePanel({
   });
   const [createError, setCreateError] = useState("");
   const [acceptError, setAcceptError] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
   const [inviteState, setInviteState] = useState("");
   const [inviteUrl, setInviteUrl] = useState("");
   const [inviteError, setInviteError] = useState("");
+  const createSpaceForm = useForm<{ name: string }>({
+    resolver: zodResolver(createSpaceSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: { name: "" },
+  });
+  const inviteForm = useForm<{ email: string }>({
+    resolver: zodResolver(invitationEmailSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: { email: "" },
+  });
   const space = spaceQuery.data?.space ?? null;
   const invitations = spaceQuery.data?.invitations ?? [];
+  const requestedInvitation = invitations.find(
+    (invitation) => invitation.id === requestedInvitationId,
+  );
   const createMutation = useMutation({
     mutationFn: async (name: string) => {
       const supabase = createClient();
@@ -48,8 +76,12 @@ export function SpacePanel({
         .insert({ name, created_by: user.id });
       if (error) throw error;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.space(userId) }),
+    onSuccess: async () => {
+      createSpaceForm.reset();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.space(userId),
+      });
+    },
     onError: () =>
       setCreateError("Não foi possível criar o espaço. Tente novamente."),
   });
@@ -104,7 +136,7 @@ export function SpacePanel({
       return data.invitationUrl as string;
     },
     onSuccess: async (url) => {
-      setInviteEmail("");
+      inviteForm.reset();
       setInviteUrl(url);
       setInviteState(
         "Link criado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
@@ -113,262 +145,289 @@ export function SpacePanel({
         queryKey: queryKeys.space(userId),
       });
     },
+    onError: (caught) => {
+      const message = caught instanceof Error ? caught.message : "";
+      setInviteError(
+        message.includes("already exists")
+          ? "Já existe um convite ativo para esse e-mail."
+          : "Não foi possível gerar o convite. Confira o e-mail e tente novamente.",
+      );
+    },
   });
 
   if (spaceQuery.isPending) {
     return (
       <div
-        className="grid gap-8 lg:grid-cols-[1fr_0.9fr]"
+        className="grid gap-3 lg:grid-cols-2"
         aria-live="polite"
         aria-busy="true"
       >
-        <Skeleton className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-64" />
-        <Skeleton className="rounded-[18px] border border-line bg-graphite-900 shadow-card h-64" />
+        {[0, 1].map((item) => (
+          <Card className="flex min-h-64 flex-col gap-3 p-5 sm:p-6" key={item}>
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-7 w-2/3" />
+            <Skeleton className="h-4 w-full max-w-sm" />
+            <Skeleton className="mt-auto h-11 w-full" />
+          </Card>
+        ))}
       </div>
     );
   }
   if (spaceQuery.isError) {
     return (
-      <div
-        role="alert"
-        className="rounded-[18px] border border-line bg-graphite-900 shadow-card p-6 text-sm text-rose-500"
-      >
-        Não foi possível carregar as informações do espaço. Tente novamente.
-      </div>
+      <Card role="alert" className="flex flex-col items-start gap-3 p-5 sm:p-6">
+        <p className="text-sm text-rose-500">
+          Não foi possível carregar as informações do espaço.
+        </p>
+        <Button
+          onClick={() => {
+            void spaceQuery.refetch();
+          }}
+          type="button"
+          variant="secondary"
+        >
+          Tentar novamente
+        </Button>
+      </Card>
     );
-  }
-
-  async function sendInvitation(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setInviteError("");
-    setInviteState("");
-    setInviteUrl("");
-
-    try {
-      await invitationMutation.mutateAsync(inviteEmail.trim().toLowerCase());
-    } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "";
-      setInviteError(
-        message.includes("already exists")
-          ? "Já existe um convite ativo para esse e-mail."
-          : message.includes("send invitation email")
-            ? "Não foi possível enviar o e-mail. Verifique a configuração de SMTP no Supabase."
-            : "Não foi possível enviar. Confira o e-mail e tente novamente.",
-      );
-    }
   }
 
   if (!space) {
     return (
-      <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-        <section className="rounded-2xl border border-line bg-graphite-900 p-5 sm:p-7">
-          <Eyebrow tone="accent">Comece por aqui</Eyebrow>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
-            Crie seu espaço
-          </h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-muted">
-            Você poderá organizar suas finanças e convidar outras pessoas para
-            compartilhar os mesmos dados.
-          </p>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              setCreateError("");
-              const name = String(
-                new FormData(event.currentTarget).get("name") ?? "",
-              ).trim();
-              if (!name || name.length > 100) {
-                setCreateError("Informe um nome de até 100 caracteres.");
-                return;
-              }
-              createMutation.mutate(name);
-            }}
-            className="mt-6 space-y-4"
-          >
-            <Input
-              label="Nome do espaço"
-              containerClassName="gap-2"
-              className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
-              name="name"
-              maxLength={100}
-              placeholder="Ex.: Pessoal"
-              required
-            />
-            {createError && (
-              <p role="alert" className="text-sm text-rose-500">
-                {createError}
-              </p>
-            )}
-            <Button disabled={createMutation.isPending} type="submit">
-              {createMutation.isPending ? "Criando…" : "Criar espaço"}
-            </Button>
-          </form>
-        </section>
+      <div className="grid items-start gap-3 lg:grid-cols-2">
+        <Card sections className="overflow-hidden">
+          <CardHeader className="flex flex-col gap-2 bg-graphite-600 p-5 sm:p-6">
+            <Eyebrow tone="accent">Comece por aqui</Eyebrow>
+            <CardTitle className="text-xl tracking-tight">
+              Crie seu espaço
+            </CardTitle>
+            <CardDescription className="max-w-md leading-6">
+              Você poderá organizar suas finanças e convidar outras pessoas para
+              compartilhar os mesmos dados.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-5 sm:p-6">
+            <form
+              onSubmit={createSpaceForm.handleSubmit(({ name }) => {
+                setCreateError("");
+                createMutation.mutate(name.trim());
+              })}
+              className="flex flex-col gap-3"
+              noValidate
+            >
+              <Input
+                label="Nome do espaço"
+                containerClassName="gap-2"
+                className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
+                error={createSpaceForm.formState.errors.name?.message}
+                maxLength={100}
+                placeholder="Ex.: Pessoal"
+                {...createSpaceForm.register("name")}
+              />
+              {createError && (
+                <p role="alert" className="text-sm text-rose-500">
+                  {createError}
+                </p>
+              )}
+              <Button
+                className="w-full sm:w-auto sm:self-start"
+                disabled={createMutation.isPending}
+                type="submit"
+              >
+                {createMutation.isPending ? "Criando…" : "Criar espaço"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-        <section className="rounded-2xl border border-line bg-graphite-900 p-5 sm:p-7">
-          <Eyebrow tone="accent">Convites recebidos</Eyebrow>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
-            Acesse um espaço existente
-          </h2>
-          {invitations.length ? (
-            <div className="mt-5 space-y-3">
-              {invitations.map((invitation) => (
-                <div
-                  key={invitation.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-canvas p-4"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-ink">
-                      Convite para compartilhar finanças
-                    </p>
-                    <p className="mt-1 text-xs text-muted">
-                      Expira em {formatDate(invitation.expires_at)}
-                    </p>
-                  </div>
-                  <form
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      setAcceptError("");
-                      acceptMutation.mutate(invitation.id);
-                    }}
+        <Card sections className="overflow-hidden">
+          <CardHeader className="flex flex-col gap-2 bg-graphite-600 p-5 sm:p-6">
+            <Eyebrow tone="accent">Convites recebidos</Eyebrow>
+            <CardTitle className="text-xl tracking-tight">
+              Acesse um espaço existente
+            </CardTitle>
+            <CardDescription className="leading-6">
+              Convites enviados ao seu e-mail aparecem aqui.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
+            {invitations.length ? (
+              <div className="flex flex-col gap-3">
+                {invitations.map((invitation) => (
+                  <div
+                    key={invitation.id}
+                    className="flex flex-col items-start gap-3 rounded-xl border border-line/50 bg-graphite-800 p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
+                    <div>
+                      <p className="text-sm font-medium text-ink">
+                        Convite para compartilhar finanças
+                      </p>
+                      <p className="mt-1 text-xs text-muted">
+                        Expira em {formatDate(invitation.expires_at)}
+                      </p>
+                    </div>
                     <Button
+                      className="w-full sm:w-auto"
                       disabled={acceptMutation.isPending}
+                      onClick={() => {
+                        setAcceptError("");
+                        acceptMutation.mutate(invitation.id);
+                      }}
                       size="sm"
-                      type="submit"
+                      type="button"
                     >
                       {requestedInvitationId === invitation.id
                         ? "Aceitar este convite"
                         : "Aceitar convite"}
                     </Button>
-                  </form>
-                </div>
-              ))}
-              {acceptError && (
-                <p role="alert" className="text-sm text-rose-500">
-                  {acceptError}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="mt-3 text-sm leading-6 text-muted">
-              {requestedInvitationId
-                ? "Este convite não está disponível para a conta conectada. Entre com o e-mail confirmado que recebeu o convite."
-                : acceptError ||
-                  "Quando alguém convidar seu e-mail, o convite aparecerá aqui."}
-            </p>
-          )}
-          {requestedInvitationId &&
-            !invitations.some(
-              (invitation) => invitation.id === requestedInvitationId,
-            ) &&
-            invitations.length > 0 && (
-              <p role="alert" className="mt-3 text-sm leading-6 text-rose-500">
-                O link não está disponível para a conta conectada. Entre com o
-                e-mail confirmado que recebeu o convite.
+                  </div>
+                ))}
+                {acceptError && (
+                  <p role="alert" className="text-sm text-rose-500">
+                    {acceptError}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-line px-4 py-3 text-sm leading-6 text-muted">
+                {requestedInvitationId
+                  ? "Este convite não está disponível para a conta conectada. Entre com o e-mail confirmado que recebeu o convite."
+                  : acceptError ||
+                    "Quando alguém convidar seu e-mail, o convite aparecerá aqui."}
               </p>
             )}
-          {requestedInvitationId &&
-            invitations.some(
-              (invitation) => invitation.id === requestedInvitationId,
-            ) && (
+            {requestedInvitationId &&
+              !requestedInvitation &&
+              invitations.length > 0 && (
+                <p
+                  role="alert"
+                  className="mt-3 text-sm leading-6 text-rose-500"
+                >
+                  O link não está disponível para a conta conectada. Entre com o
+                  e-mail confirmado que recebeu o convite.
+                </p>
+              )}
+            {requestedInvitationId && requestedInvitation && (
               <p className="mt-3 text-sm leading-6 text-muted">
                 Você está conectado como {email}. O convite só pode ser aceito
                 por esta conta se o e-mail confirmado corresponder ao endereço
                 convidado.
               </p>
             )}
-        </section>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[640px] rounded-2xl border border-line bg-graphite-900 p-5 sm:p-8">
-      <Eyebrow tone="accent">Espaço financeiro</Eyebrow>
-      <h2 className="mt-3 text-2xl font-semibold tracking-tight text-ink">
-        {space.name}
-      </h2>
-      <p className="mt-2 text-sm leading-6 text-muted">
-        Convide outras pessoas para acompanhar e atualizar as finanças junto com
-        você.
-      </p>
-
-      {space.member_role === "owner" ? (
-        <form onSubmit={sendInvitation} className="mt-6 space-y-4">
-          <Input
-            label="E-mail da pessoa convidada"
-            containerClassName="gap-2"
-            className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
-            autoComplete="email"
-            type="email"
-            required
-            value={inviteEmail}
-            onChange={(event) => setInviteEmail(event.target.value)}
-            placeholder="nome@exemplo.com"
-          />
-          {inviteError && (
-            <p role="alert" className="text-sm text-rose-500">
-              {inviteError}
-            </p>
-          )}
-          {inviteState && (
-            <p
-              role="status"
-              className="rounded-xl bg-accent-soft px-3.5 py-3 text-sm text-accent"
+    <Card sections className="mx-auto max-w-[640px] overflow-hidden">
+      <CardHeader className="flex flex-col gap-3 bg-graphite-600 p-5 sm:p-6">
+        <Eyebrow tone="accent">Seu espaço</Eyebrow>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardTitle className="min-w-0 break-words text-2xl tracking-tight">
+            {space.name}
+          </CardTitle>
+          <Badge variant="secondary">
+            {space.member_role === "owner" ? "Proprietário" : "Membro"}
+          </Badge>
+        </div>
+        <CardDescription className="leading-6">
+          {space.member_role === "owner"
+            ? "Gerencie o acesso e compartilhe suas finanças com pessoas de confiança."
+            : "Acompanhe as finanças compartilhadas neste espaço."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
+        {space.member_role === "owner" ? (
+          <form
+            onSubmit={inviteForm.handleSubmit(({ email: targetEmail }) => {
+              setInviteError("");
+              setInviteState("");
+              setInviteUrl("");
+              invitationMutation.mutate(targetEmail.trim().toLowerCase());
+            })}
+            className="flex flex-col gap-3"
+            noValidate
+          >
+            <Input
+              label="E-mail da pessoa convidada"
+              containerClassName="gap-2"
+              className="min-h-11 px-3.5 focus:border-accent mobile-app:focus:!border-line"
+              autoComplete="email"
+              type="email"
+              placeholder="nome@exemplo.com"
+              error={inviteForm.formState.errors.email?.message}
+              {...inviteForm.register("email")}
+            />
+            {inviteError && (
+              <p role="alert" className="text-sm text-rose-500">
+                {inviteError}
+              </p>
+            )}
+            {inviteState && (
+              <p
+                role="status"
+                className="rounded-xl bg-accent-soft px-3.5 py-3 text-sm text-accent"
+              >
+                {inviteState}
+              </p>
+            )}
+            {inviteUrl && (
+              <div className="flex flex-col gap-3 rounded-xl border border-line/50 bg-graphite-800 p-4">
+                <label
+                  htmlFor="invitation-link"
+                  className="text-sm font-medium text-ink"
+                >
+                  Link do convite
+                </label>
+                <Input
+                  id="invitation-link"
+                  readOnly
+                  value={inviteUrl}
+                  className="min-h-11 px-3.5"
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+                <Button
+                  className="self-start"
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(inviteUrl);
+                    setInviteState(
+                      "Link copiado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
+                    );
+                  }}
+                >
+                  Copiar link
+                </Button>
+              </div>
+            )}
+            <Button
+              className="w-full sm:w-auto sm:self-start"
+              disabled={invitationMutation.isPending}
+              type="submit"
             >
-              {inviteState}
-            </p>
-          )}
-          {inviteUrl && (
-            <div className="space-y-2 rounded-xl bg-canvas p-4">
-              <label
-                htmlFor="invitation-link"
-                className="text-sm font-medium text-ink"
-              >
-                Link do convite
-              </label>
-              <Input
-                id="invitation-link"
-                readOnly
-                value={inviteUrl}
-                className="min-h-11 px-3.5"
-                onFocus={(event) => event.currentTarget.select()}
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(inviteUrl);
-                  setInviteState(
-                    "Link copiado. Compartilhe com a pessoa convidada; ele expira em sete dias.",
-                  );
-                }}
-              >
-                Copiar link
-              </Button>
-            </div>
-          )}
-          <Button disabled={invitationMutation.isPending} type="submit">
-            {invitationMutation.isPending
-              ? "Gerando link…"
-              : "Gerar link de convite"}
-          </Button>
-        </form>
-      ) : (
-        <p className="mt-5 rounded-xl bg-canvas px-4 py-3 text-sm text-muted">
-          Você já participa deste espaço.
-        </p>
-      )}
-      <Button
-        className="mt-7 w-full"
-        onClick={() => router.push("/dashboard")}
-        type="button"
-        variant="secondary"
-      >
-        Ir para o Finance
-      </Button>
-    </div>
+              {invitationMutation.isPending
+                ? "Gerando link…"
+                : "Gerar link de convite"}
+            </Button>
+          </form>
+        ) : (
+          <p className="rounded-xl border border-line/50 bg-graphite-800 px-4 py-3 text-sm text-muted">
+            Você já participa deste espaço.
+          </p>
+        )}
+        <Button
+          className="w-full"
+          onClick={() => router.push("/dashboard")}
+          type="button"
+          variant="secondary"
+        >
+          Ir para o Finance
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

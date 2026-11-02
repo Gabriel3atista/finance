@@ -17,9 +17,7 @@ import {
 import { Card, CardSection } from "@/components/ui/card";
 import { formatCompactCurrency } from "@/shared/lib/currency";
 import { formatMonth, formatShortMonth } from "@/shared/lib/date";
-import {
-  useValuesVisibility,
-} from "@/shared/components/financial-values";
+import { useValuesVisibility } from "@/shared/components/financial-values";
 import { useMobileApp } from "@/shared/hooks/use-mobile-app";
 import type { DashboardMonth } from "@/features/dashboard/lib/data";
 
@@ -73,9 +71,7 @@ function MonthlyBarChart({
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-3 min-w-0 w-full">
             <div className="flex items-center justify-between w-full">
-              <h3 className="text-xl font-semibold text-ink ml-1">
-                Geral
-              </h3>
+              <h3 className="text-xl font-semibold text-ink ml-1">Geral</h3>
               <Select
                 containerClassName="w-auto"
                 onValueChange={onPeriodChange}
@@ -87,13 +83,20 @@ function MonthlyBarChart({
                 </SelectTrigger>
                 <SelectContent>
                   {periodOptions.map((option) => (
-                    <SelectItem key={option.months} value={String(option.months)}>
+                    <SelectItem
+                      key={option.months}
+                      value={String(option.months)}
+                    >
                       {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            <p className="ml-1 text-xs text-muted">
+              Valores previstos e realizados, incluindo recorrências e parcelas
+              cadastradas.
+            </p>
           </div>
         </header>
         <ChartContainer className="mt-4 h-[230px] w-full" config={chartConfig}>
@@ -112,7 +115,8 @@ function MonthlyBarChart({
               dataKey="fullMonth"
               tickLine={false}
               tickFormatter={(value: string) =>
-                chartData.find((item) => item.fullMonth === value)?.month ?? value
+                chartData.find((item) => item.fullMonth === value)?.month ??
+                value
               }
               tick={{ fill: "hsl(220 8% 60%)", fontSize: 11 }}
               tickMargin={10}

@@ -14,6 +14,8 @@ import {
   useReducedMotion,
   useTransform,
 } from "motion/react";
+import { Controller, FormProvider, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { NextIcon } from "@/components/atoms/next-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,10 @@ import {
 } from "@/components/ui/drawer";
 import { EntryFields } from "@/features/transactions/components/entry-fields";
 import {
+  entryFormSchema,
+  type EntryFormValues,
+} from "@/features/transactions/lib/form-schemas";
+import {
   FINANCIAL_CATEGORIES,
   isFinancialCategory,
   normalizeFinancialCategory,
@@ -54,6 +60,7 @@ import {
 import type { FinancialEntry } from "@/features/transactions/lib/data";
 import { formatCurrency } from "@/shared/lib/currency";
 import { formatDate, localDateString } from "@/shared/lib/date";
+import { formDataFromValues } from "@/shared/lib/forms";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { cn } from "@/shared/lib/utils";
 
@@ -148,6 +155,20 @@ export function MonthlyEntryList({
     entries.find((entry) => entry.id === selectedEntryId) ??
     selectedEntrySnapshot ??
     undefined;
+  const editForm = useForm<EntryFormValues>({
+    resolver: zodResolver(entryFormSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      title: "",
+      amount: "",
+      entry_type: "expense",
+      category: "",
+      due_date: "",
+      competence_month: `${month}-01`,
+      scope: "single",
+    },
+  });
   const filteredEntries = entries.filter(
     (entry) =>
       categoryFilter === "all" ||
@@ -173,6 +194,24 @@ export function MonthlyEntryList({
     setDeleteError("");
     setMonthActionError("");
   }, [closeDeleteDrawer, closeEntryDrawer, closeMonthActionDrawer, month]);
+
+  useEffect(() => {
+    if (!selectedEntry) return;
+    editForm.reset({
+      id: selectedEntry.id,
+      title: selectedEntry.title,
+      amount: selectedEntry.amount.toFixed(2),
+      entry_type: selectedEntry.entry_type,
+      category: normalizeFinancialCategory(
+        selectedEntry.category,
+        selectedEntry.entry_type,
+        selectedEntry.source_kind,
+      ),
+      due_date: selectedEntry.due_date ?? "",
+      competence_month: `${month}-01`,
+      scope: "single",
+    });
+  }, [editForm, month, selectedEntry]);
 
   function openEntryDrawer(entry: FinancialEntry) {
     setActionError("");
@@ -449,56 +488,53 @@ export function MonthlyEntryList({
 
             <form
               className="flex min-h-0 flex-1 flex-col overflow-hidden"
-              onSubmit={(event) => {
-                event.preventDefault();
-                const form = new FormData(event.currentTarget);
-                void runAction(() => onUpdate(form));
-              }}
+              onSubmit={editForm.handleSubmit(
+                (values) =>
+                  void runAction(() => onUpdate(formDataFromValues(values))),
+              )}
+              noValidate
             >
-              <Input name="id" type="hidden" value={selectedEntry.id} />
-              <DrawerBody className="space-y-4 px-3 pb-5">
-                {actionError && (
-                  <p
-                    className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
-                    role="alert"
-                  >
-                    {actionError}
-                  </p>
-                )}
-                <Select
-                  label="Tipo"
-                  name="entry_type"
-                  defaultValue={selectedEntry.entry_type}
-                  variant="secondary"
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="expense">Despesa</SelectItem>
-                    <SelectItem value="income">Receita</SelectItem>
-                  </SelectContent>
-                </Select>
-                <EntryFields month={month} entry={selectedEntry} />
-                {selectedEntry.source_kind === "recurrence" && (
-                  <Select
-                    label="Aplicar alteração"
-                    name="scope"
-                    defaultValue="single"
-                    variant="secondary"
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Somente este mês</SelectItem>
-                      <SelectItem value="future">
-                        Este e próximos meses
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              </DrawerBody>
+              <FormProvider {...editForm}>
+                <Input type="hidden" {...editForm.register("id")} />
+                <DrawerBody className="space-y-4 px-3 pb-5">
+                  {actionError && (
+                    <p
+                      className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                      role="alert"
+                    >
+                      {actionError}
+                    </p>
+                  )}
+                  <EntryFields />
+                  {selectedEntry.source_kind === "recurrence" && (
+                    <Controller
+                      control={editForm.control}
+                      name="scope"
+                      render={({ field }) => (
+                        <Select
+                          label="Aplicar alteração"
+                          name={field.name}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          variant="secondary"
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="single">
+                              Somente este mês
+                            </SelectItem>
+                            <SelectItem value="future">
+                              Este e próximos meses
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  )}
+                </DrawerBody>
+              </FormProvider>
               <DrawerFooter className="shrink-0 border-t border-line/30 px-3 pb-3 pt-4">
                 <div className="grid grid-cols-1 gap-3">
                   <Button

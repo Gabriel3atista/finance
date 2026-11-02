@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,14 +32,12 @@ import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate
 import { queryKeys } from "@/shared/lib/query-keys";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { EntryFields } from "@/features/transactions/components/entry-fields";
+import {
+  entryFormSchema,
+  type EntryFormValues,
+} from "@/features/transactions/lib/form-schemas";
+import { formDataFromValues } from "@/shared/lib/forms";
 import { MobileMonthView } from "@/features/transactions/components/mobile-month-view";
 import { MonthlyEntryList } from "@/features/transactions/components/monthly-entry-list";
 import { useMobileApp } from "@/shared/hooks/use-mobile-app";
@@ -553,48 +553,48 @@ function NewEntryDrawer({
   error: string;
   onSubmit: (form: FormData) => void;
 }) {
-  const formRef = useRef<HTMLFormElement>(null);
+  const defaultValues: EntryFormValues = {
+    title: "",
+    amount: "",
+    entry_type: "expense",
+    category: "",
+    due_date: localDateString(),
+    competence_month: `${month}-01`,
+  };
+  const form = useForm<EntryFormValues>({
+    resolver: zodResolver(entryFormSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues,
+  });
 
   return (
-    <Drawer {...drawer.props} onCloseComplete={() => formRef.current?.reset()}>
+    <Drawer {...drawer.props} onCloseComplete={() => form.reset(defaultValues)}>
       <DrawerContent>
         <DrawerHeader className="shrink-0 px-3 pb-3 pt-4 text-left">
           <DrawerTitle className="text-base">Novo lançamento</DrawerTitle>
         </DrawerHeader>
         <form
-          ref={formRef}
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(new FormData(event.currentTarget));
-          }}
+          onSubmit={form.handleSubmit((values) =>
+            onSubmit(formDataFromValues(values)),
+          )}
+          noValidate
         >
-          <DrawerBody className="space-y-4 px-3 pb-5">
-            {error && (
-              <p
-                className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
-                role="alert"
-              >
-                {errorMessages[error] ??
-                  "Não foi possível salvar o lançamento. Tente novamente."}
-              </p>
-            )}
-            <Select
-              label="Tipo"
-              name="entry_type"
-              defaultValue="expense"
-              variant="secondary"
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="expense">Despesa</SelectItem>
-                <SelectItem value="income">Receita</SelectItem>
-              </SelectContent>
-            </Select>
-            <EntryFields month={month} />
-          </DrawerBody>
+          <FormProvider {...form}>
+            <DrawerBody className="space-y-4 px-3 pb-5">
+              {error && (
+                <p
+                  className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+                  role="alert"
+                >
+                  {errorMessages[error] ??
+                    "Não foi possível salvar o lançamento. Tente novamente."}
+                </p>
+              )}
+              <EntryFields />
+            </DrawerBody>
+          </FormProvider>
           <DrawerFooter className="shrink-0 border-t border-line px-3 pb-3 pt-4">
             <Button
               className="w-full"

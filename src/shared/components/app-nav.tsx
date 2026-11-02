@@ -2,17 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { NextIcon } from "@/components/atoms/next-icon";
 import { cn } from "@/shared/lib/utils";
 
 const items = [
   { href: "/dashboard", label: "Painel", icon: "DashboardOutline" },
   { href: "/mes", label: "Meu mês", icon: "CalendarOutline" },
-  { href: "/cadastros", label: "Cadastros", icon: "RecordsOutline" },
+  { href: "/cadastros", label: "Programações", icon: "BillListOutline" },
 ] as const;
 
 export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
   const pathname = usePathname();
+  const shouldReduceMotion = useReducedMotion();
+  const activeIndex = items.findIndex((item) => pathname === item.href);
+  const [optimisticActiveIndex, setOptimisticActiveIndex] = useState<
+    number | null
+  >(null);
+  const selectedIndex = optimisticActiveIndex ?? activeIndex;
+
+  useEffect(() => {
+    setOptimisticActiveIndex(null);
+  }, [pathname]);
 
   return (
     <div
@@ -36,24 +48,50 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
       )}
       <div
         className={cn(
-          variant === "sidebar" ? "space-y-1 px-3" : "flex w-full gap-1",
+          variant === "sidebar"
+            ? "space-y-1 px-3"
+            : "relative flex w-fit gap-1",
         )}
       >
-        {items.map((item) => {
-          const active = pathname === item.href;
+        {variant === "mobile" && selectedIndex >= 0 && (
+          <motion.span
+            aria-hidden="true"
+            animate={{
+              transform: `translate3d(${selectedIndex * 52}px, 0, 0)`,
+            }}
+            className="pointer-events-none absolute left-0 top-0 size-[48px] rounded-full border border-line/30 bg-gradient-to-b from-white/20 to-white/10 shadow-[inset_0_1px_0_hsl(0_0%_100%/25%),0_2px_8px_hsl(0_0%_0%/20%)]"
+            initial={false}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0 }
+                : { type: "spring", duration: 0.4, bounce: 0.12 }
+            }
+          />
+        )}
+        {items.map((item, index) => {
+          const active =
+            variant === "mobile"
+              ? selectedIndex === index
+              : pathname === item.href;
+          const current = pathname === item.href;
           return (
             <Link
               key={item.href}
+              onClick={
+                variant === "mobile"
+                  ? () => setOptimisticActiveIndex(index)
+                  : undefined
+              }
               href={item.href}
-              aria-current={active ? "page" : undefined}
+              aria-current={current ? "page" : undefined}
               className={cn(
                 "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none flex items-center",
                 variant === "sidebar" && "gap-3 rounded-xl px-3 py-3 text-sm",
                 variant === "mobile" &&
-                  "size-[48px] shrink-0 justify-center rounded-full",
+                  "relative z-10 size-[48px] shrink-0 justify-center rounded-full",
                 active
                   ? variant === "mobile"
-                    ? "border border-line/30 bg-gradient-to-b from-white/20 to-white/10 text-white shadow-[inset_0_1px_0_hsl(0_0%_100%/25%),0_2px_8px_hsl(0_0%_0%/20%)]"
+                    ? "text-white"
                     : "bg-white font-semibold text-black"
                   : variant === "mobile"
                     ? "text-muted hover:bg-white/10 hover:text-ink"

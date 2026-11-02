@@ -1,9 +1,10 @@
 import { useId, type InputHTMLAttributes } from "react";
 import { cn } from "@/shared/lib/utils";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & {
+export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   containerClassName?: string;
   label?: string;
+  error?: string;
 };
 
 export function Input({
@@ -11,6 +12,7 @@ export function Input({
   containerClassName,
   id,
   label,
+  error,
   type,
   ...props
 }: InputProps) {
@@ -25,10 +27,13 @@ export function Input({
         "shrink-0",
         (type === "date" || type === "month") &&
           "box-border h-10 w-full min-w-0 max-w-full appearance-none py-0 leading-normal [@media(pointer:coarse)]:text-base",
+        error && "border-rose-500 focus:border-rose-500",
       )}
       id={inputId}
       type={type}
       {...props}
+      aria-invalid={error ? true : props["aria-invalid"]}
+      aria-describedby={error ? `${inputId}-error` : props["aria-describedby"]}
     />
   );
 
@@ -48,6 +53,15 @@ export function Input({
         {label || "Campo de entrada"}
       </label>
       {input}
+      {error && (
+        <p
+          className="text-xs leading-5 text-rose-500"
+          id={`${inputId}-error`}
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }

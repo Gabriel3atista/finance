@@ -27,6 +27,8 @@ import { cn } from "@/shared/lib/utils";
 
 type SelectVisuals = {
   controlId: string;
+  errorId?: string;
+  invalid: boolean;
   variant: ButtonVariant;
   size: ButtonTextSize;
   rounded: ButtonRounded;
@@ -36,6 +38,7 @@ type SelectVisuals = {
 const SelectVisualContext = createContext<SelectVisuals>({
   variant: "default",
   controlId: "",
+  invalid: false,
   size: "default",
   rounded: false,
   loading: false,
@@ -45,6 +48,7 @@ type SelectProps = ComponentProps<typeof SelectPrimitive.Root> & {
   containerClassName?: string;
   label?: string;
   id?: string;
+  error?: string;
   loading?: boolean;
   rounded?: ButtonRounded;
   size?: ButtonTextSize;
@@ -56,6 +60,7 @@ export function Select({
   containerClassName,
   defaultValue,
   disabled = false,
+  error,
   id,
   label,
   loading = false,
@@ -77,13 +82,22 @@ export function Select({
   const { options, placeholder, triggerProps } = readSelectChildren(children);
   const controlId = id ?? triggerProps.id ?? generatedId;
   const triggerSize = triggerProps.size ?? size;
+  const errorId = error ? `${controlId}-error` : undefined;
 
   function changeValue(nextValue: string) {
     if (value === undefined) setUncontrolledValue(nextValue);
     onValueChange?.(nextValue);
   }
 
-  const visuals = { variant, size: triggerSize, rounded, loading, controlId };
+  const visuals = {
+    variant,
+    size: triggerSize,
+    rounded,
+    loading,
+    controlId,
+    errorId,
+    invalid: Boolean(error),
+  };
 
   return (
     <SelectVisualContext.Provider value={visuals}>
@@ -114,6 +128,8 @@ export function Select({
               autoComplete={rootProps.autoComplete}
               controlId={controlId}
               disabled={disabled || loading || !isCoarsePointer}
+              errorId={errorId}
+              invalid={Boolean(error)}
               name={isCoarsePointer ? name : undefined}
               onChange={(event) => changeValue(event.currentTarget.value)}
               options={options}
@@ -128,6 +144,15 @@ export function Select({
             />
           </div>
         </SelectPrimitive.Root>
+        {error && (
+          <p
+            className="text-xs leading-5 text-rose-500"
+            id={errorId}
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
       </div>
     </SelectVisualContext.Provider>
   );
@@ -159,8 +184,15 @@ export function SelectTrigger({
 }: Omit<ComponentProps<typeof SelectPrimitive.Trigger>, "size"> & {
   size?: ButtonTextSize;
 }) {
-  const { controlId, loading, rounded, size: contextSize, variant } =
-    useContext(SelectVisualContext);
+  const {
+    controlId,
+    errorId,
+    invalid,
+    loading,
+    rounded,
+    size: contextSize,
+    variant,
+  } = useContext(SelectVisualContext);
   const triggerSize = size ?? contextSize;
   const variantClasses =
     variant === "unstyled"
@@ -176,11 +208,14 @@ export function SelectTrigger({
       className={cn(
         variantClasses,
         "relative w-full shrink-0 cursor-pointer justify-between pr-10 text-left outline-none",
+        invalid && "border-rose-500",
         className,
         rounded && "rounded-full",
         "shrink-0",
       )}
       id={controlId || id}
+      aria-invalid={invalid || undefined}
+      aria-describedby={errorId}
       {...props}
     >
       {children}
@@ -291,6 +326,8 @@ function NativeSelect({
   triggerProps,
   controlId,
   variant,
+  errorId,
+  invalid,
 }: {
   autoComplete?: string;
   disabled: boolean;
@@ -306,6 +343,8 @@ function NativeSelect({
   triggerProps: NativeTriggerProps;
   controlId: string;
   variant: ButtonVariant;
+  errorId?: string;
+  invalid: boolean;
 }) {
   const variantClasses =
     variant === "unstyled"
@@ -318,12 +357,14 @@ function NativeSelect({
         aria-busy={loading || undefined}
         aria-label={triggerProps["aria-label"]}
         aria-labelledby={triggerProps["aria-labelledby"]}
-        aria-describedby={triggerProps["aria-describedby"]}
+        aria-describedby={errorId ?? triggerProps["aria-describedby"]}
+        aria-invalid={invalid || undefined}
         autoComplete={autoComplete}
         className={cn(
           variantClasses,
           "w-full shrink-0 cursor-pointer appearance-none pr-10 text-left mobile-app:focus:!outline-none truncate",
           disabled && "cursor-not-allowed opacity-50",
+          invalid && "border-rose-500",
           rounded && "rounded-full",
           "shrink-0",
         )}

@@ -28,9 +28,11 @@ import { useEnsurePeriodEntries } from "@/features/transactions/hooks/use-ensure
 import { NextIcon } from "@/components/atoms/next-icon";
 
 export function Dashboard({
+  greeting,
   spaceId,
   userId,
 }: {
+  greeting: { greeting: string; complement: string };
   spaceId: string;
   userId: string;
 }) {
@@ -64,8 +66,9 @@ export function Dashboard({
       <div className="relative z-10">
         <header className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
-            <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
-              Bem vindo de volta, <br /> Gabriel!
+            <h1 className="mt-2 line-clamp-2 text-[28px] font-semibold tracking-[-0.04em] sm:text-[34px]">
+              <span className="text-ink">{greeting.greeting}</span>{" "}
+              <span className="text-graphite-100">{greeting.complement}</span>
             </h1>
           </div>
         </header>
@@ -92,28 +95,22 @@ export function Dashboard({
   );
 }
 
-function UpcomingDueCard({
-  entries,
-}: {
-  entries: DashboardDueEntry[];
-}) {
+function UpcomingDueCard({ entries }: { entries: DashboardDueEntry[] }) {
   const today = localDateString();
   const upcomingEntries = entries.slice(0, 6);
 
   return (
     <Card sections className="mt-3 overflow-hidden">
       <CardHeader className="flex flex-col gap-2 bg-graphite-600">
-        <CardTitle
-          className="flex items-center gap-2"
-        >
+        <CardTitle className="flex items-center gap-2">
           <div className="flex items-center justify-center p-3  rounded-lg size-4 bg-accent/10 text-accent">
             <NextIcon name="ShieldWarningOutline" size="xs" />
           </div>
           Próximos vencimentos
         </CardTitle>
         <CardDescription className="text-xs max-w-[256px]">
-          Lançamentos vencidos e previstos para os próximos 30 dias,
-          organizados por data.
+          Lançamentos vencidos e previstos para os próximos 30 dias, organizados
+          por data.
         </CardDescription>
       </CardHeader>
       {upcomingEntries.length ? (
@@ -135,7 +132,8 @@ function UpcomingDueCard({
                     size="sm"
                     variant={overdue ? "destructive" : "secondary"}
                   >
-                    {overdue ? "Vencido" : "Vence"} {formatDate(entry.due_date!)}
+                    {overdue ? "Vencido" : "Vence"}{" "}
+                    {formatDate(entry.due_date!)}
                   </Badge>
                   <Badge size="sm" variant="secondary">
                     {entry.entry_type === "income" ? "Receita" : "Despesa"}
@@ -155,9 +153,7 @@ function UpcomingDueCard({
         })
       ) : (
         <CardSection>
-          <p className="py-2 text-sm text-muted">
-            Nenhum vencimento próximo.
-          </p>
+          <p className="py-2 text-sm text-muted">Nenhum vencimento próximo.</p>
         </CardSection>
       )}
     </Card>

@@ -2,14 +2,21 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { safeInternalPath } from "@/features/auth/lib/safe-redirect";
+import {
+  createAuthFormSchema,
+  type AuthFormMode,
+} from "@/features/auth/lib/form-schemas";
 
-type AuthMode = "login" | "signup" | "forgot" | "update-password";
+type AuthMode = AuthFormMode;
+type AuthFormValues = { email: string; password: string };
 
 const messages: Record<string, string> = {
   "Invalid login credentials": "E-mail ou senha incorretos.",
@@ -36,10 +43,17 @@ function errorMessage(error: unknown) {
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [busy, setBusy] = useState(false);
+  const [oauthBusy, setOauthBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const callbackError = searchParams.get("error");
+  const form = useForm<AuthFormValues>({
+    resolver: zodResolver(createAuthFormSchema(mode)),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: { email: "", password: "" },
+  });
+  const busy = form.formState.isSubmitting || oauthBusy;
 
   const titles: Record<AuthMode, string> = {
     login: "Acesse suas finanças",
@@ -56,16 +70,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     "update-password": "Escolha uma senha nova para sua conta.",
   };
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
+  async function handleSubmit(values: AuthFormValues) {
     setError("");
     setNotice("");
-    const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "")
-      .trim()
-      .toLowerCase();
-    const password = String(form.get("password") ?? "");
+    const email = values.email.trim().toLowerCase();
+    const password = values.password;
 
     try {
       const supabase = createClient();
@@ -124,13 +133,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       }, 700);
     } catch (caught) {
       setError(errorMessage(caught));
-    } finally {
-      setBusy(false);
     }
   }
 
   async function signInWithGoogle() {
-    setBusy(true);
+    setOauthBusy(true);
     setError("");
     const isStandalonePwa =
       window.matchMedia("(display-mode: standalone)").matches ||
@@ -166,7 +173,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     } catch (caught) {
       authWindow?.close();
       setError(errorMessage(caught));
-      setBusy(false);
+      setOauthBusy(false);
     }
   }
 
@@ -193,17 +200,21 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="space-y-4"
+        noValidate
+      >
         {mode !== "update-password" && (
           <Input
             label="E-mail"
             containerClassName="gap-2"
             autoComplete="email"
             className="min-h-11 px-3.5"
-            name="email"
             placeholder="voce@exemplo.com"
-            required
             type="email"
+            error={form.formState.errors.email?.message}
+            {...form.register("email")}
           />
         )}
 
@@ -215,13 +226,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               mode === "login" ? "current-password" : "new-password"
             }
             className="min-h-11 px-3.5"
-            name="password"
             placeholder={
               mode === "login" ? "Sua senha" : "Pelo menos 8 caracteres"
             }
-            minLength={8}
-            required
             type="password"
+            error={form.formState.errors.password?.message}
+            {...form.register("password")}
           />
         )}
 

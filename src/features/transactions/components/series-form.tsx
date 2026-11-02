@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   Drawer,
   DrawerBody,
@@ -29,17 +32,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const seriesTypeOptions = [
-  { value: "salary", label: "Salário", entryType: "income" },
-  { value: "service", label: "Serviço ou conta fixa", entryType: "expense" },
-  { value: "financing", label: "Financiamento", entryType: "expense" },
-  { value: "purchase", label: "Compra", entryType: "expense" },
-  { value: "other_income", label: "Outra receita", entryType: "income" },
-  { value: "other_expense", label: "Outra despesa", entryType: "expense" },
-] as const;
-
-export type SeriesFormType = (typeof seriesTypeOptions)[number]["value"];
+import {
+  getSeriesTypeOption,
+  SERIES_TYPE_OPTIONS,
+  type SeriesFormType,
+} from "@/features/transactions/lib/categories";
+import {
+  seriesFormSchema,
+  type SeriesFormValues,
+} from "@/features/transactions/lib/form-schemas";
+import { formDataFromValues } from "@/shared/lib/forms";
 
 export type SeriesFormInitialData = {
   id: string;
@@ -54,7 +56,7 @@ export type SeriesFormInitialData = {
 };
 
 function inputAmount(value: number) {
-  return value.toFixed(2).replace(".", ",");
+  return value.toFixed(2);
 }
 
 export function SeriesFormDrawer({
@@ -72,37 +74,51 @@ export function SeriesFormDrawer({
   pending: boolean;
   onSubmit: (form: FormData) => void;
 }) {
-  const [seriesType, setSeriesType] =
-    useState<SeriesFormType>(initialData?.seriesType ?? "service");
-  const [hasInstallments, setHasInstallments] = useState(
-    initialData?.kind === "installment",
-  );
-  const [indefinite, setIndefinite] = useState(
-    initialData ? initialData.kind === "recurrence" && !initialData.endsOn : true,
-  );
-  const [startsOn, setStartsOn] = useState(
-    initialData?.startsOn ?? currentDate,
-  );
-  const [endsOn, setEndsOn] = useState(
-    initialData?.endsOn ?? initialData?.startsOn ?? currentDate,
-  );
-  const [installmentCount, setInstallmentCount] = useState(
-    String(initialData?.installmentCount ?? 1),
-  );
-  const [installmentValue, setInstallmentValue] = useState(() =>
-    initialData?.kind === "installment" && initialData.installmentCount
-      ? inputAmount(
-          installmentAmount(
-            initialData.amount,
-            initialData.installmentCount,
-            1,
-          ),
-        )
-      : "",
-  );
-  const selectedType = seriesTypeOptions.find(
-    (option) => option.value === seriesType,
-  );
+  const form = useForm<SeriesFormValues>({
+    resolver: zodResolver(seriesFormSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      id: initialData?.id ?? "",
+      kind: initialData?.kind ?? "recurrence",
+      series_type: initialData?.seriesType ?? "service",
+      title: initialData?.title ?? "",
+      amount:
+        initialData && initialData.kind !== "installment"
+          ? inputAmount(initialData.amount)
+          : "",
+      installment_amount:
+        initialData?.kind === "installment" && initialData.installmentCount
+          ? inputAmount(
+              installmentAmount(
+                initialData.amount,
+                initialData.installmentCount,
+                1,
+              ),
+            )
+          : "",
+      installment_count: String(initialData?.installmentCount ?? 1),
+      has_installments: String(initialData?.kind === "installment") as
+        "true" | "false",
+      indefinite: String(
+        initialData
+          ? initialData.kind === "recurrence" && !initialData.endsOn
+          : true,
+      ) as "true" | "false",
+      starts_on: initialData?.startsOn ?? currentDate,
+      ends_on: initialData?.endsOn ?? initialData?.startsOn ?? currentDate,
+      due_day: initialData?.dueDay ? String(initialData.dueDay) : "",
+    },
+  });
+  const { control, formState, getValues, register, setValue, watch } = form;
+  const seriesType = watch("series_type") as SeriesFormType;
+  const hasInstallments = watch("has_installments") === "true";
+  const indefinite = watch("indefinite") === "true";
+  const startsOn = watch("starts_on");
+  const endsOn = watch("ends_on");
+  const installmentCount = watch("installment_count");
+  const installmentValue = watch("installment_amount") ?? "";
+  const selectedType = getSeriesTypeOption(seriesType);
   const isIncome = selectedType?.entryType === "income";
   const parsedInstallmentValue = parseCurrencyInput(installmentValue);
   const parsedInstallmentCount = Number(installmentCount);
@@ -115,35 +131,76 @@ export function SeriesFormDrawer({
         100
       : 0;
 
+  useEffect(() => {
+    if (!drawer.props.open) return;
+    form.reset({
+      id: initialData?.id ?? "",
+      kind: initialData?.kind ?? "recurrence",
+      series_type: initialData?.seriesType ?? "service",
+      title: initialData?.title ?? "",
+      amount:
+        initialData && initialData.kind !== "installment"
+          ? inputAmount(initialData.amount)
+          : "",
+      installment_amount:
+        initialData?.kind === "installment" && initialData.installmentCount
+          ? inputAmount(
+              installmentAmount(
+                initialData.amount,
+                initialData.installmentCount,
+                1,
+              ),
+            )
+          : "",
+      installment_count: String(initialData?.installmentCount ?? 1),
+      has_installments: String(initialData?.kind === "installment") as
+        "true" | "false",
+      indefinite: String(
+        initialData
+          ? initialData.kind === "recurrence" && !initialData.endsOn
+          : true,
+      ) as "true" | "false",
+      starts_on: initialData?.startsOn ?? currentDate,
+      ends_on: initialData?.endsOn ?? initialData?.startsOn ?? currentDate,
+      due_day: initialData?.dueDay ? String(initialData.dueDay) : "",
+    });
+  }, [drawer.props.open, form, initialData, currentDate]);
+
   function changeSeriesType(value: string) {
-    const nextType = seriesTypeOptions.find((option) => option.value === value);
+    const nextType = getSeriesTypeOption(value);
     if (!nextType) return;
 
-    setSeriesType(nextType.value);
-    if (nextType.entryType === "income") setHasInstallments(false);
+    setValue("series_type", nextType.value, { shouldValidate: true });
+    if (nextType.entryType === "income" && hasInstallments) {
+      toggleInstallments(false);
+    }
   }
 
   function changeStartsOn(value: string) {
-    setStartsOn(value);
+    setValue("starts_on", value, { shouldValidate: true });
     if (hasInstallments) {
-      setEndsOn(
+      setValue(
+        "ends_on",
         addMonthsToDate(value, Math.max(parsedInstallmentCount, 1) - 1),
+        { shouldValidate: true },
       );
     } else if (value > endsOn) {
-      setEndsOn(value);
+      setValue("ends_on", value, { shouldValidate: true });
     }
   }
 
   function changeInstallmentCount(value: string) {
-    setInstallmentCount(value);
+    setValue("installment_count", value, { shouldValidate: true });
     const count = Number(value);
     if (!Number.isInteger(count) || count < 1 || count > 600) return;
 
-    setEndsOn(addMonthsToDate(startsOn, count - 1));
+    setValue("ends_on", addMonthsToDate(startsOn, count - 1), {
+      shouldValidate: true,
+    });
   }
 
   function changeInstallmentEnd(value: string) {
-    setEndsOn(value);
+    setValue("ends_on", value, { shouldValidate: true });
     const first = parseMonth(startsOn.slice(0, 7));
     const last = parseMonth(value.slice(0, 7));
     const count =
@@ -151,15 +208,41 @@ export function SeriesFormDrawer({
       last.getMonth() -
       first.getMonth() +
       1;
-    if (count > 0) setInstallmentCount(String(count));
+    if (count > 0) {
+      setValue("installment_count", String(count), { shouldValidate: true });
+    }
   }
 
   function toggleInstallments(nextValue: boolean) {
-    setHasInstallments(nextValue);
-    setIndefinite(!nextValue);
+    if (nextValue === hasInstallments) return;
+
+    if (nextValue) {
+      const currentAmount = getValues("amount");
+      if (currentAmount) {
+        setValue("installment_amount", currentAmount, {
+          shouldValidate: true,
+        });
+      }
+    } else {
+      const currentInstallmentAmount = getValues("installment_amount");
+      if (currentInstallmentAmount) {
+        setValue("amount", currentInstallmentAmount, {
+          shouldValidate: true,
+        });
+      }
+    }
+
+    setValue("has_installments", String(nextValue) as "true" | "false", {
+      shouldValidate: true,
+    });
+    setValue("indefinite", String(!nextValue) as "true" | "false", {
+      shouldValidate: true,
+    });
     if (nextValue) {
       const count = Math.max(parsedInstallmentCount, 1);
-      setEndsOn(addMonthsToDate(startsOn, count - 1));
+      setValue("ends_on", addMonthsToDate(startsOn, count - 1), {
+        shouldValidate: true,
+      });
     }
   }
 
@@ -168,28 +251,24 @@ export function SeriesFormDrawer({
       <DrawerContent>
         <DrawerHeader className="shrink-0 px-3 pb-3 pt-4 text-left">
           <DrawerTitle className="text-base">
-            {initialData ? "Editar cadastro" : "Novo cadastro"}
+            {initialData ? "Editar programação" : "Nova programação"}
           </DrawerTitle>
           <DrawerDescription>
             {initialData
-              ? "Atualize os dados do cadastro. Lançamentos já gerados permanecem como foram registrados."
-              : "Configure uma receita ou despesa mensal, com ou sem parcelas."}
+              ? "Atualize esta programação. Os lançamentos já gerados permanecem como foram registrados."
+              : "Programe uma receita ou despesa mensal, com ou sem parcelas."}
           </DrawerDescription>
         </DrawerHeader>
         <form
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(new FormData(event.currentTarget));
-          }}
-        >
-          {initialData && (
-            <>
-              <Input type="hidden" name="id" value={initialData.id} />
-              <Input type="hidden" name="kind" value={initialData.kind} />
-            </>
+          onSubmit={form.handleSubmit((values) =>
+            onSubmit(formDataFromValues(values)),
           )}
-          <DrawerBody className="space-y-4 px-3 pb-5">
+          noValidate
+        >
+          <input type="hidden" {...register("id")} />
+          <input type="hidden" {...register("kind")} />
+          <DrawerBody className="flex flex-col gap-3 pb-5">
             {error && (
               <p
                 className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
@@ -198,39 +277,40 @@ export function SeriesFormDrawer({
                 {error}
               </p>
             )}
-            <Select
-              label="O que deseja cadastrar?"
+            <Controller
+              control={control}
               name="series_type"
-              onValueChange={changeSeriesType}
-              value={seriesType}
-              variant="secondary"
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {seriesTypeOptions
-                  .filter(
-                    (option) =>
-                      !initialData ||
-                      initialData.kind !== "installment" ||
-                      option.entryType === "expense",
-                  )
-                  .map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+              render={({ field }) => (
+                <Select
+                  label="O que deseja programar?"
+                  name={field.name}
+                  onValueChange={changeSeriesType}
+                  value={field.value}
+                  variant="secondary"
+                  error={formState.errors.series_type?.message}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SERIES_TYPE_OPTIONS.filter(
+                      (option) =>
+                        !hasInstallments || option.entryType === "expense",
+                    ).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             <div className="grid gap-3 sm:grid-cols-2">
               <Input
                 label="Descrição"
                 containerClassName="sm:col-span-2"
-                name="title"
                 maxLength={160}
-                required
-                defaultValue={initialData?.title}
+                error={formState.errors.title?.message}
                 placeholder={
                   seriesType === "salary"
                     ? "Ex.: Salário mensal"
@@ -242,154 +322,167 @@ export function SeriesFormDrawer({
                           ? "Ex.: Móveis da sala"
                           : "Ex.: Outra receita ou despesa"
                 }
+                {...register("title")}
               />
               {hasInstallments ? (
                 <>
-                  <Input
-                    label="Valor por parcela (R$)"
+                  <Controller
+                    control={control}
                     name="installment_amount"
-                    inputMode="decimal"
-                    placeholder="0,00"
-                    value={installmentValue}
-                    onChange={(event) =>
-                      setInstallmentValue(event.currentTarget.value)
-                    }
-                    required
+                    render={({ field }) => (
+                      <CurrencyInput
+                        name={field.name}
+                        value={field.value ?? ""}
+                        onBlur={field.onBlur}
+                        onValueChange={field.onChange}
+                        inputRef={field.ref}
+                        label="Valor por parcela (R$)"
+                        placeholder="0,00"
+                        error={formState.errors.installment_amount?.message}
+                      />
+                    )}
                   />
-                  <Input
-                    label="Número de parcelas"
+                  <Controller
+                    control={control}
                     name="installment_count"
-                    type="number"
-                    min={1}
-                    max={600}
-                    step={1}
-                    value={installmentCount}
-                    onChange={(event) =>
-                      changeInstallmentCount(event.currentTarget.value)
-                    }
-                    required
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        label="Número de parcelas"
+                        type="number"
+                        min={1}
+                        max={600}
+                        step={1}
+                        onChange={(event) =>
+                          changeInstallmentCount(event.currentTarget.value)
+                        }
+                        error={formState.errors.installment_count?.message}
+                      />
+                    )}
                   />
                 </>
               ) : (
-                <Input
-                  label="Valor mensal (R$)"
+                <Controller
+                  control={control}
                   name="amount"
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  defaultValue={
-                    initialData ? inputAmount(initialData.amount) : undefined
-                  }
-                  required
+                  render={({ field }) => (
+                    <CurrencyInput
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onBlur={field.onBlur}
+                      onValueChange={field.onChange}
+                      inputRef={field.ref}
+                      label="Valor mensal (R$)"
+                      placeholder="0,00"
+                      error={formState.errors.amount?.message}
+                    />
+                  )}
                 />
               )}
               {!isIncome && (
                 <Input
                   label="Dia de vencimento (opcional)"
-                  name="due_day"
                   type="number"
                   min={1}
                   max={31}
                   placeholder="Sem vencimento"
-                  defaultValue={initialData?.dueDay ?? ""}
+                  error={formState.errors.due_day?.message}
+                  {...register("due_day")}
                 />
               )}
             </div>
 
-            {initialData ? (
-              <Badge size="sm" variant="secondary">
-                {hasInstallments ? "Parcelamento" : "Recorrência"}
-              </Badge>
-            ) : (
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-medium text-muted">
-                  Como esse valor se repete?
-                </legend>
-                <div
-                  aria-label="Tipo de duração"
-                  className="grid grid-cols-2 gap-2"
-                  role="group"
+            <fieldset className="flex flex-col gap-3">
+              <legend className="text-sm font-medium text-muted mb-2">
+                Como esse valor será programado?
+              </legend>
+              <div
+                aria-label="Tipo de duração"
+                className="grid grid-cols-2 gap-3"
+                role="group"
+              >
+                <Button
+                  aria-pressed={!hasInstallments}
+                  className="w-full"
+                  onClick={() => toggleInstallments(false)}
+                  type="button"
+                  variant={!hasInstallments ? "primary-subtle" : "secondary"}
                 >
-                  <Button
-                    aria-pressed={!hasInstallments}
-                    className="w-full"
-                    onClick={() => toggleInstallments(false)}
-                    type="button"
-                    variant={!hasInstallments ? "primary-subtle" : "secondary"}
-                  >
-                    Recorrência
-                  </Button>
-                  <Button
-                    aria-pressed={hasInstallments}
-                    className="w-full"
-                    disabled={isIncome}
-                    onClick={() => toggleInstallments(true)}
-                    type="button"
-                    variant={hasInstallments ? "primary-subtle" : "secondary"}
-                  >
-                    Parcelado
-                  </Button>
-                </div>
-              </fieldset>
-            )}
-            <input
-              name="has_installments"
-              type="hidden"
-              value={String(hasInstallments)}
-            />
+                  Mensal
+                </Button>
+                <Button
+                  aria-pressed={hasInstallments}
+                  className="w-full"
+                  disabled={isIncome}
+                  onClick={() => toggleInstallments(true)}
+                  type="button"
+                  variant={hasInstallments ? "primary-subtle" : "secondary"}
+                >
+                  Parcelado
+                </Button>
+              </div>
+            </fieldset>
+            <input type="hidden" {...register("has_installments")} />
 
             {!hasInstallments && (
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2 my-3">
                 <Switch
                   checked={!indefinite}
                   label="Definir data de término"
-                  onCheckedChange={(checked) => setIndefinite(!checked)}
+                  onCheckedChange={(checked) =>
+                    setValue(
+                      "indefinite",
+                      String(!checked) as "true" | "false",
+                      {
+                        shouldValidate: true,
+                      },
+                    )
+                  }
                 />
-                <input
-                  name="indefinite"
-                  type="hidden"
-                  value={String(indefinite)}
-                />
+                <input type="hidden" {...register("indefinite")} />
               </div>
             )}
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Input
+                {...register("starts_on")}
                 label="Data de início"
-                name="starts_on"
                 type="date"
                 value={startsOn}
                 onChange={(event) => changeStartsOn(event.currentTarget.value)}
-                required
+                error={formState.errors.starts_on?.message}
               />
               {hasInstallments || !indefinite ? (
                 <Input
+                  {...register("ends_on")}
                   label={
                     hasInstallments
                       ? "Data da última parcela"
                       : "Data de término"
                   }
-                  name="ends_on"
                   type="date"
                   min={startsOn}
                   value={endsOn}
                   onChange={(event) =>
                     hasInstallments
                       ? changeInstallmentEnd(event.currentTarget.value)
-                      : setEndsOn(event.currentTarget.value)
+                      : setValue("ends_on", event.currentTarget.value, {
+                          shouldValidate: true,
+                        })
                   }
-                  required
+                  error={formState.errors.ends_on?.message}
                 />
               ) : null}
             </div>
 
             {hasInstallments && (
-              <div className="rounded-xl border border-line/50 bg-graphite-800 p-3">
+              <div className="flex flex-col gap-3 rounded-xl border border-line/50 bg-graphite-800 p-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="flex min-w-0 flex-col gap-1">
                     <p className="text-sm font-medium text-ink">
                       Total do parcelamento
                     </p>
-                    <p className="mt-1 text-xs leading-5 text-muted">
+                    <p className="text-xs leading-5 text-muted">
                       Soma do valor de cada parcela.
                     </p>
                   </div>
@@ -401,7 +494,7 @@ export function SeriesFormDrawer({
                     </FinancialValue>
                   </p>
                 </div>
-                <div className="mt-3 flex items-start gap-2">
+                <div className="flex items-start gap-3">
                   <Badge size="sm" variant="secondary">
                     {parsedInstallmentCount > 0
                       ? `${installmentCount} parcelas`
@@ -414,7 +507,7 @@ export function SeriesFormDrawer({
               </div>
             )}
           </DrawerBody>
-          <DrawerFooter className="shrink-0 border-t border-line/30 px-3 pb-3 pt-4">
+          <DrawerFooter className="flex flex-col gap-3 shrink-0 border-t border-line/30 px-3 pb-3 pt-4">
             <Button
               className="w-full"
               disabled={pending}

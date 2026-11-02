@@ -13,6 +13,7 @@ import HistoryOutline from "./arrows/history-outline";
 // Brands
 import Google from "./brands/google";
 // Finance
+import BillListOutline from "./finance/bill-list-outline";
 import EqualsOutline from "./finance/equals-outline";
 // Layout
 import BrandMarkOutline from "./layout/brand-mark-outline";
@@ -44,6 +45,7 @@ export const iconsMap = {
   ArrowUpRightOutline,
   ArrowUpTrendOutline,
   BellOutline,
+  BillListOutline,
   BrandMarkOutline,
   CalendarOutline,
   CheckCircleOutline,

@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { NextIcon } from "@/components/atoms/next-icon";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardSection } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Drawer,
   DrawerBody,
@@ -17,7 +16,13 @@ import {
   DrawerTitle,
   useDrawer,
 } from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   createFinancialSeries,
@@ -37,30 +42,29 @@ import {
   fetchInstallmentPlans,
   fetchRecurringItems,
 } from "@/features/transactions/lib/queries";
+import { getDefaultSeriesType } from "@/features/transactions/lib/categories";
 import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
 import { formatCurrency, installmentAmount } from "@/shared/lib/currency";
 import { FinancialValue } from "@/shared/components/financial-values";
-import {
-  formatDate,
-  localDateString,
-} from "@/shared/lib/date";
+import { formatDate, localDateString } from "@/shared/lib/date";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { cn } from "@/shared/lib/utils";
 
 const errors: Record<string, string> = {
-  "invalid-series": "Confira a descrição, o valor e o período do cadastro.",
-  "save-series": "Não foi possível salvar o cadastro.",
-  "update-series": "Não foi possível atualizar o cadastro.",
-  "deactivate-series": "Não foi possível encerrar este cadastro.",
-  "delete-series": "Não foi possível excluir este cadastro.",
+  "invalid-series": "Confira a descrição, o valor e o período da programação.",
+  "save-series": "Não foi possível salvar a programação.",
+  "update-series": "Não foi possível atualizar a programação.",
+  "deactivate-series": "Não foi possível encerrar esta programação.",
+  "delete-series": "Não foi possível excluir esta programação.",
 };
 
 type SeriesListItem = {
   id: string;
   kind: "recurrence" | "installment";
   title: string;
-  detail: string;
-  amount: string;
+  details: { label: string; value: string }[];
+  amount: number;
+  amountCaption: string;
   active: boolean;
   initialData: SeriesFormInitialData;
 };
@@ -118,7 +122,9 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       void invalidateRecords();
     },
     onError: (caught) =>
-      setMutationMessage(caught instanceof Error ? caught.message : "save-series"),
+      setMutationMessage(
+        caught instanceof Error ? caught.message : "save-series",
+      ),
   });
   const seriesDrawer = useDrawer({
     canClose: () => !saveSeries.isPending,
@@ -208,17 +214,19 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
         role="alert"
         className="mx-auto max-w-5xl rounded-2xl border border-rose-500/30 bg-graphite-800 p-6 text-sm text-rose-500"
       >
-        Não foi possível carregar seus cadastros. Tente novamente.
+        Não foi possível carregar suas programações. Tente novamente.
       </div>
     );
   }
 
   const messages: Record<string, string> = {
-    saved: "Cadastro salvo. As ocorrências serão criadas ao abrir cada mês.",
+    saved: "Programação salva. Os lançamentos serão gerados ao abrir cada mês.",
     updated:
-      "Cadastro atualizado. Novas ocorrências usarão esses dados; lançamentos já gerados permanecem iguais.",
-    deactivated: "Cadastro encerrado. Os lançamentos já criados continuam no mês.",
-    "series-deleted": "Cadastro excluído. Os lançamentos já criados foram mantidos.",
+      "Programação atualizada. Os próximos lançamentos usarão esses dados; os já gerados permanecem iguais.",
+    deactivated:
+      "Programação encerrada. Os lançamentos já criados continuam no mês.",
+    "series-deleted":
+      "Programação excluída. Os lançamentos já criados foram mantidos.",
   };
   const message = mutationMessage
     ? (messages[mutationMessage] ??
@@ -233,22 +241,25 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
           : "";
   const messageIsError = Boolean(
     (mutationMessage &&
-      !["saved", "deactivated", "updated", "series-deleted"].includes(mutationMessage)) ||
+      !["saved", "deactivated", "updated", "series-deleted"].includes(
+        mutationMessage,
+      )) ||
     urlError,
   );
 
   return (
     <section
-      className="mx-auto max-w-5xl"
+      className="mx-auto flex max-w-5xl flex-col gap-3"
       aria-busy={isLoading || undefined}
     >
-      <header className="mb-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <header className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2">
           <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
-            Recorrências
+            Programações
           </h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-[15px]">
-            Organize receitas e despesas que se repetem ou têm parcelas.
+          <p className="max-w-xl text-sm leading-6 text-muted sm:text-[15px]">
+            Programe receitas e despesas mensais ou parceladas para os próximos
+            meses.
           </p>
         </div>
         <Button
@@ -256,18 +267,17 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
           leadingIcon="PlusOutline"
           onClick={openNewSeries}
           rounded
-          size="sm"
           type="button"
           variant="primary"
         >
-          Nova recorrência
+          Nova programação
         </Button>
       </header>
 
       {message && (
         <p
           className={cn(
-            "mb-5 rounded-xl px-4 py-3 text-sm",
+            "rounded-xl px-4 py-3 text-sm",
             messageIsError
               ? "border border-rose-500/30 bg-graphite-800 text-rose-500"
               : "border border-mint-500/30 bg-graphite-800 text-mint-300",
@@ -311,12 +321,12 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
             <>
               <DrawerHeader className="px-3 pb-3 pt-4 text-left">
                 <DrawerTitle className="text-base">
-                  Excluir cadastro?
+                  Excluir programação?
                 </DrawerTitle>
                 <DrawerDescription>
                   “{seriesToDelete.title}” será removido. Os lançamentos já
                   criados serão mantidos como avulsos e deixarão de ser
-                  atualizados por este cadastro.
+                  atualizados por esta programação.
                 </DrawerDescription>
               </DrawerHeader>
               <DrawerBody className="px-3 pb-5">
@@ -331,7 +341,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
                 )}
               </DrawerBody>
               <DrawerFooter className="border-t border-line/30 px-3 pb-3 pt-4">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <Button
                     disabled={deleteSeries.isPending}
                     onClick={deleteDrawer.closeDrawer}
@@ -363,23 +373,30 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
 }
 
 function toRecurringListItem(item: RecurringItem): SeriesListItem {
-  const seriesType =
-    item.entry_type === "income"
-      ? item.category === "Salário"
-        ? "salary"
-        : "other_income"
-      : item.category === "Dívidas e parcelas"
-        ? "purchase"
-        : item.category === "Fixos"
-          ? "service"
-          : "other_expense";
+  const seriesType = getDefaultSeriesType(item.category, item.entry_type);
 
   return {
     id: item.id,
     kind: "recurrence",
     title: item.title,
-    detail: `${item.entry_type === "income" ? "Receita" : "Despesa"} · ${item.due_day ? `vence dia ${item.due_day}` : "sem vencimento"} · desde ${formatDate(item.starts_on)}${item.ends_on ? ` · até ${formatDate(item.ends_on)}` : " · sem data final"}`,
-    amount: `${formatCurrency(Number(item.planned_amount))} / mês`,
+    details: [
+      { label: "Tipo", value: "Mensal" },
+      {
+        label: "Natureza",
+        value: item.entry_type === "income" ? "Receita" : "Despesa",
+      },
+      { label: "Categoria", value: item.category ?? "Sem categoria" },
+      {
+        label: "Vencimento",
+        value: item.due_day ? `Dia ${item.due_day}` : "Sem vencimento",
+      },
+      {
+        label: "Período",
+        value: `${formatDate(item.starts_on)} – ${item.ends_on ? formatDate(item.ends_on) : "Sem término"}`,
+      },
+    ],
+    amount: Number(item.planned_amount),
+    amountCaption: "mês",
     active: item.is_active,
     initialData: {
       id: item.id,
@@ -395,15 +412,31 @@ function toRecurringListItem(item: RecurringItem): SeriesListItem {
 }
 
 function toInstallmentListItem(plan: InstallmentPlan): SeriesListItem {
-  const seriesType =
-    plan.category === "Fixos" ? "service" : "purchase";
+  const seriesType = getDefaultSeriesType(plan.category, "expense");
 
   return {
     id: plan.id,
     kind: "installment",
     title: plan.title,
-    detail: `${plan.installment_count} parcelas · ${formatDate(plan.starts_on)} a ${formatDate(plan.ends_on)}${plan.due_day ? ` · vence dia ${plan.due_day}` : ""}`,
-    amount: `${formatCurrency(installmentAmount(Number(plan.total_amount), plan.installment_count, 1))} / parcela`,
+    details: [
+      { label: "Tipo", value: "Parcelado" },
+      { label: "Parcelas", value: `${plan.installment_count} parcelas` },
+      { label: "Categoria", value: plan.category ?? "Sem categoria" },
+      {
+        label: "Vencimento",
+        value: plan.due_day ? `Dia ${plan.due_day}` : "Sem vencimento",
+      },
+      {
+        label: "Período",
+        value: `${formatDate(plan.starts_on)} – ${formatDate(plan.ends_on)}`,
+      },
+    ],
+    amount: installmentAmount(
+      Number(plan.total_amount),
+      plan.installment_count,
+      1,
+    ),
+    amountCaption: "parcela",
     active: plan.is_active,
     initialData: {
       id: plan.id,
@@ -436,139 +469,190 @@ function SeriesList({
   onDelete: (item: SeriesListItem) => void;
   deletePending: boolean;
 }) {
-  const activeCount = items.filter((item) => item.active).length;
-
   if (!loading && items.length === 0) {
     return (
-      <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-line bg-graphite-800 px-4 text-center">
+      <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line bg-graphite-800 px-4 text-center">
         <span
           className="grid size-11 place-items-center rounded-full bg-accent-soft text-accent"
           aria-hidden="true"
         >
           <NextIcon name="RecordsOutline" />
         </span>
-        <h3 className="mt-3 font-semibold text-ink">
-          Nenhuma recorrência ainda
-        </h3>
-        <p className="mt-3 max-w-xs text-sm leading-5 text-muted">
-          Cadastre salários, serviços, financiamentos ou compras parceladas.
+        <h3 className="font-semibold text-ink">Nenhuma programação ainda</h3>
+        <p className="max-w-xs text-sm leading-5 text-muted">
+          Programe salários, serviços, financiamentos ou compras parceladas.
         </p>
       </div>
     );
   }
 
   return (
-    <Card asChild sections className="overflow-hidden">
-      <section aria-label="Cadastros automáticos">
-        <CardSection className="flex items-center justify-between gap-3 bg-graphite-600">
-          <div className="w-full">
-            <div className="flex items-center justify-between w-full">
-              <h2 className="text-[15px] font-semibold text-ink">
-                Cadastros automáticos
-              </h2>
-              {loading ? (
-                <Skeleton className="h-5 w-16 rounded-full" />
-              ) : (
-                <Badge size="sm" variant="secondary">
-                  {activeCount} ativos
-                </Badge>
-              )}
-            </div>
-            <p className="mt-1 text-xs text-muted">
-              Recorrências e parcelamentos em um só lugar.
-            </p>
-          </div>
-        </CardSection>
-        {loading ? (
-          <div aria-label="Carregando cadastros" className="divide-y divide-line">
-            {Array.from({ length: 6 }, (_, index) => (
-              <CardSection
-                className="flex items-center justify-between gap-4"
-                key={index}
-              >
-                <div className="min-w-0 flex-1 space-y-2">
-                  <Skeleton className="h-4 w-2/5 rounded-md" />
-                  <Skeleton className="h-3 w-3/5 rounded-md" />
-                  <Skeleton className="h-3 w-1/4 rounded-md" />
+    <section
+      aria-label="Programações financeiras"
+      className="flex flex-col gap-3"
+    >
+      {loading ? (
+        <div
+          aria-label="Carregando programações"
+          className="flex flex-col gap-3"
+        >
+          {Array.from({ length: 6 }, (_, index) => (
+            <Card className="overflow-hidden" key={index}>
+              <div className="flex items-center justify-between gap-3 bg-graphite-600 p-4 sm:p-5">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="size-2 rounded-full" />
+                  <Skeleton className="h-5 w-36 rounded-md" />
                 </div>
-                <Skeleton className="h-8 w-20 shrink-0 rounded-full" />
-              </CardSection>
-            ))}
-          </div>
-        ) : (
-          <div className="divide-y divide-line">
-            {items.map((item) => (
-              <CardSection
-                className="flex items-start justify-between gap-4"
-                key={`${item.kind}-${item.id}`}
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3
-                      className={cn(
-                        "truncate text-sm font-medium",
-                        item.active ? "text-ink" : "text-muted",
-                      )}
-                    >
-                      {item.title}
-                    </h3>
-                    <Badge size="sm" variant="outline">
-                      {item.kind === "recurrence" ? "Recorrência" : "Parcelado"}
-                    </Badge>
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end gap-2">
+                    <Skeleton className="h-5 w-28 rounded-md" />
+                    <Skeleton className="h-3 w-16 rounded-md" />
                   </div>
-                  <p className="mt-1 text-xs text-muted">{item.detail}</p>
-                  <p className="mt-1 text-xs font-medium text-ink">
-                    <FinancialValue>{item.amount}</FinancialValue>
-                  </p>
+                  <Skeleton className="size-8 rounded-lg" />
+                </div>
+              </div>
+              <div className="p-4 sm:p-5">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <Skeleton className="h-7 w-full rounded-md" />
+                  <Skeleton className="h-7 w-full rounded-md" />
+                  <Skeleton className="h-7 w-full rounded-md" />
+                  <Skeleton className="col-span-2 h-7 w-full rounded-md sm:col-span-1" />
+                </div>
+                <div className="border-t border-line/50 pt-3">
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {items.map((item) => (
+            <Card className="overflow-hidden" key={`${item.kind}-${item.id}`}>
+              <div className="flex items-center justify-between gap-3 bg-graphite-600 p-4 sm:p-5">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span
+                    aria-label={item.active ? "Ativo" : "Encerrado"}
+                    className={cn(
+                      "size-2 shrink-0 rounded-full",
+                      item.active ? "bg-mint-300" : "bg-graphite-500",
+                    )}
+                    role="img"
+                  />
+                  <h3
+                    className={cn(
+                      "min-w-0 break-words text-[15px] font-semibold leading-5",
+                      item.active ? "text-ink" : "text-muted",
+                    )}
+                  >
+                    {item.title}
+                  </h3>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    disabled={deletePending || deactivatePending}
-                    onClick={() => onEdit(item)}
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    Editar
-                  </Button>
-                  {item.active ? (
-                    <form
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        onDeactivate(new FormData(event.currentTarget));
-                      }}
-                    >
-                      <Input type="hidden" name="id" value={item.id} />
-                      <Input type="hidden" name="kind" value={item.kind} />
-                      <Button
-                        disabled={deactivatePending}
-                        size="sm"
-                        type="submit"
-                        variant="outline"
-                      >
-                        {deactivatePending ? "Encerrando…" : "Encerrar"}
-                      </Button>
-                    </form>
-                  ) : (
-                    <Badge size="sm" variant="ghost">
-                      Encerrado
-                    </Badge>
-                  )}
-                  <Button
-                    aria-label={`Excluir cadastro ${item.title}`}
-                    disabled={deletePending}
-                    icon="TrashOutline"
-                    onClick={() => onDelete(item)}
-                    size="icon-sm"
-                    type="button"
-                    variant="destructive-ghost"
+                  <p className="flex items-baseline gap-1 text-right text-sm font-semibold tabular-nums text-ink">
+                    <FinancialValue>
+                      {formatCurrency(item.amount)}
+                    </FinancialValue>
+                    <span className="text-xs font-normal text-muted">
+                      / {item.amountCaption}
+                    </span>
+                  </p>
+                  <SeriesActionsMenu
+                    item={item}
+                    onEdit={onEdit}
+                    onDeactivate={onDeactivate}
+                    onDelete={onDelete}
+                    deletePending={deletePending}
+                    deactivatePending={deactivatePending}
                   />
                 </div>
-              </CardSection>
-            ))}
-          </div>
+              </div>
+              <div className="flex flex-col gap-4 p-4 sm:p-5">
+                <dl className="flex flex-col gap-3">
+                  {item.details.map((detail) => (
+                    <div
+                      className="flex items-center justify-between gap-4"
+                      key={detail.label}
+                    >
+                      <dt className="shrink-0 text-xs text-muted">
+                        {detail.label}
+                      </dt>
+                      <dd className="min-w-0 break-words text-right text-xs font-medium text-ink">
+                        {detail.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SeriesActionsMenu({
+  item,
+  onEdit,
+  onDeactivate,
+  onDelete,
+  deletePending,
+  deactivatePending,
+}: {
+  item: SeriesListItem;
+  onEdit: (item: SeriesListItem) => void;
+  onDeactivate: (form: FormData) => void;
+  onDelete: (item: SeriesListItem) => void;
+  deletePending: boolean;
+  deactivatePending: boolean;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          aria-label={`Mais ações para ${item.title}`}
+          disabled={deletePending || deactivatePending}
+          icon="VerticalDots"
+          size="icon-sm"
+          type="button"
+          variant="ghost"
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          disabled={deletePending || deactivatePending}
+          onSelect={() => onEdit(item)}
+          variant="ghost"
+        >
+          Editar programação
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {item.active && (
+          <>
+            <DropdownMenuItem
+              disabled={deactivatePending}
+              onSelect={() => {
+                const form = new FormData();
+                form.set("id", item.id);
+                form.set("kind", item.kind);
+                onDeactivate(form);
+              }}
+              variant="ghost"
+            >
+              Encerrar programação
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
         )}
-      </section>
-    </Card>
+        <DropdownMenuItem
+          disabled={deletePending}
+          onSelect={() => onDelete(item)}
+          variant="destructive-ghost"
+        >
+          Excluir programação
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

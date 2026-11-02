@@ -21,7 +21,10 @@ export function ChartContainer({
   ) as CSSProperties;
 
   return (
-    <div className={className} style={colors}>
+    <div
+      className={`${className} [&_*:focus:not(:focus-visible)]:outline-none [&_*:focus:not(:focus-visible)]:ring-0`}
+      style={colors}
+    >
       <ResponsiveContainer height="100%" width="100%">
         {children}
       </ResponsiveContainer>

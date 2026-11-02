@@ -93,7 +93,10 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
               aria-label={variant === "mobile" ? item.label : undefined}
               title={variant === "mobile" ? item.label : undefined}
             >
-              <AppNavLinkIcon name={item.icon} />
+              <AppNavLinkIcon
+                name={item.icon}
+                showPending={variant === "sidebar"}
+              />
               {variant === "sidebar" && <span>{item.label}</span>}
             </Link>
           );
@@ -103,15 +106,22 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
   );
 }
 
-function AppNavLinkIcon({ name }: { name: (typeof items)[number]["icon"] }) {
+function AppNavLinkIcon({
+  name,
+  showPending,
+}: {
+  name: (typeof items)[number]["icon"];
+  showPending: boolean;
+}) {
   const { pending } = useLinkStatus();
+  const isPending = showPending && pending;
 
   return (
     <NextIcon
       className={
-        pending ? "animate-spin motion-reduce:animate-none" : undefined
+        isPending ? "animate-spin motion-reduce:animate-none" : undefined
       }
-      name={pending ? "LoadingOutline" : name}
+      name={isPending ? "LoadingOutline" : name}
       size={24}
     />
   );

@@ -1,9 +1,12 @@
 const DATE_LOCALE = "pt-BR";
+const APP_TIME_ZONE = "America/Sao_Paulo";
 const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
 function getDateFormatter(options: Intl.DateTimeFormatOptions) {
   const key = JSON.stringify(
-    Object.entries(options).sort(([left], [right]) => left.localeCompare(right)),
+    Object.entries(options).sort(([left], [right]) =>
+      left.localeCompare(right),
+    ),
   );
   let formatter = dateFormatterCache.get(key);
   if (!formatter) {
@@ -41,12 +44,22 @@ export function formatShortMonth(date: Date) {
 
 export function parseMonth(value: string | undefined) {
   const match = value?.match(/^(\d{4})-(\d{2})$/);
-  if (!match)
-    return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  if (!match) return currentMonthDate();
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (month < 1 || month > 12) return new Date();
-  return new Date(year, month - 1, 1);
+  if (month < 1 || month > 12) return currentMonthDate();
+  return new Date(year, month - 1, 1, 12);
+}
+
+function currentMonthDate(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(now);
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  return new Date(year, month - 1, 1, 12);
 }
 
 export function monthString(date: Date) {

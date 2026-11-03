@@ -796,7 +796,7 @@ function EntryLogsDrawer({
                             {entryLogFieldLabel(field)}
                           </span>
                           <span className="flex min-w-0 flex-wrap items-center justify-end gap-x-1.5 gap-y-1 text-right">
-                            <span className="max-w-full break-words text-xs text-muted line-through decoration-graphite-500">
+                            <span className="max-w-full break-words text-xs text-muted">
                               {formatEntryLogValue(
                                 field,
                                 change.from,
@@ -852,16 +852,16 @@ function EntryLogAvatar({ name, src }: { name: string; src: string | null }) {
     .toLocaleUpperCase("pt-BR");
 
   return (
-    <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-graphite-700 text-[11px] font-semibold text-ink">
+    <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-graphite-700 text-[10px] font-semibold text-ink">
       {src && !hasImageError ? (
         <Image
           alt=""
           className="size-full object-cover"
-          height={36}
+          height={32}
           onError={() => setHasImageError(true)}
           src={src}
           unoptimized
-          width={36}
+          width={32}
         />
       ) : (
         initials || "U"

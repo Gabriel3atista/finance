@@ -7,6 +7,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   animate,
@@ -700,6 +701,7 @@ type FinancialEntryLog = {
   id: string;
   actor_id: string | null;
   actor_name: string;
+  actor_avatar_url: string | null;
   changed_fields: Record<string, { from: unknown; to: unknown }>;
   created_at: string;
 };
@@ -756,15 +758,21 @@ function EntryLogsDrawer({
             <ol className="space-y-3">
               {logs.data.map((log) => (
                 <li
-                  className="rounded-xl border border-line bg-graphite-800 p-3"
+                  className="rounded-2xl border border-line/80 bg-graphite-800/80 p-3.5 shadow-card"
                   key={log.id}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                    <p className="text-sm font-medium text-ink">
-                      {log.actor_name}
-                    </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <EntryLogAvatar
+                        name={log.actor_name}
+                        src={log.actor_avatar_url}
+                      />
+                      <p className="truncate text-sm font-medium text-ink">
+                        {log.actor_name}
+                      </p>
+                    </div>
                     <time
-                      className="text-xs text-muted"
+                      className="shrink-0 text-right text-[11px] tabular-nums text-muted"
                       dateTime={log.created_at}
                     >
                       {formatDate(log.created_at, {
@@ -776,28 +784,38 @@ function EntryLogsDrawer({
                       })}
                     </time>
                   </div>
-                  <ul className="mt-2 space-y-1.5 text-sm text-muted">
+                  <ul className="mt-3 divide-y divide-line/60 text-sm">
                     {Object.entries(log.changed_fields)
                       .filter(([field]) => field !== "settled_at")
                       .map(([field, change]) => (
-                        <li className="flex flex-wrap gap-x-1" key={field}>
-                          <span className="text-ink">
-                            {entryLogFieldLabel(field)}:
+                        <li
+                          className="flex items-start justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
+                          key={field}
+                        >
+                          <span className="shrink-0 pt-0.5 text-xs font-medium text-muted">
+                            {entryLogFieldLabel(field)}
                           </span>
-                          <span>
-                            {formatEntryLogValue(
-                              field,
-                              change.from,
-                              entry?.entry_type,
-                            )}
-                          </span>
-                          <span aria-hidden="true">→</span>
-                          <span>
-                            {formatEntryLogValue(
-                              field,
-                              change.to,
-                              entry?.entry_type,
-                            )}
+                          <span className="flex min-w-0 flex-wrap items-center justify-end gap-x-1.5 gap-y-1 text-right">
+                            <span className="max-w-full break-words text-xs text-muted line-through decoration-graphite-500">
+                              {formatEntryLogValue(
+                                field,
+                                change.from,
+                                entry?.entry_type,
+                              )}
+                            </span>
+                            <span
+                              aria-hidden="true"
+                              className="text-xs text-muted/70"
+                            >
+                              →
+                            </span>
+                            <span className="max-w-full break-words text-xs font-medium text-ink">
+                              {formatEntryLogValue(
+                                field,
+                                change.to,
+                                entry?.entry_type,
+                              )}
+                            </span>
                           </span>
                         </li>
                       ))}
@@ -820,6 +838,35 @@ function EntryLogsDrawer({
         </DrawerFooter>
       </DrawerContent>
     </DrawerNested>
+  );
+}
+
+function EntryLogAvatar({ name, src }: { name: string; src: string | null }) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toLocaleUpperCase("pt-BR");
+
+  return (
+    <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-graphite-700 text-[11px] font-semibold text-ink">
+      {src && !hasImageError ? (
+        <Image
+          alt=""
+          className="size-full object-cover"
+          height={36}
+          onError={() => setHasImageError(true)}
+          src={src}
+          unoptimized
+          width={36}
+        />
+      ) : (
+        initials || "U"
+      )}
+    </span>
   );
 }
 

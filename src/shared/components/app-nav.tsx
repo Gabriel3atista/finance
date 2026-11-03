@@ -1,6 +1,6 @@
 "use client";
 
-import Link, { useLinkStatus } from "next/link";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
@@ -35,6 +35,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
       {variant === "sidebar" && (
         <Link
           href="/dashboard"
+          prefetch={true}
           className="focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none mb-10 flex h-[68px] items-center gap-3 border-b border-line/30 px-6"
           aria-label="pinutie, página inicial"
         >
@@ -76,6 +77,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
               key={item.href}
               onNavigate={() => setOptimisticActiveIndex(index)}
               href={item.href}
+              prefetch={true}
               aria-current={current ? "page" : undefined}
               className={cn(
                 "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-moon-600 mobile-app:focus:!outline-none flex items-center",
@@ -93,10 +95,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
               aria-label={variant === "mobile" ? item.label : undefined}
               title={variant === "mobile" ? item.label : undefined}
             >
-              <AppNavLinkIcon
-                name={item.icon}
-                showPending={variant === "sidebar"}
-              />
+              <AppNavLinkIcon name={item.icon} />
               {variant === "sidebar" && <span>{item.label}</span>}
             </Link>
           );
@@ -106,23 +105,6 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
   );
 }
 
-function AppNavLinkIcon({
-  name,
-  showPending,
-}: {
-  name: (typeof items)[number]["icon"];
-  showPending: boolean;
-}) {
-  const { pending } = useLinkStatus();
-  const isPending = showPending && pending;
-
-  return (
-    <NextIcon
-      className={
-        isPending ? "animate-spin motion-reduce:animate-none" : undefined
-      }
-      name={isPending ? "LoadingOutline" : name}
-      size={24}
-    />
-  );
+function AppNavLinkIcon({ name }: { name: (typeof items)[number]["icon"] }) {
+  return <NextIcon name={name} size={24} />;
 }

@@ -15,11 +15,7 @@ export function useEnsurePeriodEntries(
     queryFn: async () => {
       await Promise.all(
         months.map((month) =>
-          ensureMonthEntries(
-            spaceId,
-            userId,
-            new Date(`${month}-01T00:00:00`),
-          ),
+          ensureMonthEntries(spaceId, userId, new Date(`${month}-01T00:00:00`)),
         ),
       );
       return ensureKey;
@@ -31,6 +27,9 @@ export function useEnsurePeriodEntries(
 
   return {
     ...query,
-    isReady: query.data === ensureKey && !query.isFetching,
+    // Keep cached ledger data available while stale ensure checks refresh in
+    // the background. On the first load, data is undefined until generation
+    // finishes, so the ledger still waits for it before fetching entries.
+    isReady: query.data === ensureKey,
   };
 }

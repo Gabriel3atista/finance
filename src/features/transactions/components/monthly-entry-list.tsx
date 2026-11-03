@@ -7,6 +7,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   animate,
   motion,
@@ -63,6 +64,8 @@ import { formatDate, localDateString } from "@/shared/lib/date";
 import { formDataFromValues } from "@/shared/lib/forms";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { cn } from "@/shared/lib/utils";
+import { createClient } from "@/features/auth/lib/supabase/client";
+import { queryKeys } from "@/shared/lib/query-keys";
 
 type CategoryFilterValue = "all" | FinancialCategory;
 type EntryStatus = "planned" | "settled";
@@ -112,6 +115,10 @@ export function MonthlyEntryList({
   const [monthAction, setMonthAction] = useState<MonthAction | null>(null);
   const [monthActionError, setMonthActionError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [logsEntry, setLogsEntry] = useState<FinancialEntry | null>(null);
+  const logsDrawer = useDrawer({
+    onCloseComplete: () => setLogsEntry(null),
+  });
   const entryDrawer = useDrawer({
     onOpenChange: (open) => {
       if (!open) setActionError("");
@@ -506,6 +513,19 @@ export function MonthlyEntryList({
                     </p>
                   )}
                   <EntryFields />
+                  <Button
+                    className="w-full"
+                    leadingIcon="HistoryOutline"
+                    onClick={() => {
+                      setLogsEntry(selectedEntry);
+                      logsDrawer.openDrawer();
+                    }}
+                    type="button"
+                    variant="secondary"
+                    rounded
+                  >
+                    Ver histórico de alterações
+                  </Button>
                   {selectedEntry.source_kind === "recurrence" && (
                     <Controller
                       control={editForm.control}
@@ -613,6 +633,7 @@ export function MonthlyEntryList({
           )}
         </DrawerContent>
       </DrawerNested>
+      <EntryLogsDrawer drawer={logsDrawer} entry={logsEntry} />
       <DrawerNested {...monthActionDrawer.props}>
         <DrawerContent>
           {monthAction && (
@@ -673,6 +694,175 @@ export function MonthlyEntryList({
       </DrawerNested>
     </Drawer>
   );
+}
+
+type FinancialEntryLog = {
+  id: string;
+  actor_id: string | null;
+  actor_name: string;
+  changed_fields: Record<string, { from: unknown; to: unknown }>;
+  created_at: string;
+};
+
+function EntryLogsDrawer({
+  drawer,
+  entry,
+}: {
+  drawer: ReturnType<typeof useDrawer>;
+  entry: FinancialEntry | null;
+}) {
+  const logs = useQuery({
+    queryKey: queryKeys.financialEntryLogs(entry?.id ?? ""),
+    queryFn: async () => {
+      if (!entry) return [] as FinancialEntryLog[];
+      const { data, error } = await createClient().rpc(
+        "list_financial_entry_logs",
+        { p_entry_id: entry.id },
+      );
+      if (error) throw error;
+      return (data ?? []) as FinancialEntryLog[];
+    },
+    enabled: drawer.open && Boolean(entry),
+  });
+
+  return (
+    <DrawerNested {...drawer.props}>
+      <DrawerContent>
+        <DrawerHeader className="shrink-0 px-3 pb-3 pt-4 text-left">
+          <DrawerTitle className="text-base">
+            Histórico de alterações
+          </DrawerTitle>
+          <DrawerDescription className="truncate">
+            {entry?.title ?? "Lançamento"}
+          </DrawerDescription>
+        </DrawerHeader>
+        <DrawerBody className="space-y-3 px-3 pb-5">
+          {logs.isPending ? (
+            <p className="py-6 text-center text-sm text-muted">
+              Carregando histórico…
+            </p>
+          ) : logs.isError ? (
+            <p
+              className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
+              role="alert"
+            >
+              Não foi possível carregar o histórico. Tente novamente.
+            </p>
+          ) : logs.data.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted">
+              Ainda não há alterações registradas para este lançamento.
+            </p>
+          ) : (
+            <ol className="space-y-3">
+              {logs.data.map((log) => (
+                <li
+                  className="rounded-xl border border-line bg-graphite-800 p-3"
+                  key={log.id}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                    <p className="text-sm font-medium text-ink">
+                      {log.actor_name}
+                    </p>
+                    <time
+                      className="text-xs text-muted"
+                      dateTime={log.created_at}
+                    >
+                      {formatDate(log.created_at, {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                  </div>
+                  <ul className="mt-2 space-y-1.5 text-sm text-muted">
+                    {Object.entries(log.changed_fields)
+                      .filter(([field]) => field !== "settled_at")
+                      .map(([field, change]) => (
+                        <li className="flex flex-wrap gap-x-1" key={field}>
+                          <span className="text-ink">
+                            {entryLogFieldLabel(field)}:
+                          </span>
+                          <span>
+                            {formatEntryLogValue(
+                              field,
+                              change.from,
+                              entry?.entry_type,
+                            )}
+                          </span>
+                          <span aria-hidden="true">→</span>
+                          <span>
+                            {formatEntryLogValue(
+                              field,
+                              change.to,
+                              entry?.entry_type,
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                </li>
+              ))}
+            </ol>
+          )}
+        </DrawerBody>
+        <DrawerFooter className="shrink-0 border-t border-line/30 px-3 pb-3 pt-4">
+          <Button
+            className="w-full"
+            onClick={drawer.closeDrawer}
+            rounded
+            type="button"
+            variant="secondary"
+          >
+            Voltar ao lançamento
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </DrawerNested>
+  );
+}
+
+function entryLogFieldLabel(field: string) {
+  const labels: Record<string, string> = {
+    title: "Descrição",
+    entry_type: "Tipo",
+    amount: "Valor",
+    category: "Categoria",
+    competence_month: "Competência",
+    due_date: "Vencimento",
+    status: "Situação",
+  };
+  return labels[field] ?? field;
+}
+
+function formatEntryLogValue(
+  field: string,
+  value: unknown,
+  entryType?: FinancialEntry["entry_type"],
+) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (field === "amount") return formatCurrency(Number(value));
+  if (field === "due_date" || field === "competence_month") {
+    const date = String(value);
+    return formatDate(
+      date,
+      field === "competence_month"
+        ? { month: "long", year: "numeric" }
+        : { day: "2-digit", month: "short", year: "numeric" },
+    );
+  }
+  if (field === "status") {
+    if (value === "planned") return "Em aberto";
+    if (value === "settled")
+      return entryType === "income" ? "Recebido" : "Pago";
+    if (value === "cancelled") return "Cancelado";
+  }
+  if (field === "entry_type") {
+    if (value === "income") return "Receita";
+    if (value === "expense") return "Despesa";
+  }
+  return String(value);
 }
 
 function SwipeableEntry({

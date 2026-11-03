@@ -4,6 +4,8 @@ export const queryKeys = {
   invitations: (email: string) => ["invitations", email.toLowerCase()] as const,
   monthEntries: (spaceId: string, month: string) =>
     ["month-entries", spaceId, month] as const,
+  financialEntryLogs: (entryId: string) =>
+    ["financial-entry-logs", entryId] as const,
   spaceMonthEntries: (spaceId: string) => ["month-entries", spaceId] as const,
   ensurePeriodEntries: (spaceId: string, userId: string, months: string[]) =>
     ["ensure-period-entries", spaceId, userId, ...[...months].sort()] as const,

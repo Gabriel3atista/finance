@@ -18,6 +18,7 @@ import { ProfileAvatar } from "@/shared/components/profile-avatar";
 const profileLinks = [
   { href: "/dashboard", label: "Painel" },
   { href: "/mes", label: "Meu mês" },
+  { href: "/cartoes", label: "Cartões de crédito" },
   { href: "/space", label: "Gerenciar espaço" },
 ] as const;
 

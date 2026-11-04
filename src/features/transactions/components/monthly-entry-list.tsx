@@ -67,6 +67,9 @@ import { FinancialValue } from "@/shared/components/financial-values";
 import { cn } from "@/shared/lib/utils";
 import { createClient } from "@/features/auth/lib/supabase/client";
 import { queryKeys } from "@/shared/lib/query-keys";
+import { fetchCreditCards } from "@/features/transactions/lib/queries";
+import { creditCardLabel } from "@/features/credit-cards/components/credit-card-select";
+import { useWorkspaceContext } from "@/shared/components/workspace-context";
 
 type CategoryFilterValue = "all" | FinancialCategory;
 type EntryStatus = "planned" | "settled";
@@ -157,6 +160,13 @@ export function MonthlyEntryList({
   const closeMonthActionDrawer = monthActionDrawer.closeDrawer;
   const [categoryFilter, setCategoryFilter] =
     useState<CategoryFilterValue>("all");
+  const [cardFilter, setCardFilter] = useState("all");
+  const { spaceId } = useWorkspaceContext();
+  const { data: creditCards = [] } = useQuery({
+    queryKey: queryKeys.creditCards(spaceId),
+    queryFn: () => fetchCreditCards(spaceId),
+  });
+  const creditCardsById = new Map(creditCards.map((card) => [card.id, card]));
   const reducedMotion = useReducedMotion() === true;
   const today = localDateString();
   const selectedEntry =
@@ -171,6 +181,7 @@ export function MonthlyEntryList({
       title: "",
       amount: "",
       entry_type: "expense",
+      credit_card_id: "",
       category: "",
       due_date: "",
       competence_month: `${month}-01`,
@@ -185,6 +196,9 @@ export function MonthlyEntryList({
         entry.entry_type,
         entry.source_kind,
       ) === categoryFilter,
+  );
+  const visibleEntries = filteredEntries.filter(
+    (entry) => cardFilter === "all" || entry.credit_card_id === cardFilter,
   );
 
   function handleCategoryChange(value: string) {
@@ -210,6 +224,7 @@ export function MonthlyEntryList({
       title: selectedEntry.title,
       amount: selectedEntry.amount.toFixed(2),
       entry_type: selectedEntry.entry_type,
+      credit_card_id: selectedEntry.credit_card_id ?? "",
       category: normalizeFinancialCategory(
         selectedEntry.category,
         selectedEntry.entry_type,
@@ -317,10 +332,34 @@ export function MonthlyEntryList({
             />
           </div>
         )}
-        <CategoryFilter
-          value={categoryFilter}
-          onValueChange={handleCategoryChange}
-        />
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <CategoryFilter
+              value={categoryFilter}
+              onValueChange={handleCategoryChange}
+            />
+          </div>
+          <Select
+            aria-label="Filtrar lançamentos por cartão"
+            value={cardFilter}
+            onValueChange={setCardFilter}
+            variant="secondary"
+            containerClassName="sm:w-56 sm:shrink-0"
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todos os cartões" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os cartões</SelectItem>
+              {creditCards.map((card) => (
+                <SelectItem key={card.id} value={card.id}>
+                  {creditCardLabel(card)}
+                  {card.is_active ? "" : " (inativo)"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="min-h-0 flex-1">
           {isLoading ? (
             <div
@@ -338,9 +377,9 @@ export function MonthlyEntryList({
                 ))}
               </div>
             </div>
-          ) : filteredEntries.length ? (
+          ) : visibleEntries.length ? (
             <div className="flex flex-col gap-3">
-              {filteredEntries.map((entry) => (
+              {visibleEntries.map((entry) => (
                 <SwipeableEntry
                   ariaLabel={`${entry.title}, ${entry.entry_type === "income" ? "Receita" : "Despesa"}, ${normalizeFinancialCategory(entry.category, entry.entry_type, entry.source_kind)}, ${formatCurrency(Number(entry.amount))}, ${statusLabel(entry, today)}. Abrir detalhes`}
                   entry={entry}
@@ -420,6 +459,21 @@ export function MonthlyEntryList({
                           entry.source_kind,
                         )}
                       </Badge>
+                      {entry.credit_card_id &&
+                        creditCardsById.has(entry.credit_card_id) && (
+                          <Badge
+                            className="max-w-[170px] truncate"
+                            size="sm"
+                            title={creditCardLabel(
+                              creditCardsById.get(entry.credit_card_id)!,
+                            )}
+                            variant="outline"
+                          >
+                            {creditCardLabel(
+                              creditCardsById.get(entry.credit_card_id)!,
+                            )}
+                          </Badge>
+                        )}
                     </span>
                   </span>
                 </SwipeableEntry>
@@ -461,7 +515,7 @@ export function MonthlyEntryList({
               </h3>
               <p className="mt-3 max-w-xs text-sm leading-5 text-muted">
                 {entries.length
-                  ? "Selecione outra categoria para ver mais lançamentos."
+                  ? "Ajuste os filtros de categoria ou cartão para ver mais lançamentos."
                   : "Cadastre uma receita ou despesa. Recorrências e parcelas aparecem automaticamente."}
               </p>
             </div>

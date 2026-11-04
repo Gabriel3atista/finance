@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { categoriesForEntryType } from "@/features/transactions/lib/categories";
+import { CreditCardSelect } from "@/features/credit-cards/components/credit-card-select";
 import type { EntryFormValues } from "@/features/transactions/lib/form-schemas";
 
 export function EntryFields() {
@@ -108,6 +109,19 @@ export function EntryFields() {
         error={errors.due_date?.message}
         {...register("due_date")}
       />
+      {entryType === "expense" && (
+        <Controller
+          control={control}
+          name="credit_card_id"
+          render={({ field }) => (
+            <CreditCardSelect
+              name={field.name}
+              value={field.value ?? ""}
+              onValueChange={field.onChange}
+            />
+          )}
+        />
+      )}
       <Input type="hidden" {...register("competence_month")} />
     </div>
   );

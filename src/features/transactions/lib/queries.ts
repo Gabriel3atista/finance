@@ -3,6 +3,7 @@
 import { createClient } from "@/features/auth/lib/supabase/client";
 import type {
   FinancialEntry,
+  CreditCard,
   InstallmentPlan,
   RecurringItem,
 } from "@/features/transactions/lib/data";
@@ -10,11 +11,22 @@ import { addMonths, dateForDay, monthDate } from "@/shared/lib/date";
 import { installmentAmount } from "@/shared/lib/currency";
 
 const entryColumns =
-  "id, space_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number";
+  "id, space_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number, credit_card_id";
 const recurringColumns =
-  "id, space_id, title, entry_type, planned_amount, category, due_day, starts_on, ends_on, is_active";
+  "id, space_id, title, entry_type, planned_amount, category, due_day, starts_on, ends_on, is_active, credit_card_id";
 const installmentColumns =
-  "id, space_id, title, total_amount, installment_count, starts_on, ends_on, due_day, category, is_active";
+  "id, space_id, title, total_amount, installment_count, starts_on, ends_on, due_day, category, is_active, credit_card_id";
+
+export async function fetchCreditCards(spaceId: string) {
+  const { data, error } = await createClient()
+    .from("credit_cards")
+    .select("id, space_id, bank_name, last_four, is_active")
+    .eq("space_id", spaceId)
+    .order("is_active", { ascending: false })
+    .order("bank_name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as CreditCard[];
+}
 
 export async function fetchRecurringItems(spaceId: string) {
   const { data, error } = await createClient()
@@ -110,6 +122,7 @@ export async function ensureMonthEntries(
       status: "planned",
       source_kind: "recurrence",
       recurring_item_id: item.id,
+      credit_card_id: item.credit_card_id,
       created_by: userId,
     });
   }
@@ -142,6 +155,7 @@ export async function ensureMonthEntries(
       source_kind: "installment",
       installment_plan_id: plan.id,
       installment_number: number,
+      credit_card_id: plan.credit_card_id,
       created_by: userId,
     });
   }

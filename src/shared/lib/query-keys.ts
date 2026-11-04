@@ -14,5 +14,6 @@ export const queryKeys = {
   recurringItems: (spaceId: string) => ["recurring-items", spaceId] as const,
   installmentPlans: (spaceId: string) =>
     ["installment-plans", spaceId] as const,
+  creditCards: (spaceId: string) => ["credit-cards", spaceId] as const,
   dashboard: (spaceId: string) => ["dashboard", spaceId] as const,
 };

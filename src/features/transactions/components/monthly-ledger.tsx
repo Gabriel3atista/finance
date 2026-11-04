@@ -557,6 +557,7 @@ function NewEntryDrawer({
     title: "",
     amount: "",
     entry_type: "expense",
+    credit_card_id: "",
     category: "",
     due_date: localDateString(),
     competence_month: `${month}-01`,

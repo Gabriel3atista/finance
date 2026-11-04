@@ -19,6 +19,7 @@ export const entryFormSchema = z
       return Number.isFinite(amount) && amount > 0;
     }, "Informe um valor maior que zero."),
     entry_type: z.enum(["income", "expense"]),
+    credit_card_id: z.string().optional(),
     category: z
       .string()
       .refine(
@@ -77,6 +78,7 @@ export const seriesFormSchema = z
     starts_on: z.string(),
     ends_on: z.string(),
     due_day: z.string(),
+    credit_card_id: z.string().optional(),
   })
   .superRefine((values, context) => {
     const seriesType = getSeriesTypeOption(values.series_type);

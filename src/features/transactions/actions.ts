@@ -26,6 +26,22 @@ function categoryValue(formData: FormData, entryType: string) {
   return isCategoryAllowedForEntryType(value, entryType) ? value : null;
 }
 
+async function creditCardIdValue(
+  formData: FormData,
+  context: Awaited<ReturnType<typeof getUserContext>>,
+) {
+  const value = String(formData.get("credit_card_id") ?? "").trim();
+  if (!value) return null;
+  if (!/^[0-9a-f-]{36}$/i.test(value)) return undefined;
+  const { data, error } = await context.supabase
+    .from("credit_cards")
+    .select("id")
+    .eq("id", value)
+    .eq("space_id", context.spaceId)
+    .maybeSingle();
+  return error || !data ? undefined : data.id;
+}
+
 function validDueDate(value: FormDataEntryValue | null) {
   if (value === null || value === "") return null;
   if (typeof value !== "string" || !isValidDateString(value)) return undefined;
@@ -63,6 +79,9 @@ export async function createFinancialEntry(
     return { error: "invalid-entry" };
 
   const context = await getUserContext();
+  const creditCardId =
+    entryType === "expense" ? await creditCardIdValue(formData, context) : null;
+  if (creditCardId === undefined) return { error: "invalid-entry" };
   const { error } = await context.supabase.from("financial_entries").insert({
     space_id: context.spaceId,
     title,
@@ -74,6 +93,7 @@ export async function createFinancialEntry(
     status: "planned",
     source_kind: "manual",
     created_by: context.user.id,
+    credit_card_id: creditCardId,
   });
   if (error) return { error: "save-entry" };
   return { success: "created" };
@@ -89,6 +109,7 @@ type FinancialSeriesValues = {
   installmentCount: number;
   indefinite: boolean;
   dueDay: number | null;
+  creditCardId: string | null;
 };
 
 function readFinancialSeriesValues(
@@ -113,6 +134,8 @@ function readFinancialSeriesValues(
   const indefinite = formData.get("indefinite") === "true";
   const dueDayValue = String(formData.get("due_day") ?? "");
   const dueDay = dueDayValue ? Number(dueDayValue) : null;
+  const creditCardIdValue = String(formData.get("credit_card_id") ?? "").trim();
+  const creditCardId = creditCardIdValue || null;
   const invalidEnd =
     (hasInstallments || !indefinite) &&
     (!validEndsOn || !validStartsOn || (endsOn !== null && endsOn < startsOn));
@@ -159,6 +182,7 @@ function readFinancialSeriesValues(
     installmentCount,
     indefinite,
     dueDay,
+    creditCardId,
   };
 }
 
@@ -169,6 +193,11 @@ export async function createFinancialSeries(
   if (!values) return { error: "invalid-series" };
 
   const context = await getUserContext();
+  const creditCardId =
+    values.creditCardId && values.seriesType.entryType === "expense"
+      ? await creditCardIdValue(formData, context)
+      : null;
+  if (creditCardId === undefined) return { error: "invalid-series" };
   if (values.hasInstallments) {
     const { error } = await context.supabase.from("installment_plans").insert({
       space_id: context.spaceId,
@@ -180,6 +209,7 @@ export async function createFinancialSeries(
       due_day: values.dueDay,
       category: values.seriesType.category,
       created_by: context.user.id,
+      credit_card_id: creditCardId,
     });
     if (error) return { error: "save-series" };
     return { success: "series" };
@@ -195,6 +225,8 @@ export async function createFinancialSeries(
     starts_on: values.startsOn,
     ends_on: values.indefinite ? null : values.endsOn,
     created_by: context.user.id,
+    credit_card_id:
+      values.seriesType.entryType === "expense" ? creditCardId : null,
   });
   if (error) return { error: "save-series" };
   return { success: "series" };
@@ -211,6 +243,11 @@ export async function updateFinancialSeries(
   }
 
   const context = await getUserContext();
+  const creditCardId =
+    values.creditCardId && values.seriesType.entryType === "expense"
+      ? await creditCardIdValue(formData, context)
+      : null;
+  if (creditCardId === undefined) return { error: "invalid-series" };
   const nextKind = values.hasInstallments ? "installment" : "recurrence";
   if (kind !== nextKind) {
     const { data, error } = await context.supabase.rpc(
@@ -229,6 +266,7 @@ export async function updateFinancialSeries(
         p_ends_on: values.endsOn,
         p_installment_count: values.installmentCount,
         p_indefinite: values.indefinite,
+        p_credit_card_id: creditCardId,
       },
     );
     if (error || !data) return { error: "update-series" };
@@ -247,6 +285,7 @@ export async function updateFinancialSeries(
             ends_on: values.endsOn,
             due_day: values.dueDay,
             category: values.seriesType.category,
+            credit_card_id: creditCardId,
           })
           .eq("id", id)
           .eq("space_id", context.spaceId)
@@ -259,6 +298,8 @@ export async function updateFinancialSeries(
             entry_type: values.seriesType.entryType,
             planned_amount: values.amount,
             category: values.seriesType.category,
+            credit_card_id:
+              values.seriesType.entryType === "expense" ? creditCardId : null,
             due_day: values.dueDay,
             starts_on: values.startsOn,
             ends_on: values.indefinite ? null : values.endsOn,
@@ -296,6 +337,9 @@ export async function updateFinancialEntry(
     return { error: "invalid-entry" };
 
   const context = await getUserContext();
+  const creditCardId =
+    entryType === "expense" ? await creditCardIdValue(formData, context) : null;
+  if (creditCardId === undefined) return { error: "invalid-entry" };
   const { data: entry } = await context.supabase
     .from("financial_entries")
     .select(
@@ -312,6 +356,7 @@ export async function updateFinancialEntry(
     amount,
     category,
     due_date: dueDate,
+    credit_card_id: creditCardId,
   };
   if (
     scope === "future" &&
@@ -352,6 +397,7 @@ export async function updateFinancialEntry(
         entry_type: entryType,
         planned_amount: amount,
         category,
+        credit_card_id: entryType === "expense" ? creditCardId : null,
         due_day: dueDate ? Number(dueDate.slice(-2)) : null,
       })
       .eq("id", entry.recurring_item_id)

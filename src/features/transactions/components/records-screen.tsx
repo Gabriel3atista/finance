@@ -35,12 +35,14 @@ import {
   type SeriesFormInitialData,
 } from "@/features/transactions/components/series-form";
 import type {
+  CreditCard,
   InstallmentPlan,
   RecurringItem,
 } from "@/features/transactions/lib/data";
 import {
   fetchInstallmentPlans,
   fetchRecurringItems,
+  fetchCreditCards,
 } from "@/features/transactions/lib/queries";
 import { getDefaultSeriesType } from "@/features/transactions/lib/categories";
 import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
@@ -82,9 +84,17 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     queryKey: queryKeys.installmentPlans(spaceId),
     queryFn: () => fetchInstallmentPlans(spaceId),
   });
+  const cardsQuery = useQuery({
+    queryKey: queryKeys.creditCards(spaceId),
+    queryFn: () => fetchCreditCards(spaceId),
+  });
+  const cardsById = new Map(
+    (cardsQuery.data ?? []).map((card) => [card.id, card]),
+  );
   const recurring = recurringQuery.data ?? [];
   const plans = plansQuery.data ?? [];
-  const isLoading = recurringQuery.isPending || plansQuery.isPending;
+  const isLoading =
+    recurringQuery.isPending || plansQuery.isPending || cardsQuery.isPending;
   const currentDate = localDateString();
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
@@ -204,11 +214,11 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
   }
 
   const series: SeriesListItem[] = [
-    ...recurring.map((item) => toRecurringListItem(item)),
-    ...plans.map((plan) => toInstallmentListItem(plan)),
+    ...recurring.map((item) => toRecurringListItem(item, cardsById)),
+    ...plans.map((plan) => toInstallmentListItem(plan, cardsById)),
   ].sort((left, right) => Number(right.active) - Number(left.active));
 
-  if (recurringQuery.isError || plansQuery.isError) {
+  if (recurringQuery.isError || plansQuery.isError || cardsQuery.isError) {
     return (
       <div
         role="alert"
@@ -372,7 +382,10 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
   );
 }
 
-function toRecurringListItem(item: RecurringItem): SeriesListItem {
+function toRecurringListItem(
+  item: RecurringItem,
+  cards: Map<string, CreditCard>,
+): SeriesListItem {
   const seriesType = getDefaultSeriesType(item.category, item.entry_type);
 
   return {
@@ -386,6 +399,14 @@ function toRecurringListItem(item: RecurringItem): SeriesListItem {
         value: item.entry_type === "income" ? "Receita" : "Despesa",
       },
       { label: "Categoria", value: item.category ?? "Sem categoria" },
+      ...(item.credit_card_id && cards.has(item.credit_card_id)
+        ? [
+            {
+              label: "Cartão",
+              value: `${cards.get(item.credit_card_id)!.bank_name} ···· ${cards.get(item.credit_card_id)!.last_four}`,
+            },
+          ]
+        : []),
       {
         label: "Vencimento",
         value: item.due_day ? `Dia ${item.due_day}` : "Sem vencimento",
@@ -407,11 +428,15 @@ function toRecurringListItem(item: RecurringItem): SeriesListItem {
       dueDay: item.due_day,
       startsOn: item.starts_on,
       endsOn: item.ends_on,
+      creditCardId: item.credit_card_id,
     },
   };
 }
 
-function toInstallmentListItem(plan: InstallmentPlan): SeriesListItem {
+function toInstallmentListItem(
+  plan: InstallmentPlan,
+  cards: Map<string, CreditCard>,
+): SeriesListItem {
   const seriesType = getDefaultSeriesType(plan.category, "expense");
 
   return {
@@ -422,6 +447,14 @@ function toInstallmentListItem(plan: InstallmentPlan): SeriesListItem {
       { label: "Tipo", value: "Parcelado" },
       { label: "Parcelas", value: `${plan.installment_count} parcelas` },
       { label: "Categoria", value: plan.category ?? "Sem categoria" },
+      ...(plan.credit_card_id && cards.has(plan.credit_card_id)
+        ? [
+            {
+              label: "Cartão",
+              value: `${cards.get(plan.credit_card_id)!.bank_name} ···· ${cards.get(plan.credit_card_id)!.last_four}`,
+            },
+          ]
+        : []),
       {
         label: "Vencimento",
         value: plan.due_day ? `Dia ${plan.due_day}` : "Sem vencimento",
@@ -448,6 +481,7 @@ function toInstallmentListItem(plan: InstallmentPlan): SeriesListItem {
       startsOn: plan.starts_on,
       endsOn: plan.ends_on,
       installmentCount: plan.installment_count,
+      creditCardId: plan.credit_card_id,
     },
   };
 }

@@ -42,6 +42,7 @@ import {
   type SeriesFormValues,
 } from "@/features/transactions/lib/form-schemas";
 import { formDataFromValues } from "@/shared/lib/forms";
+import { CreditCardSelect } from "@/features/credit-cards/components/credit-card-select";
 
 export type SeriesFormInitialData = {
   id: string;
@@ -53,6 +54,7 @@ export type SeriesFormInitialData = {
   startsOn: string;
   endsOn: string | null;
   installmentCount?: number;
+  creditCardId?: string | null;
 };
 
 function inputAmount(value: number) {
@@ -108,6 +110,7 @@ export function SeriesFormDrawer({
       starts_on: initialData?.startsOn ?? currentDate,
       ends_on: initialData?.endsOn ?? initialData?.startsOn ?? currentDate,
       due_day: initialData?.dueDay ? String(initialData.dueDay) : "",
+      credit_card_id: initialData?.creditCardId ?? "",
     },
   });
   const { control, formState, getValues, register, setValue, watch } = form;
@@ -163,6 +166,7 @@ export function SeriesFormDrawer({
       starts_on: initialData?.startsOn ?? currentDate,
       ends_on: initialData?.endsOn ?? initialData?.startsOn ?? currentDate,
       due_day: initialData?.dueDay ? String(initialData.dueDay) : "",
+      credit_card_id: initialData?.creditCardId ?? "",
     });
   }, [drawer.props.open, form, initialData, currentDate]);
 
@@ -388,6 +392,19 @@ export function SeriesFormDrawer({
                   placeholder="Sem vencimento"
                   error={formState.errors.due_day?.message}
                   {...register("due_day")}
+                />
+              )}
+              {!isIncome && (
+                <Controller
+                  control={control}
+                  name="credit_card_id"
+                  render={({ field }) => (
+                    <CreditCardSelect
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onValueChange={field.onChange}
+                    />
+                  )}
                 />
               )}
             </div>

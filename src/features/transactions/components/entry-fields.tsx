@@ -35,6 +35,9 @@ export function EntryFields() {
             name={field.name}
             onValueChange={(value) => {
               field.onChange(value);
+              if (value === "income") {
+                setValue("credit_card_id", "", { shouldValidate: true });
+              }
               setValue("category", "", { shouldValidate: true });
             }}
             value={field.value}
@@ -118,6 +121,7 @@ export function EntryFields() {
               name={field.name}
               value={field.value ?? ""}
               onValueChange={field.onChange}
+              error={errors.credit_card_id?.message}
             />
           )}
         />

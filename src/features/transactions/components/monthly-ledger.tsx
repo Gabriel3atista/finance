@@ -560,7 +560,7 @@ function NewEntryDrawer({
     credit_card_id: "",
     category: "",
     due_date: localDateString(),
-    competence_month: `${month}-01`,
+    competence_month: month,
   };
   const form = useForm<EntryFormValues>({
     resolver: zodResolver(entryFormSchema),
@@ -568,6 +568,15 @@ function NewEntryDrawer({
     reValidateMode: "onChange",
     defaultValues,
   });
+
+  useEffect(() => {
+    if (error === "invalid-entry") {
+      form.setError("credit_card_id", {
+        type: "server",
+        message: "O cartão selecionado não está mais disponível.",
+      });
+    }
+  }, [error, form]);
 
   return (
     <Drawer {...drawer.props} onCloseComplete={() => form.reset(defaultValues)}>
@@ -584,7 +593,7 @@ function NewEntryDrawer({
         >
           <FormProvider {...form}>
             <DrawerBody className="space-y-4 px-3 pb-5">
-              {error && (
+              {error && error !== "invalid-entry" && (
                 <p
                   className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
                   role="alert"

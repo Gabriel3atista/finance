@@ -16,8 +16,12 @@ export const entryFormSchema = z
       .max(160, "Use até 160 caracteres."),
     amount: z.string().refine((value) => {
       const amount = parseCurrencyInput(value);
-      return Number.isFinite(amount) && amount > 0;
-    }, "Informe um valor maior que zero."),
+      return (
+        Number.isFinite(amount) &&
+        amount > 0 &&
+        amount <= 999999999999.99
+      );
+    }, "Informe um valor maior que zero e dentro do limite permitido."),
     entry_type: z.enum(["income", "expense"]),
     credit_card_id: z.string().optional(),
     category: z
@@ -36,7 +40,7 @@ export const entryFormSchema = z
       ),
     competence_month: z
       .string()
-      .regex(/^\d{4}-\d{2}-01$/, "Informe uma competência válida."),
+      .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Informe uma competência válida."),
     scope: z.enum(["single", "future"]).optional(),
   })
   .superRefine((values, context) => {

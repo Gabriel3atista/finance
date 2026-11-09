@@ -184,7 +184,7 @@ export function MonthlyEntryList({
       credit_card_id: "",
       category: "",
       due_date: "",
-      competence_month: `${month}-01`,
+      competence_month: month,
       scope: "single",
     },
   });
@@ -231,7 +231,7 @@ export function MonthlyEntryList({
         selectedEntry.source_kind,
       ),
       due_date: selectedEntry.due_date ?? "",
-      competence_month: `${month}-01`,
+      competence_month: month,
       scope: "single",
     });
   }, [editForm, month, selectedEntry]);

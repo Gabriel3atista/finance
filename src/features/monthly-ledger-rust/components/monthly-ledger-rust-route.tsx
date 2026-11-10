@@ -45,13 +45,22 @@ export function MonthlyLedgerRustRoute() {
     month: monthValue,
   });
   const mountRef = useRef<HTMLDivElement>(null);
-  const [wasmError, setWasmError] = useState(false);
+  const [failure, setFailure] = useState<"data" | "module" | null>(null);
 
   useEffect(() => {
     let disposed = false;
     async function renderLedger() {
       const host = mountRef.current;
       if (!host) return;
+
+      if (ensureEntries.isError || entries.isError) {
+        console.error(
+          "Falha ao carregar lançamentos para a tela Rust/WASM:",
+          ensureEntries.error ?? entries.error,
+        );
+        setFailure("data");
+        return;
+      }
 
       try {
         const response = await fetch("/wasm/monthly-ledger-rust.wasm");
@@ -66,11 +75,6 @@ export function MonthlyLedgerRustRoute() {
         rust.reset();
         rust.set_month(month.getFullYear(), month.getMonth() + 1);
         rust.set_hidden(hidden ? 1 : 0);
-
-        if (ensureEntries.isError || entries.isError) {
-          setWasmError(true);
-          return;
-        }
 
         if (!ensureEntries.isReady || entries.isPending || !entries.data) {
           const pointer = rust.render_loading();
@@ -92,9 +96,15 @@ export function MonthlyLedgerRustRoute() {
         );
         if (disposed || !mountRef.current) return;
         mountRef.current.innerHTML = html;
-        setWasmError(false);
-      } catch {
-        if (!disposed) setWasmError(true);
+        setFailure(null);
+      } catch (error) {
+        if (!disposed) {
+          console.error(
+            "Falha ao iniciar o módulo Rust/WASM da página:",
+            error,
+          );
+          setFailure("module");
+        }
       }
     }
 
@@ -106,25 +116,36 @@ export function MonthlyLedgerRustRoute() {
     entries.data,
     entries.isError,
     entries.isPending,
+    entries.error,
     ensureEntries.isError,
     ensureEntries.isPending,
     ensureEntries.isReady,
+    ensureEntries.error,
     hidden,
     month,
   ]);
 
   return (
     <div className="mx-auto max-w-5xl">
-      {wasmError ? (
+      {failure ? (
         <p
           className="rounded-xl border border-rose-500/30 bg-graphite-800 p-5 text-sm text-rose-300"
           role="alert"
         >
-          Não foi possível carregar os lançamentos Rust/WASM. Gere o módulo com
-          <code className="mx-1 rounded bg-graphite-700 px-1.5 py-0.5">
-            npm run wasm:build
-          </code>
-          e tente novamente.
+          {failure === "data" ? (
+            <>
+              Não foi possível carregar os lançamentos do mês. Verifique sua
+              conexão e tente novamente.
+            </>
+          ) : (
+            <>
+              Não foi possível iniciar o módulo Rust/WASM. Gere o arquivo com{" "}
+              <code className="mx-1 rounded bg-graphite-700 px-1.5 py-0.5">
+                npm run wasm:build
+              </code>{" "}
+              e atualize a página.
+            </>
+          )}
         </p>
       ) : (
         <div

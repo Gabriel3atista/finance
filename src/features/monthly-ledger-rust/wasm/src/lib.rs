@@ -36,7 +36,8 @@ static mut ENTRIES: [Entry; MAX_ENTRIES] = [Entry::EMPTY; MAX_ENTRIES];
 static mut ENTRY_COUNT: usize = 0;
 static mut OUTPUT: [u8; OUTPUT_SIZE] = [0; OUTPUT_SIZE];
 static mut OUTPUT_LENGTH: usize = 0;
-static mut NEXT_ALLOCATION: usize = 1_048_576;
+static mut ALLOCATION_BASE: usize = 0;
+static mut NEXT_ALLOCATION: usize = 0;
 static mut YEAR: i32 = 0;
 static mut MONTH: u32 = 1;
 static mut HIDDEN: bool = false;
@@ -62,8 +63,28 @@ impl Write for Output {
 #[no_mangle]
 pub extern "C" fn alloc(length: usize) -> usize {
     unsafe {
-        let pointer = NEXT_ALLOCATION;
-        NEXT_ALLOCATION = (NEXT_ALLOCATION + length + 7) & !7;
+        if ALLOCATION_BASE == 0 {
+            ALLOCATION_BASE = core::arch::wasm32::memory_size(0) * 65_536;
+        }
+        let pointer = if NEXT_ALLOCATION == 0 {
+            ALLOCATION_BASE
+        } else {
+            NEXT_ALLOCATION
+        };
+        let Some(end) = pointer.checked_add(length) else {
+            return 0;
+        };
+        let Some(aligned_end) = end.checked_add(7).map(|value| value & !7) else {
+            return 0;
+        };
+        let current_bytes = core::arch::wasm32::memory_size(0) * 65_536;
+        if aligned_end > current_bytes {
+            let additional_pages = (aligned_end - current_bytes + 65_535) / 65_536;
+            if core::arch::wasm32::memory_grow(0, additional_pages) == usize::MAX {
+                return 0;
+            }
+        }
+        NEXT_ALLOCATION = aligned_end;
         pointer
     }
 }
@@ -73,7 +94,7 @@ pub extern "C" fn reset() {
     unsafe {
         ENTRY_COUNT = 0;
         OUTPUT_LENGTH = 0;
-        NEXT_ALLOCATION = 1_048_576;
+        NEXT_ALLOCATION = ALLOCATION_BASE;
     }
 }
 

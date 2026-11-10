@@ -1,0 +1,306 @@
+.monthly-ledger-rust .rust-ledger {
+  @apply text-ink;
+}
+
+.monthly-ledger-rust .rust-ledger__header,
+.monthly-ledger-rust .rust-ledger__list-heading,
+.monthly-ledger-rust .rust-ledger__entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.monthly-ledger-rust .rust-ledger__header {
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.monthly-ledger-rust .rust-ledger__eyebrow {
+  margin: 0 0 0.45rem;
+  @apply text-accent;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.13em;
+}
+
+.monthly-ledger-rust .rust-ledger__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.125rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+
+.monthly-ledger-rust .rust-ledger__subtitle {
+  margin: 0.45rem 0 0;
+  @apply text-muted;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+.monthly-ledger-rust .rust-ledger__month {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.3rem;
+  @apply border border-line bg-graphite-700 text-ink;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.monthly-ledger-rust .rust-ledger__month a {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  @apply text-muted;
+  font-size: 1.25rem;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.monthly-ledger-rust .rust-ledger__month a:hover {
+  @apply bg-graphite-600 text-ink;
+}
+
+.monthly-ledger-rust .rust-ledger__month a:focus-visible {
+  @apply outline outline-2 outline-accent;
+  outline-offset: 2px;
+}
+
+.monthly-ledger-rust .rust-ledger__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.monthly-ledger-rust .rust-ledger__summary article {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem;
+  @apply border border-line bg-graphite-900;
+  border-radius: 1rem;
+}
+
+.monthly-ledger-rust .rust-ledger__summary article span,
+.monthly-ledger-rust .rust-ledger__list-heading p {
+  @apply text-muted;
+  font-size: 0.75rem;
+}
+
+.monthly-ledger-rust .rust-ledger__summary strong {
+  overflow-wrap: anywhere;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.monthly-ledger-rust .is-income {
+  @apply text-mint-300;
+}
+
+.monthly-ledger-rust .is-expense {
+  @apply text-rose-400;
+}
+
+.monthly-ledger-rust .rust-ledger__list-heading {
+  margin: 0 0 0.6rem;
+  padding: 0 0.25rem;
+}
+
+.monthly-ledger-rust .rust-ledger__list-heading h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.monthly-ledger-rust .rust-ledger__list-heading p {
+  margin: 0.25rem 0 0;
+}
+
+.monthly-ledger-rust .rust-ledger__list-heading > span {
+  @apply text-muted;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.monthly-ledger-rust .rust-ledger__entries {
+  overflow: hidden;
+  @apply border border-line bg-graphite-900;
+  border-radius: 1.125rem;
+}
+
+.monthly-ledger-rust .rust-ledger__entry {
+  min-height: 5.25rem;
+  padding: 0.85rem 1rem;
+}
+
+.monthly-ledger-rust .rust-ledger__entry + .rust-ledger__entry {
+  @apply border-t border-line/75;
+}
+
+.monthly-ledger-rust .rust-ledger__date {
+  display: flex;
+  width: 2.5rem;
+  flex: 0 0 2.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  @apply text-muted;
+}
+
+.monthly-ledger-rust .rust-ledger__date strong {
+  @apply text-ink;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.monthly-ledger-rust .rust-ledger__date span {
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+}
+
+.monthly-ledger-rust .rust-ledger__description {
+  min-width: 0;
+  flex: 1;
+}
+
+.monthly-ledger-rust .rust-ledger__description h3 {
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.monthly-ledger-rust .rust-ledger__description p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.3rem 0 0;
+  @apply text-muted;
+  font-size: 0.7rem;
+}
+
+.monthly-ledger-rust .rust-ledger__amount {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.monthly-ledger-rust .rust-ledger__amount strong {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.monthly-ledger-rust .rust-ledger__status {
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.63rem;
+  line-height: 1.2;
+}
+
+.monthly-ledger-rust .rust-ledger__status.is-settled {
+  @apply bg-mint-300/10 text-mint-300;
+}
+
+.monthly-ledger-rust .rust-ledger__status.is-planned {
+  @apply bg-graphite-600 text-muted;
+}
+
+.monthly-ledger-rust .rust-ledger__empty {
+  display: flex;
+  min-height: 15rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.monthly-ledger-rust .rust-ledger__empty > span {
+  margin-bottom: 0.8rem;
+  @apply text-accent;
+  font-size: 1.75rem;
+}
+
+.monthly-ledger-rust .rust-ledger__empty h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.monthly-ledger-rust .rust-ledger__empty p {
+  margin: 0.4rem 0 0;
+  @apply text-muted;
+  font-size: 0.8rem;
+}
+
+.monthly-ledger-rust .rust-ledger__loading {
+  display: flex;
+  min-height: 15rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  @apply border border-line bg-graphite-900 text-muted;
+  border-radius: 1.125rem;
+  font-size: 0.85rem;
+}
+
+.monthly-ledger-rust .rust-ledger__loading-mark {
+  width: 0.7rem;
+  height: 0.7rem;
+  @apply border-2 border-accent/25 border-t-accent;
+  border-radius: 999px;
+  animation: rust-ledger-spin 800ms linear infinite;
+}
+
+@keyframes rust-ledger-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monthly-ledger-rust .rust-ledger__loading-mark {
+    animation-duration: 1800ms;
+  }
+}
+
+@media (max-width: 639px) {
+  .monthly-ledger-rust .rust-ledger__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .monthly-ledger-rust .rust-ledger__month {
+    align-self: flex-end;
+  }
+
+  .monthly-ledger-rust .rust-ledger__summary {
+    gap: 0.5rem;
+  }
+
+  .monthly-ledger-rust .rust-ledger__summary article {
+    gap: 0.55rem;
+    padding: 0.8rem 0.65rem;
+  }
+
+  .monthly-ledger-rust .rust-ledger__summary article span {
+    font-size: 0.65rem;
+  }
+
+  .monthly-ledger-rust .rust-ledger__entry {
+    gap: 0.65rem;
+    padding: 0.8rem 0.7rem;
+  }
+}

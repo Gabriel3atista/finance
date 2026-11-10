@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "wasm:build": "powershell -ExecutionPolicy Bypass -File scripts/build-monthly-ledger-wasm.ps1",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

@@ -132,7 +132,10 @@ function readFinancialSeriesValues(
   const validStartsOn = isValidDateString(startsOn);
   const validEndsOn = endsOn !== null && isValidDateString(endsOn);
   const indefinite = formData.get("indefinite") === "true";
-  const dueDayValue = String(formData.get("due_day") ?? "");
+  const dueDayValue =
+    seriesType?.entryType === "expense"
+      ? String(formData.get("due_day") ?? "")
+      : "";
   const dueDay = dueDayValue ? Number(dueDayValue) : null;
   const creditCardIdValue = String(formData.get("credit_card_id") ?? "").trim();
   const creditCardId = creditCardIdValue || null;
@@ -197,7 +200,7 @@ export async function createFinancialSeries(
     values.creditCardId && values.seriesType.entryType === "expense"
       ? await creditCardIdValue(formData, context)
       : null;
-  if (creditCardId === undefined) return { error: "invalid-series" };
+  if (creditCardId === undefined) return { error: "invalid-credit-card" };
   if (values.hasInstallments) {
     const { error } = await context.supabase.from("installment_plans").insert({
       space_id: context.spaceId,
@@ -247,7 +250,7 @@ export async function updateFinancialSeries(
     values.creditCardId && values.seriesType.entryType === "expense"
       ? await creditCardIdValue(formData, context)
       : null;
-  if (creditCardId === undefined) return { error: "invalid-series" };
+  if (creditCardId === undefined) return { error: "invalid-credit-card" };
   const nextKind = values.hasInstallments ? "installment" : "recurrence";
   if (kind !== nextKind) {
     const { data, error } = await context.supabase.rpc(

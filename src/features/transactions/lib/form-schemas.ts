@@ -16,11 +16,7 @@ export const entryFormSchema = z
       .max(160, "Use até 160 caracteres."),
     amount: z.string().refine((value) => {
       const amount = parseCurrencyInput(value);
-      return (
-        Number.isFinite(amount) &&
-        amount > 0 &&
-        amount <= 999999999999.99
-      );
+      return Number.isFinite(amount) && amount > 0 && amount <= 999999999999.99;
     }, "Informe um valor maior que zero e dentro do limite permitido."),
     entry_type: z.enum(["income", "expense"]),
     credit_card_id: z.string().optional(),
@@ -56,7 +52,7 @@ export type EntryFormValues = z.infer<typeof entryFormSchema>;
 
 const positiveAmount = (value: string) => {
   const amount = parseCurrencyInput(value);
-  return Number.isFinite(amount) && amount > 0;
+  return Number.isFinite(amount) && amount > 0 && amount <= 999999999999.99;
 };
 
 export const seriesFormSchema = z
@@ -97,7 +93,7 @@ export const seriesFormSchema = z
       });
     }
 
-    if (values.due_day !== "") {
+    if (seriesType?.entryType === "expense" && values.due_day !== "") {
       const dueDay = Number(values.due_day);
       if (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31) {
         context.addIssue({
@@ -115,6 +111,15 @@ export const seriesFormSchema = z
           code: "custom",
           path: ["installment_amount"],
           message: "Informe um valor por parcela maior que zero.",
+        });
+      } else if (
+        parseCurrencyInput(values.installment_amount ?? "") * count >
+        999999999999.99
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["installment_amount"],
+          message: "O valor total do parcelamento excede o limite permitido.",
         });
       }
       if (!Number.isInteger(count) || count < 1 || count > 600) {
@@ -149,6 +154,13 @@ export const seriesFormSchema = z
             code: "custom",
             path: ["ends_on"],
             message: "A data final deve corresponder à quantidade de parcelas.",
+          });
+        }
+        if (values.ends_on < values.starts_on) {
+          context.addIssue({
+            code: "custom",
+            path: ["ends_on"],
+            message: "A data final deve ser igual ou posterior ao inÃ­cio.",
           });
         }
       } else if (!isValidDateString(values.ends_on)) {

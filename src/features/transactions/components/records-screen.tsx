@@ -61,7 +61,6 @@ import { queryKeys } from "@/shared/lib/query-keys";
 import { cn } from "@/shared/lib/utils";
 
 const errors: Record<string, string> = {
-  "invalid-series": "Confira a descrição, o valor e o período da programação.",
   "save-series": "Não foi possível salvar a programação.",
   "update-series": "Não foi possível atualizar a programação.",
   "deactivate-series": "Não foi possível encerrar esta programação.",
@@ -273,7 +272,8 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     return true;
   });
   const hasActiveFilters = Object.entries(filters).some(
-    ([key, value]) => value !== defaultSeriesFilters[key as keyof SeriesFilters],
+    ([key, value]) =>
+      value !== defaultSeriesFilters[key as keyof SeriesFilters],
   );
 
   if (recurringQuery.isError || plansQuery.isError || cardsQuery.isError) {
@@ -330,16 +330,165 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
             meses.
           </p>
         </div>
-        <Button
-          className="w-full sm:w-auto"
-          leadingIcon="PlusOutline"
-          onClick={openNewSeries}
-          rounded
-          type="button"
-          variant="primary"
-        >
-          Nova programação
-        </Button>
+        <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+          {series.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label={
+                    hasActiveFilters
+                      ? "Filtros de programações ativos"
+                      : "Filtros de programações"
+                  }
+                  className="shrink-0"
+                  rounded
+                  type="button"
+                  variant="secondary"
+                >
+                  Filtros
+                  {hasActiveFilters && (
+                    <span
+                      aria-hidden="true"
+                      className="ml-1 size-1.5 rounded-full bg-accent"
+                    />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80 p-3">
+                <div className="flex flex-col gap-3">
+                  <Select
+                    label="Natureza"
+                    containerClassName="flex-row items-center gap-3 [&>label]:w-20 [&>label]:shrink-0 [&>div]:min-w-0 [&>div]:flex-1 [&>div]:shrink"
+                    onValueChange={(entryType) =>
+                      setFilters((current) => ({
+                        ...current,
+                        entryType: entryType as SeriesFilters["entryType"],
+                      }))
+                    }
+                    value={filters.entryType}
+                    variant="secondary"
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Receitas e despesas</SelectItem>
+                      <SelectItem value="income">Receitas</SelectItem>
+                      <SelectItem value="expense">Despesas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    label="Formato"
+                    containerClassName="flex-row items-center gap-3 [&>label]:w-20 [&>label]:shrink-0 [&>div]:min-w-0 [&>div]:flex-1 [&>div]:shrink"
+                    onValueChange={(kind) =>
+                      setFilters((current) => ({
+                        ...current,
+                        kind: kind as SeriesFilters["kind"],
+                      }))
+                    }
+                    value={filters.kind}
+                    variant="secondary"
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Mensais e parceladas</SelectItem>
+                      <SelectItem value="recurrence">Mensais</SelectItem>
+                      <SelectItem value="installment">Parceladas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    label="Situação"
+                    containerClassName="flex-row items-center gap-3 [&>label]:w-20 [&>label]:shrink-0 [&>div]:min-w-0 [&>div]:flex-1 [&>div]:shrink"
+                    onValueChange={(status) =>
+                      setFilters((current) => ({
+                        ...current,
+                        status: status as SeriesFilters["status"],
+                      }))
+                    }
+                    value={filters.status}
+                    variant="secondary"
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Ativas e encerradas</SelectItem>
+                      <SelectItem value="active">Ativas</SelectItem>
+                      <SelectItem value="inactive">Encerradas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    label="Cartão"
+                    containerClassName="flex-row items-center gap-3 [&>label]:w-20 [&>label]:shrink-0 [&>div]:min-w-0 [&>div]:flex-1 [&>div]:shrink"
+                    onValueChange={(card) =>
+                      setFilters((current) => ({ ...current, card }))
+                    }
+                    value={filters.card}
+                    variant="secondary"
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os cartões</SelectItem>
+                      <SelectItem value="with_card">Com cartão</SelectItem>
+                      <SelectItem value="none">Sem cartão</SelectItem>
+                      {(cardsQuery.data ?? []).map((card) => (
+                        <SelectItem key={card.id} value={card.id}>
+                          {creditCardLabel(card)}
+                          {card.is_active ? "" : " (inativo)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    label="Categoria"
+                    containerClassName="flex-row items-center gap-3 [&>label]:w-20 [&>label]:shrink-0 [&>div]:min-w-0 [&>div]:flex-1 [&>div]:shrink"
+                    onValueChange={(category) =>
+                      setFilters((current) => ({ ...current, category }))
+                    }
+                    value={filters.category}
+                    variant="secondary"
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as categorias</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {hasActiveFilters && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => setFilters(defaultSeriesFilters)}
+                    >
+                      Limpar filtros
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          <Button
+            className="min-w-0 flex-1 sm:flex-none"
+            leadingIcon="PlusOutline"
+            onClick={openNewSeries}
+            rounded
+            type="button"
+            variant="primary"
+          >
+            Nova programação
+          </Button>
+        </div>
       </header>
 
       {message && (
@@ -357,135 +506,9 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       )}
 
       {!isLoading && series.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-graphite-900 p-3 sm:p-4">
-          <div
-            aria-label="Filtros de programações"
-            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
-          >
-            <Select
-              label="Natureza"
-              onValueChange={(entryType) =>
-                setFilters((current) => ({
-                  ...current,
-                  entryType: entryType as SeriesFilters["entryType"],
-                }))
-              }
-              value={filters.entryType}
-              variant="secondary"
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Receitas e despesas</SelectItem>
-                <SelectItem value="income">Receitas</SelectItem>
-                <SelectItem value="expense">Despesas</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              label="Formato"
-              onValueChange={(kind) =>
-                setFilters((current) => ({
-                  ...current,
-                  kind: kind as SeriesFilters["kind"],
-                }))
-              }
-              value={filters.kind}
-              variant="secondary"
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Mensais e parceladas</SelectItem>
-                <SelectItem value="recurrence">Mensais</SelectItem>
-                <SelectItem value="installment">Parceladas</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              label="Situação"
-              onValueChange={(status) =>
-                setFilters((current) => ({
-                  ...current,
-                  status: status as SeriesFilters["status"],
-                }))
-              }
-              value={filters.status}
-              variant="secondary"
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Ativas e encerradas</SelectItem>
-                <SelectItem value="active">Ativas</SelectItem>
-                <SelectItem value="inactive">Encerradas</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              label="Cartão"
-              onValueChange={(card) =>
-                setFilters((current) => ({ ...current, card }))
-              }
-              value={filters.card}
-              variant="secondary"
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os cartões</SelectItem>
-                <SelectItem value="with_card">Com cartão</SelectItem>
-                <SelectItem value="none">Sem cartão</SelectItem>
-                {(cardsQuery.data ?? []).map((card) => (
-                  <SelectItem key={card.id} value={card.id}>
-                    {creditCardLabel(card)}
-                    {card.is_active ? "" : " (inativo)"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              label="Categoria"
-              onValueChange={(category) =>
-                setFilters((current) => ({ ...current, category }))
-              }
-              value={filters.category}
-              variant="secondary"
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between gap-3 border-t border-line/50 pt-3">
-            <p className="text-xs text-muted">
-              {filteredSeries.length} de {series.length} programações
-            </p>
-            {hasActiveFilters && (
-              <Button
-                className="min-h-8 px-2 text-xs"
-                onClick={() => setFilters(defaultSeriesFilters)}
-                type="button"
-                variant="ghost"
-              >
-                Limpar filtros
-              </Button>
-            )}
-          </div>
-        </div>
+        <p className="text-xs text-muted" role="status">
+          {filteredSeries.length} de {series.length} programações
+        </p>
       )}
 
       <SeriesList
@@ -508,11 +531,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
         drawer={seriesDrawer}
         currentDate={currentDate}
         initialData={seriesToEdit?.initialData}
-        error={
-          saveSeries.isError
-            ? (errors[saveSeries.error.message] ?? errors["save-series"])
-            : undefined
-        }
+        error={saveSeries.isError ? saveSeries.error.message : undefined}
         pending={saveSeries.isPending}
         onSubmit={submitSeries}
       />

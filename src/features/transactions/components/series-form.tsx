@@ -113,7 +113,16 @@ export function SeriesFormDrawer({
       credit_card_id: initialData?.creditCardId ?? "",
     },
   });
-  const { control, formState, getValues, register, setValue, watch } = form;
+  const {
+    clearErrors,
+    control,
+    formState,
+    getValues,
+    register,
+    setError,
+    setValue,
+    watch,
+  } = form;
   const seriesType = watch("series_type") as SeriesFormType;
   const hasInstallments = watch("has_installments") === "true";
   const indefinite = watch("indefinite") === "true";
@@ -169,6 +178,22 @@ export function SeriesFormDrawer({
       credit_card_id: initialData?.creditCardId ?? "",
     });
   }, [drawer.props.open, form, initialData, currentDate]);
+
+  useEffect(() => {
+    if (error === "invalid-credit-card") {
+      setError("credit_card_id", {
+        type: "server",
+        message: "O cartão selecionado não está mais disponível.",
+      });
+    }
+  }, [error, setError]);
+
+  const serverErrorMessage =
+    error && error !== "invalid-credit-card"
+      ? error === "save-series" || error === "invalid-series"
+        ? "Não foi possível salvar a programação."
+        : "Não foi possível atualizar a programação."
+      : undefined;
 
   function changeSeriesType(value: string) {
     const nextType = getSeriesTypeOption(value);
@@ -273,12 +298,12 @@ export function SeriesFormDrawer({
           <input type="hidden" {...register("id")} />
           <input type="hidden" {...register("kind")} />
           <DrawerBody className="flex flex-col gap-3 pb-5">
-            {error && (
+            {serverErrorMessage && (
               <p
                 className="rounded-xl border border-rose-800 bg-rose-900 px-3 py-2 text-sm text-rose-100"
                 role="alert"
               >
-                {error}
+                {serverErrorMessage}
               </p>
             )}
             <Controller
@@ -402,7 +427,11 @@ export function SeriesFormDrawer({
                     <CreditCardSelect
                       name={field.name}
                       value={field.value ?? ""}
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        clearErrors("credit_card_id");
+                        field.onChange(value);
+                      }}
+                      error={formState.errors.credit_card_id?.message}
                     />
                   )}
                 />

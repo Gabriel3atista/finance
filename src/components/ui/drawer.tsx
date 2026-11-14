@@ -141,6 +141,7 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       data-app-drawer="true"
+      data-responsive-drawer-content="true"
       onPointerDown={(event) => {
         onPointerDown?.(event);
         if (event.defaultPrevented || !(event.target instanceof Element))
@@ -166,7 +167,7 @@ const DrawerContent = React.forwardRef<
         }
       }}
       className={cn(
-        "fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] standalone:bottom-0 standalone:pb-[env(safe-area-inset-bottom,0px)] z-50 mt-24 flex h-auto max-h-[80dvh] min-h-0 flex-col overflow-hidden rounded-[28px] border border-line/30 bg-graphite-800/60 p-0 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-lg",
+        "fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+12px)] standalone:bottom-0 standalone:pb-[env(safe-area-inset-bottom,0px)] z-50 mt-24 flex h-auto max-h-[80dvh] min-h-0 flex-col overflow-hidden rounded-[28px] border border-line/30 bg-graphite-800/60 p-0 text-ink shadow-[0_8px_32px_hsl(0_0%_0%/45%)] backdrop-blur-lg md:inset-x-auto md:bottom-auto md:mt-0 md:w-[min(36rem,calc(100vw-2rem))] md:max-h-[min(80dvh,48rem)] md:rounded-2xl md:bg-graphite-800",
         className,
       )}
       style={{ ...drawerMotionStyle, ...style }}

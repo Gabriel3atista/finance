@@ -528,7 +528,7 @@ function SeriesList({
       {loading ? (
         <div
           aria-label="Carregando programações"
-          className="flex flex-col gap-3"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
         >
           {Array.from({ length: 6 }, (_, index) => (
             <Card className="overflow-hidden" key={index}>
@@ -560,7 +560,7 @@ function SeriesList({
           ))}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <Card className="overflow-hidden" key={`${item.kind}-${item.id}`}>
               <div className="flex items-center justify-between gap-3 bg-graphite-600 p-4 sm:p-5">

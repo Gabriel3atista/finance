@@ -144,7 +144,59 @@
   }
 }
 
+@media (min-width: 768px) {
+  [data-responsive-drawer-content="true"] {
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+    touch-action: auto;
+  }
+
+  [data-responsive-drawer-content="true"] > div:first-child {
+    display: none;
+  }
+
+  [data-responsive-drawer-content="true"][data-state="open"] {
+    animation: responsive-drawer-modal-in 180ms
+      cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
+  }
+
+  [data-responsive-drawer-content="true"][data-state="closed"] {
+    animation: responsive-drawer-modal-out 140ms ease-out both !important;
+  }
+}
+
+@keyframes responsive-drawer-modal-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes responsive-drawer-modal-out {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+
+  to {
+    opacity: 0;
+    scale: 0.98;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  [data-responsive-drawer-content="true"] {
+    animation: none !important;
+  }
+
   [data-vaul-drawer][data-state="open"] {
     animation: vaul-drawer-fade-in 160ms ease-out both !important;
     transition: none !important;

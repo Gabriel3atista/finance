@@ -534,7 +534,7 @@ export function MonthlyLedger({
           />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col rounded-[18px] border border-line bg-red-900 p-5 shadow-card sm:p-7">
+        <div className="flex min-h-0 flex-1 flex-col rounded-[18px] border border-line p-5 shadow-card sm:p-7">
           <MonthlyEntryList
             entries={entries}
             month={monthValue}

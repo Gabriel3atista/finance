@@ -25,32 +25,57 @@ type DrawerRootProps = OmitDrawerAnimationConfig<
   React.ComponentProps<typeof DrawerPrimitive.Root>
 > & { onCloseComplete?: () => void };
 
-const Drawer = ({ onCloseComplete, ...props }: DrawerRootProps) => (
-  <DrawerPrimitive.Root
-    {...props}
-    autoFocus={false}
-    direction="bottom"
-    onAnimationEnd={(open) => {
-      if (!open) onCloseComplete?.();
-    }}
-    repositionInputs={false}
-    shouldScaleBackground={false}
-  />
-);
+function useDesktopModalMode() {
+  const [isDesktop, setIsDesktop] = React.useState(false);
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mediaQuery.matches);
+
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
+  return isDesktop;
+}
+
+const Drawer = ({ onCloseComplete, ...props }: DrawerRootProps) => {
+  const isDesktop = useDesktopModalMode();
+
+  return (
+    <DrawerPrimitive.Root
+      {...props}
+      autoFocus={false}
+      direction="bottom"
+      handleOnly={isDesktop}
+      onAnimationEnd={(open) => {
+        if (!open) onCloseComplete?.();
+      }}
+      repositionInputs={false}
+      shouldScaleBackground={false}
+    />
+  );
+};
 Drawer.displayName = "Drawer";
 
-const DrawerNested = ({ onCloseComplete, ...props }: DrawerRootProps) => (
-  <DrawerPrimitive.NestedRoot
-    {...props}
-    autoFocus={false}
-    direction="bottom"
-    onAnimationEnd={(open) => {
-      if (!open) onCloseComplete?.();
-    }}
-    repositionInputs={false}
-    shouldScaleBackground={false}
-  />
-);
+const DrawerNested = ({ onCloseComplete, ...props }: DrawerRootProps) => {
+  const isDesktop = useDesktopModalMode();
+
+  return (
+    <DrawerPrimitive.NestedRoot
+      {...props}
+      autoFocus={false}
+      direction="bottom"
+      handleOnly={isDesktop}
+      onAnimationEnd={(open) => {
+        if (!open) onCloseComplete?.();
+      }}
+      repositionInputs={false}
+      shouldScaleBackground={false}
+    />
+  );
+};
 DrawerNested.displayName = "DrawerNested";
 
 export type DrawerControllerOptions = {

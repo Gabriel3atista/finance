@@ -7,6 +7,13 @@ import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Drawer,
   DrawerBody,
   DrawerContent,
@@ -39,6 +46,7 @@ import type {
   InstallmentPlan,
   RecurringItem,
 } from "@/features/transactions/lib/data";
+import { creditCardLabel } from "@/features/credit-cards/components/credit-card-select";
 import {
   fetchInstallmentPlans,
   fetchRecurringItems,
@@ -63,12 +71,31 @@ const errors: Record<string, string> = {
 type SeriesListItem = {
   id: string;
   kind: "recurrence" | "installment";
+  entryType: "income" | "expense";
+  category: string;
+  creditCardId: string | null;
   title: string;
   details: { label: string; value: string }[];
   amount: number;
   amountCaption: string;
   active: boolean;
   initialData: SeriesFormInitialData;
+};
+
+type SeriesFilters = {
+  entryType: "all" | "income" | "expense";
+  kind: "all" | "recurrence" | "installment";
+  status: "all" | "active" | "inactive";
+  card: string;
+  category: string;
+};
+
+const defaultSeriesFilters: SeriesFilters = {
+  entryType: "all",
+  kind: "all",
+  status: "all",
+  card: "all",
+  category: "all",
 };
 
 export function RecordsScreen({ spaceId }: { spaceId: string }) {
@@ -103,6 +130,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
   const [seriesToDelete, setSeriesToDelete] = useState<SeriesListItem | null>(
     null,
   );
+  const [filters, setFilters] = useState(defaultSeriesFilters);
 
   const invalidateRecords = async () => {
     await Promise.all([
@@ -217,6 +245,36 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     ...recurring.map((item) => toRecurringListItem(item, cardsById)),
     ...plans.map((plan) => toInstallmentListItem(plan, cardsById)),
   ].sort((left, right) => Number(right.active) - Number(left.active));
+  const categories = Array.from(
+    new Set(series.map((item) => item.category)),
+  ).sort((left, right) => left.localeCompare(right, "pt-BR"));
+  const filteredSeries = series.filter((item) => {
+    if (filters.entryType !== "all" && item.entryType !== filters.entryType)
+      return false;
+    if (filters.kind !== "all" && item.kind !== filters.kind) return false;
+    if (
+      filters.status !== "all" &&
+      item.active !== (filters.status === "active")
+    ) {
+      return false;
+    }
+    if (filters.card === "none" && item.creditCardId) return false;
+    if (filters.card === "with_card" && !item.creditCardId) return false;
+    if (
+      filters.card !== "all" &&
+      filters.card !== "none" &&
+      filters.card !== "with_card" &&
+      item.creditCardId !== filters.card
+    ) {
+      return false;
+    }
+    if (filters.category !== "all" && item.category !== filters.category)
+      return false;
+    return true;
+  });
+  const hasActiveFilters = Object.entries(filters).some(
+    ([key, value]) => value !== defaultSeriesFilters[key as keyof SeriesFilters],
+  );
 
   if (recurringQuery.isError || plansQuery.isError || cardsQuery.isError) {
     return (
@@ -298,8 +356,142 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
         </p>
       )}
 
+      {!isLoading && series.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-graphite-900 p-3 sm:p-4">
+          <div
+            aria-label="Filtros de programações"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
+          >
+            <Select
+              label="Natureza"
+              onValueChange={(entryType) =>
+                setFilters((current) => ({
+                  ...current,
+                  entryType: entryType as SeriesFilters["entryType"],
+                }))
+              }
+              value={filters.entryType}
+              variant="secondary"
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Receitas e despesas</SelectItem>
+                <SelectItem value="income">Receitas</SelectItem>
+                <SelectItem value="expense">Despesas</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              label="Formato"
+              onValueChange={(kind) =>
+                setFilters((current) => ({
+                  ...current,
+                  kind: kind as SeriesFilters["kind"],
+                }))
+              }
+              value={filters.kind}
+              variant="secondary"
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Mensais e parceladas</SelectItem>
+                <SelectItem value="recurrence">Mensais</SelectItem>
+                <SelectItem value="installment">Parceladas</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              label="Situação"
+              onValueChange={(status) =>
+                setFilters((current) => ({
+                  ...current,
+                  status: status as SeriesFilters["status"],
+                }))
+              }
+              value={filters.status}
+              variant="secondary"
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Ativas e encerradas</SelectItem>
+                <SelectItem value="active">Ativas</SelectItem>
+                <SelectItem value="inactive">Encerradas</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              label="Cartão"
+              onValueChange={(card) =>
+                setFilters((current) => ({ ...current, card }))
+              }
+              value={filters.card}
+              variant="secondary"
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os cartões</SelectItem>
+                <SelectItem value="with_card">Com cartão</SelectItem>
+                <SelectItem value="none">Sem cartão</SelectItem>
+                {(cardsQuery.data ?? []).map((card) => (
+                  <SelectItem key={card.id} value={card.id}>
+                    {creditCardLabel(card)}
+                    {card.is_active ? "" : " (inativo)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              label="Categoria"
+              onValueChange={(category) =>
+                setFilters((current) => ({ ...current, category }))
+              }
+              value={filters.category}
+              variant="secondary"
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between gap-3 border-t border-line/50 pt-3">
+            <p className="text-xs text-muted">
+              {filteredSeries.length} de {series.length} programações
+            </p>
+            {hasActiveFilters && (
+              <Button
+                className="min-h-8 px-2 text-xs"
+                onClick={() => setFilters(defaultSeriesFilters)}
+                type="button"
+                variant="ghost"
+              >
+                Limpar filtros
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       <SeriesList
-        items={series}
+        items={filteredSeries}
+        totalItems={series.length}
+        onClearFilters={() => setFilters(defaultSeriesFilters)}
         loading={isLoading}
         onEdit={editSeries}
         onDeactivate={(form) => {
@@ -391,6 +583,9 @@ function toRecurringListItem(
   return {
     id: item.id,
     kind: "recurrence",
+    entryType: item.entry_type,
+    category: item.category ?? "Sem categoria",
+    creditCardId: item.credit_card_id,
     title: item.title,
     details: [
       { label: "Tipo", value: "Mensal" },
@@ -442,6 +637,9 @@ function toInstallmentListItem(
   return {
     id: plan.id,
     kind: "installment",
+    entryType: "expense",
+    category: plan.category ?? "Sem categoria",
+    creditCardId: plan.credit_card_id,
     title: plan.title,
     details: [
       { label: "Tipo", value: "Parcelado" },
@@ -488,6 +686,8 @@ function toInstallmentListItem(
 
 function SeriesList({
   items,
+  totalItems,
+  onClearFilters,
   loading,
   onEdit,
   onDeactivate,
@@ -496,6 +696,8 @@ function SeriesList({
   deletePending,
 }: {
   items: SeriesListItem[];
+  totalItems: number;
+  onClearFilters: () => void;
   loading: boolean;
   onEdit: (item: SeriesListItem) => void;
   onDeactivate: (form: FormData) => void;
@@ -503,7 +705,7 @@ function SeriesList({
   onDelete: (item: SeriesListItem) => void;
   deletePending: boolean;
 }) {
-  if (!loading && items.length === 0) {
+  if (!loading && totalItems === 0) {
     return (
       <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line bg-graphite-800 px-4 text-center">
         <span
@@ -516,6 +718,19 @@ function SeriesList({
         <p className="max-w-xs text-sm leading-5 text-muted">
           Programe salários, serviços, financiamentos ou compras parceladas.
         </p>
+      </div>
+    );
+  }
+
+  if (!loading && items.length === 0) {
+    return (
+      <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line bg-graphite-800 px-4 text-center">
+        <h3 className="font-semibold text-ink">
+          Nenhuma programação corresponde aos filtros
+        </h3>
+        <Button onClick={onClearFilters} type="button" variant="secondary">
+          Limpar filtros
+        </Button>
       </div>
     );
   }

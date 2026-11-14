@@ -29,6 +29,7 @@ import {
 import { useMonthData } from "@/features/transactions/hooks/use-month-data";
 import { fetchMonthEntries } from "@/features/transactions/lib/queries";
 import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
+import { getSeriesGenerationLimitMonth } from "@/features/transactions/lib/series-generation";
 import { queryKeys } from "@/shared/lib/query-keys";
 import { FinancialValue } from "@/shared/components/financial-values";
 import { Eyebrow } from "@/shared/components/eyebrow";
@@ -118,6 +119,9 @@ export function MonthlyLedger({
   useAppShellHeaderContent(String((previewMonth ?? month).getFullYear()));
   const isMobileApp = useMobileApp();
   const monthValue = monthString(month);
+  const seriesGenerationLimitMonth = getSeriesGenerationLimitMonth();
+  const isBeyondSeriesGenerationLimit =
+    monthValue > monthString(seriesGenerationLimitMonth);
   const previousMonth = addMonths(month, -1);
   const previousMonthValue = monthString(previousMonth);
   const previousMonthQuery = useQuery({
@@ -356,6 +360,16 @@ export function MonthlyLedger({
   if (isMobileApp) {
     return (
       <>
+        {isBeyondSeriesGenerationLimit && (
+          <p
+            className="mx-auto mb-3 max-w-xl rounded-xl border border-line bg-graphite-800 px-4 py-3 text-sm text-muted"
+            role="status"
+          >
+            Programações recorrentes e parcelamentos geram lançamentos até{" "}
+            {formatMonth(seriesGenerationLimitMonth)}. Você ainda pode criar
+            lançamentos manuais neste mês.
+          </p>
+        )}
         {setStatus.isError && (
           <p
             className="mx-auto mb-3 max-w-xl rounded-xl border border-rose-800 bg-rose-900 px-4 py-3 text-sm text-rose-100"
@@ -461,6 +475,16 @@ export function MonthlyLedger({
             role="alert"
           >
             Não foi possível atualizar o lançamento. Tente novamente.
+          </p>
+        )}
+        {isBeyondSeriesGenerationLimit && (
+          <p
+            className="mb-5 rounded-xl border border-line bg-graphite-800 px-4 py-3 text-sm text-muted"
+            role="status"
+          >
+            Programações recorrentes e parcelamentos geram lançamentos até{" "}
+            {formatMonth(seriesGenerationLimitMonth)}. Você ainda pode criar
+            lançamentos manuais neste mês.
           </p>
         )}
         {loadFailed && (

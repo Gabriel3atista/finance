@@ -51,7 +51,7 @@ export function parseMonth(value: string | undefined) {
   return new Date(year, month - 1, 1, 12);
 }
 
-function currentMonthDate(now = new Date()) {
+export function currentMonthDate(now = new Date()) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: APP_TIME_ZONE,
     year: "numeric",

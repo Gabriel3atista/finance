@@ -9,6 +9,7 @@ import type {
 } from "@/features/transactions/lib/data";
 import { addMonths, dateForDay, monthDate } from "@/shared/lib/date";
 import { installmentAmount } from "@/shared/lib/currency";
+import { canGenerateSeriesForMonth } from "@/features/transactions/lib/series-generation";
 
 const entryColumns =
   "id, space_id, title, entry_type, amount, category, competence_month, due_date, status, settled_at, source_kind, recurring_item_id, installment_plan_id, installment_number, credit_card_id";
@@ -55,6 +56,8 @@ export async function ensureMonthEntries(
   userId: string,
   month: Date,
 ) {
+  if (!canGenerateSeriesForMonth(month)) return;
+
   const supabase = createClient();
   const monthValue = monthDate(month);
   const nextMonthValue = monthDate(addMonths(month, 1));

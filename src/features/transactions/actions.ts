@@ -89,7 +89,7 @@ export async function createFinancialEntry(
     amount,
     category,
     competence_month: competenceMonth,
-    due_date: dueDate,
+    due_date: entryType === "income" ? null : dueDate,
     status: "planned",
     source_kind: "manual",
     created_by: context.user.id,
@@ -355,7 +355,7 @@ export async function updateFinancialEntry(
     entry_type: entryType,
     amount,
     category,
-    due_date: dueDate,
+    due_date: entryType === "income" ? null : dueDate,
     credit_card_id: creditCardId,
   };
   if (

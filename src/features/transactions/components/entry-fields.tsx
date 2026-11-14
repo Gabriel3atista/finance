@@ -37,6 +37,7 @@ export function EntryFields() {
               field.onChange(value);
               if (value === "income") {
                 setValue("credit_card_id", "", { shouldValidate: true });
+                setValue("due_date", "", { shouldValidate: true });
               }
               setValue("category", "", { shouldValidate: true });
             }}
@@ -105,13 +106,15 @@ export function EntryFields() {
           </Select>
         )}
       />
-      <Input
-        label="Vencimento"
-        containerClassName="min-w-0"
-        type="date"
-        error={errors.due_date?.message}
-        {...register("due_date")}
-      />
+      {entryType === "expense" && (
+        <Input
+          label="Vencimento"
+          containerClassName="min-w-0"
+          type="date"
+          error={errors.due_date?.message}
+          {...register("due_date")}
+        />
+      )}
       {entryType === "expense" && (
         <Controller
           control={control}

@@ -570,6 +570,10 @@ function NewEntryDrawer({
   });
 
   useEffect(() => {
+    form.setValue("competence_month", month, { shouldValidate: true });
+  }, [form, month]);
+
+  useEffect(() => {
     if (error === "invalid-entry") {
       form.setError("credit_card_id", {
         type: "server",
@@ -587,7 +591,9 @@ function NewEntryDrawer({
         <form
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
           onSubmit={form.handleSubmit((values) =>
-            onSubmit(formDataFromValues(values)),
+            onSubmit(
+              formDataFromValues({ ...values, competence_month: month }),
+            ),
           )}
           noValidate
         >

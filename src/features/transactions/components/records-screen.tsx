@@ -147,7 +147,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
 
   const saveSeries = useMutation({
     mutationFn: async (form: FormData) => {
-      const isEditing = form.has("id");
+      const isEditing = Boolean(String(form.get("id") ?? "").trim());
       const result = isEditing
         ? await updateFinancialSeries(form)
         : await createFinancialSeries(form);

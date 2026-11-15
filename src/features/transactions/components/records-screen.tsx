@@ -274,6 +274,10 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       return false;
     return true;
   });
+  const filteredAmount = filteredSeries.reduce(
+    (total, item) => total + item.amount,
+    0,
+  );
   const hasActiveFilters = Object.entries(filters).some(
     ([key, value]) =>
       value !== defaultSeriesFilters[key as keyof SeriesFilters],
@@ -509,9 +513,28 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       )}
 
       {!isLoading && series.length > 0 && (
-        <p className="text-xs text-muted" role="status">
-          {filteredSeries.length} de {series.length} programações
-        </p>
+        <Card
+          aria-live="polite"
+          className="flex flex-col gap-3 border-line bg-graphite-900 p-4 sm:flex-row sm:items-center sm:justify-between"
+          role="status"
+        >
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-muted">
+              Soma dos valores das programações
+            </p>
+            <p className="text-xs text-muted">
+              Recorrências no mês e parcelamentos por parcela.
+            </p>
+          </div>
+          <div className="flex flex-col gap-1 sm:items-end">
+            <p className="text-xl font-semibold tabular-nums text-ink">
+              <FinancialValue>{formatCurrency(filteredAmount)}</FinancialValue>
+            </p>
+            <p className="text-xs text-muted">
+              {filteredSeries.length} de {series.length} programações
+            </p>
+          </div>
+        </Card>
       )}
 
       <SeriesList

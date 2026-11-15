@@ -201,12 +201,10 @@ export function MonthlyEntryList({
     (entry) => cardFilter === "all" || entry.credit_card_id === cardFilter,
   );
   const hasActiveFilters = categoryFilter !== "all" || cardFilter !== "all";
-  const visibleIncomeTotal = visibleEntries
-    .filter((entry) => entry.entry_type === "income")
-    .reduce((total, entry) => total + Number(entry.amount), 0);
-  const visibleExpenseTotal = visibleEntries
-    .filter((entry) => entry.entry_type === "expense")
-    .reduce((total, entry) => total + Number(entry.amount), 0);
+  const visibleTotal = visibleEntries.reduce(
+    (total, entry) => total + Number(entry.amount),
+    0,
+  );
 
   function handleCategoryChange(value: string) {
     if (value === "all" || isFinancialCategory(value)) {
@@ -369,31 +367,21 @@ export function MonthlyEntryList({
         </div>
         {hasActiveFilters && (
           <dl
-            aria-label="Totais dos lançamentos filtrados"
-            className="grid grid-cols-2 gap-2"
+            aria-label="Total dos lançamentos filtrados"
+            className="flex items-center justify-between gap-3 rounded-xl border border-line bg-graphite-800 px-3 py-2"
           >
-            {[
-              { label: "Receitas filtradas", total: visibleIncomeTotal },
-              { label: "Despesas filtradas", total: visibleExpenseTotal },
-            ].map(({ label, total }) => (
-              <div
-                className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-line bg-graphite-800 px-3 py-2"
-                key={label}
-              >
-                <dt className="flex min-w-0 items-center gap-2 text-xs text-muted">
-                  <span
-                    aria-hidden="true"
-                    className="size-2 shrink-0 rounded-full bg-accent"
-                  />
-                  <span className="truncate">{label}</span>
-                </dt>
-                <dd className="shrink-0 text-right text-sm font-semibold tabular-nums text-ink">
-                  <FinancialValue size="sm">
-                    {formatCurrency(total)}
-                  </FinancialValue>
-                </dd>
-              </div>
-            ))}
+            <dt className="flex min-w-0 items-center gap-2 text-sm text-muted">
+              <span
+                aria-hidden="true"
+                className="size-2 shrink-0 rounded-full bg-accent"
+              />
+              <span>Total filtrado</span>
+            </dt>
+            <dd className="shrink-0 text-right text-sm font-semibold tabular-nums text-ink">
+              <FinancialValue size="sm">
+                {formatCurrency(visibleTotal)}
+              </FinancialValue>
+            </dd>
           </dl>
         )}
         <div className="min-h-0 flex-1">

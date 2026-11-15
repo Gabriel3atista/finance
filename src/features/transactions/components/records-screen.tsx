@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { NextIcon } from "@/components/atoms/next-icon";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ import type {
   InstallmentPlan,
   RecurringItem,
 } from "@/features/transactions/lib/data";
+import { recordsFixtures } from "@/features/transactions/lib/records-fixtures";
 import { creditCardLabel } from "@/features/credit-cards/components/credit-card-select";
 import {
   fetchInstallmentPlans,
@@ -103,6 +104,15 @@ const defaultSeriesFilters: SeriesFilters = {
 
 export function RecordsScreen({ spaceId }: { spaceId: string }) {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const requestedDataMode = searchParams.get("data");
+  const dataMode =
+    process.env.NODE_ENV === "development" &&
+    requestedDataMode &&
+    Object.prototype.hasOwnProperty.call(recordsFixtures, requestedDataMode)
+      ? (requestedDataMode as keyof typeof recordsFixtures)
+      : "demo";
   const urlError = searchParams.get("error");
   const saved = searchParams.get("saved");
   const deactivated = searchParams.get("deactivated");
@@ -118,13 +128,14 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     queryKey: queryKeys.creditCards(spaceId),
     queryFn: () => fetchCreditCards(spaceId),
   });
-  const cardsById = new Map(
-    (cardsQuery.data ?? []).map((card) => [card.id, card]),
-  );
-  const recurring = recurringQuery.data ?? [];
-  const plans = plansQuery.data ?? [];
+  const fixture = dataMode === "demo" ? null : recordsFixtures[dataMode];
+  const cards = fixture?.cards ?? cardsQuery.data ?? [];
+  const cardsById = new Map(cards.map((card) => [card.id, card]));
+  const recurring = fixture?.recurring ?? recurringQuery.data ?? [];
+  const plans = fixture?.plans ?? plansQuery.data ?? [];
   const isLoading =
-    recurringQuery.isPending || plansQuery.isPending || cardsQuery.isPending;
+    !fixture &&
+    (recurringQuery.isPending || plansQuery.isPending || cardsQuery.isPending);
   const currentDate = localDateString();
   const queryClient = useQueryClient();
   const [mutationMessage, setMutationMessage] = useState("");
@@ -245,6 +256,14 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     });
   }
 
+  function changeDataMode(mode: "demo" | keyof typeof recordsFixtures) {
+    const next = new URLSearchParams(searchParams.toString());
+    if (mode === "demo") next.delete("data");
+    else next.set("data", mode);
+    const query = next.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
+
   const series: SeriesListItem[] = [
     ...recurring.map((item) => toRecurringListItem(item, cardsById)),
     ...plans.map((plan) => toInstallmentListItem(plan, cardsById)),
@@ -298,7 +317,10 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       value !== defaultSeriesFilters[key as keyof SeriesFilters],
   );
 
-  if (recurringQuery.isError || plansQuery.isError || cardsQuery.isError) {
+  if (
+    !fixture &&
+    (recurringQuery.isError || plansQuery.isError || cardsQuery.isError)
+  ) {
     return (
       <div
         role="alert"
@@ -342,7 +364,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       className="mx-auto flex max-w-5xl flex-col gap-3"
       aria-busy={isLoading || undefined}
     >
-      <header className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex flex-col items-start gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-col gap-2">
           <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-ink sm:text-[34px]">
             Programações
@@ -352,7 +374,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
             meses.
           </p>
         </div>
-        <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+        <div className="flex w-full shrink-0 gap-2 lg:w-auto">
           {series.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -457,7 +479,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
                       <SelectItem value="all">Todos os cartões</SelectItem>
                       <SelectItem value="with_card">Com cartão</SelectItem>
                       <SelectItem value="none">Sem cartão</SelectItem>
-                      {(cardsQuery.data ?? []).map((card) => (
+                      {cards.map((card) => (
                         <SelectItem key={card.id} value={card.id}>
                           {creditCardLabel(card)}
                           {card.is_active ? "" : " (inativo)"}
@@ -529,8 +551,8 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
 
       {!isLoading && series.length > 0 && (
         <Card className="flex flex-col gap-4 border-line bg-graphite-900 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex min-w-0 flex-col gap-1">
               <p className="text-sm font-medium text-muted">
                 Totais por natureza
               </p>
@@ -540,16 +562,17 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
             </div>
             <Switch
               checked={includeInstallments}
+              containerClassName="w-auto"
               label="Somar parcelas também"
               onCheckedChange={setIncludeInstallments}
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2">
             <div className="flex items-center justify-between gap-3 rounded-xl border border-line/50 bg-graphite-800 p-3">
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-medium text-mint-300">Receitas</p>
                 <p className="text-xs text-muted">
-                  {incomeSeries.length} itens filtrados
+                  {formatFilteredCount(incomeSeries.length)}
                 </p>
               </div>
               <p
@@ -563,7 +586,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-medium text-rose-400">Despesas</p>
                 <p className="text-xs text-muted">
-                  {expenseSeries.length} itens filtrados
+                  {formatFilteredCount(expenseSeries.length)}
                 </p>
               </div>
               <p
@@ -655,6 +678,38 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
           )}
         </DrawerContent>
       </Drawer>
+
+      {process.env.NODE_ENV === "development" && (
+        <nav
+          aria-label="Dados de demonstração"
+          className="fixed bottom-3 left-1/2 z-[100] flex max-w-[calc(100vw-1.5rem)] -translate-x-1/2 gap-1 overflow-x-auto rounded-xl border border-line bg-graphite-700 p-1 font-sans text-xs text-muted shadow-lg"
+        >
+          {(
+            [
+              ["demo", "Demo"],
+              ["worst", "Pior caso"],
+              ["empty", "Vazio"],
+              ["one", "Um item"],
+              ["many", "1.284 itens"],
+            ] as const
+          ).map(([mode, label]) => (
+            <button
+              aria-pressed={dataMode === mode}
+              className={cn(
+                "shrink-0 rounded-lg px-2.5 py-1.5 transition-none",
+                dataMode === mode
+                  ? "bg-moon-100 text-graphite-900"
+                  : "hover:bg-graphite-600",
+              )}
+              key={mode}
+              onClick={() => changeDataMode(mode)}
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
     </section>
   );
 }
@@ -711,6 +766,10 @@ function toRecurringListItem(
       creditCardId: item.credit_card_id,
     },
   };
+}
+
+function formatFilteredCount(count: number) {
+  return `${count} ${count === 1 ? "item filtrado" : "itens filtrados"}`;
 }
 
 function toInstallmentListItem(
@@ -863,8 +922,8 @@ function SeriesList({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <Card className="overflow-hidden" key={`${item.kind}-${item.id}`}>
-              <div className="flex items-center justify-between gap-3 bg-graphite-600 p-4 sm:p-5">
-                <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="flex flex-col gap-2 bg-graphite-600 p-4 sm:p-5">
+                <div className="flex min-w-0 items-start gap-2">
                   <span
                     aria-label={item.active ? "Ativo" : "Encerrado"}
                     className={cn(
@@ -875,22 +934,12 @@ function SeriesList({
                   />
                   <h3
                     className={cn(
-                      "min-w-0 break-words text-[15px] font-semibold leading-5",
+                      "min-w-0 flex-1 break-words text-[15px] font-semibold leading-5",
                       item.active ? "text-ink" : "text-muted",
                     )}
                   >
                     {item.title}
                   </h3>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <p className="flex items-baseline gap-1 text-right text-sm font-semibold tabular-nums text-ink">
-                    <FinancialValue>
-                      {formatCurrency(item.amount)}
-                    </FinancialValue>
-                    <span className="text-xs font-normal text-muted">
-                      / {item.amountCaption}
-                    </span>
-                  </p>
                   <SeriesActionsMenu
                     item={item}
                     onEdit={onEdit}
@@ -899,6 +948,16 @@ function SeriesList({
                     deletePending={deletePending}
                     deactivatePending={deactivatePending}
                   />
+                </div>
+                <div className="flex min-w-0 items-baseline justify-between gap-2">
+                  <p className="flex items-baseline gap-1 whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
+                    <FinancialValue>
+                      {formatCurrency(item.amount)}
+                    </FinancialValue>
+                    <span className="shrink-0 text-xs font-normal text-muted">
+                      / {item.amountCaption}
+                    </span>
+                  </p>
                 </div>
               </div>
               <div className="flex flex-col gap-4 p-4 sm:p-5">

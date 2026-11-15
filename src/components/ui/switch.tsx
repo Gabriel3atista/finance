@@ -6,19 +6,26 @@ import { cn } from "@/shared/lib/utils";
 
 type SwitchProps = ComponentProps<typeof SwitchPrimitive.Root> & {
   label?: string;
+  containerClassName?: string;
 };
 
 export function Switch({
   className,
   id,
   label,
+  containerClassName,
   ...props
 }: SwitchProps) {
   const generatedId = useId();
   const switchId = id ?? generatedId;
 
   return (
-    <div className="flex w-full min-w-0 shrink-0 items-center justify-between gap-3">
+    <div
+      className={cn(
+        "flex w-full min-w-0 shrink-0 items-center justify-between gap-3",
+        containerClassName,
+      )}
+    >
       <label
         className={cn("text-sm font-medium text-muted", !label && "sr-only")}
         htmlFor={switchId}

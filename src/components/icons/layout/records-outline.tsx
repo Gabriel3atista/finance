@@ -11,7 +11,7 @@ export default function RecordsOutline(props: IconSvgProps) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M4.5 6.5h15M7 6.5v13h10v-13M9.5 6.5V4h5v2.5M10 10v6M14 10v6" />
+      <path d="M5 3.5h14v17H5zM8 8h2M12 8h4M8 12h2M12 12h4M8 16h2M12 16h4" />
     </svg>
   );
 }

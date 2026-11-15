@@ -276,18 +276,23 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       return false;
     return true;
   });
-  const filteredAmount = filteredSeries.reduce(
-    (total, item) =>
-      total +
-      (includeInstallments || item.kind !== "installment" ? item.amount : 0),
+  const includedSeries = filteredSeries.filter(
+    (item) => includeInstallments || item.kind !== "installment",
+  );
+  const incomeSeries = includedSeries.filter(
+    (item) => item.entryType === "income",
+  );
+  const expenseSeries = includedSeries.filter(
+    (item) => item.entryType === "expense",
+  );
+  const incomeTotal = incomeSeries.reduce(
+    (total, item) => total + item.amount,
     0,
   );
-  const includedRecurringCount = filteredSeries.filter(
-    (item) => item.kind !== "installment",
-  ).length;
-  const includedInstallmentCount = includeInstallments
-    ? filteredSeries.filter((item) => item.kind === "installment").length
-    : 0;
+  const expenseTotal = expenseSeries.reduce(
+    (total, item) => total + item.amount,
+    0,
+  );
   const hasActiveFilters = Object.entries(filters).some(
     ([key, value]) =>
       value !== defaultSeriesFilters[key as keyof SeriesFilters],
@@ -523,33 +528,49 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       )}
 
       {!isLoading && series.length > 0 && (
-        <Card className="flex flex-col gap-3 border-line bg-graphite-900 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium text-muted">
-              Soma dos valores principais
-            </p>
-            <p className="text-xs text-muted">Recorrências mensais</p>
-          </div>
-          <div className="flex flex-col gap-3 sm:items-end">
+        <Card className="flex flex-col gap-4 border-line bg-graphite-900 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-muted">
+                Totais por natureza
+              </p>
+              <p className="text-xs text-muted">
+                Valores mensais e parcelas conforme o switch.
+              </p>
+            </div>
             <Switch
               checked={includeInstallments}
               label="Somar parcelas também"
               onCheckedChange={setIncludeInstallments}
             />
-            <div className="flex flex-col gap-1 sm:items-end">
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-line/50 bg-graphite-800 p-3">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium text-mint-300">Receitas</p>
+                <p className="text-xs text-muted">
+                  {incomeSeries.length} itens filtrados
+                </p>
+              </div>
               <p
                 aria-live="polite"
-                className="text-xl font-semibold tabular-nums text-ink"
+                className="shrink-0 text-lg font-semibold tabular-nums text-ink"
               >
-                <FinancialValue>
-                  {formatCurrency(filteredAmount)}
-                </FinancialValue>
+                <FinancialValue>{formatCurrency(incomeTotal)}</FinancialValue>
               </p>
-              <p className="text-xs text-muted">
-                {includedRecurringCount} recorrências
-                {includeInstallments &&
-                  ` + ${includedInstallmentCount} parcelamentos`}
-                {` (de ${filteredSeries.length} programações filtradas)`}
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-line/50 bg-graphite-800 p-3">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium text-rose-400">Despesas</p>
+                <p className="text-xs text-muted">
+                  {expenseSeries.length} itens filtrados
+                </p>
+              </div>
+              <p
+                aria-live="polite"
+                className="shrink-0 text-lg font-semibold tabular-nums text-ink"
+              >
+                <FinancialValue>{formatCurrency(expenseTotal)}</FinancialValue>
               </p>
             </div>
           </div>

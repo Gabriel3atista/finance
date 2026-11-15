@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   createFinancialSeries,
   deactivateSeries,
@@ -133,6 +134,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     null,
   );
   const [filters, setFilters] = useState(defaultSeriesFilters);
+  const [includeInstallments, setIncludeInstallments] = useState(false);
 
   const invalidateRecords = async () => {
     await Promise.all([
@@ -275,9 +277,17 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     return true;
   });
   const filteredAmount = filteredSeries.reduce(
-    (total, item) => total + item.amount,
+    (total, item) =>
+      total +
+      (includeInstallments || item.kind !== "installment" ? item.amount : 0),
     0,
   );
+  const includedRecurringCount = filteredSeries.filter(
+    (item) => item.kind !== "installment",
+  ).length;
+  const includedInstallmentCount = includeInstallments
+    ? filteredSeries.filter((item) => item.kind === "installment").length
+    : 0;
   const hasActiveFilters = Object.entries(filters).some(
     ([key, value]) =>
       value !== defaultSeriesFilters[key as keyof SeriesFilters],
@@ -513,26 +523,35 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
       )}
 
       {!isLoading && series.length > 0 && (
-        <Card
-          aria-live="polite"
-          className="flex flex-col gap-3 border-line bg-graphite-900 p-4 sm:flex-row sm:items-center sm:justify-between"
-          role="status"
-        >
+        <Card className="flex flex-col gap-3 border-line bg-graphite-900 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium text-muted">
-              Soma dos valores das programações
+              Soma dos valores principais
             </p>
-            <p className="text-xs text-muted">
-              Recorrências no mês e parcelamentos por parcela.
-            </p>
+            <p className="text-xs text-muted">Recorrências mensais</p>
           </div>
-          <div className="flex flex-col gap-1 sm:items-end">
-            <p className="text-xl font-semibold tabular-nums text-ink">
-              <FinancialValue>{formatCurrency(filteredAmount)}</FinancialValue>
-            </p>
-            <p className="text-xs text-muted">
-              {filteredSeries.length} de {series.length} programações
-            </p>
+          <div className="flex flex-col gap-3 sm:items-end">
+            <Switch
+              checked={includeInstallments}
+              label="Somar parcelas também"
+              onCheckedChange={setIncludeInstallments}
+            />
+            <div className="flex flex-col gap-1 sm:items-end">
+              <p
+                aria-live="polite"
+                className="text-xl font-semibold tabular-nums text-ink"
+              >
+                <FinancialValue>
+                  {formatCurrency(filteredAmount)}
+                </FinancialValue>
+              </p>
+              <p className="text-xs text-muted">
+                {includedRecurringCount} recorrências
+                {includeInstallments &&
+                  ` + ${includedInstallmentCount} parcelamentos`}
+                {` (de ${filteredSeries.length} programações filtradas)`}
+              </p>
+            </div>
           </div>
         </Card>
       )}

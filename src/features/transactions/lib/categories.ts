@@ -10,6 +10,11 @@ const CATEGORY_DEFINITIONS = [
     seriesType: { value: "service" },
   },
   {
+    value: "Assinatura",
+    entryType: "expense",
+    seriesType: { value: "subscription" },
+  },
+  {
     value: "Financiamento",
     entryType: "expense",
     seriesType: { value: "financing" },

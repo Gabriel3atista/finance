@@ -52,7 +52,10 @@ import {
   fetchRecurringItems,
   fetchCreditCards,
 } from "@/features/transactions/lib/queries";
-import { getDefaultSeriesType } from "@/features/transactions/lib/categories";
+import {
+  FINANCIAL_CATEGORIES,
+  getDefaultSeriesType,
+} from "@/features/transactions/lib/categories";
 import { invalidateFinanceQueries } from "@/features/transactions/lib/invalidate-finance-queries";
 import { formatCurrency, installmentAmount } from "@/shared/lib/currency";
 import { FinancialValue } from "@/shared/components/financial-values";
@@ -245,7 +248,7 @@ export function RecordsScreen({ spaceId }: { spaceId: string }) {
     ...plans.map((plan) => toInstallmentListItem(plan, cardsById)),
   ].sort((left, right) => Number(right.active) - Number(left.active));
   const categories = Array.from(
-    new Set(series.map((item) => item.category)),
+    new Set([...FINANCIAL_CATEGORIES, ...series.map((item) => item.category)]),
   ).sort((left, right) => left.localeCompare(right, "pt-BR"));
   const filteredSeries = series.filter((item) => {
     if (filters.entryType !== "all" && item.entryType !== filters.entryType)
